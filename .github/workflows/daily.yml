@@ -2,7 +2,9 @@ name: daily-post
 
 on:
   schedule:
-    - cron: "0 22 * * *" # 매일 07:00 KST (UTC 22:00). GitHub 사정으로 수십 분 늦어질 수 있음
+    # 월~토 07:00 KST = UTC 일~금 22:00. 일요일(KST)은 새 시장 데이터가 없어 쉰다.
+    # GitHub 사정으로 수십 분 늦어질 수 있음
+    - cron: "0 22 * * 0-5"
   workflow_dispatch:
     inputs:
       date:
