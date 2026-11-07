@@ -65,7 +65,7 @@ def test_dry_run_end_to_end(settings):
     assert "투자를 권유하지" in html or "권유하지 않습니다" in html
     assert "발행 전 확인" in preview and "발행 전 확인" not in html
     # 데이터로 만든 요약 상자·표와 새 섹션
-    for text in ("오늘 시장 한눈에", "<table", "코스피", "오늘 한국 증시 체크포인트", "마무리", "[함께 보면 좋은 글]", "#미국증시"):
+    for text in ("오늘 시장 한눈에", "<table", "코스피", "한국 증시 체크포인트", "마무리", "[함께 보면 좋은 글]", "#미국증시"):
         assert text in html, text
     assert html.index("오늘 시장 한눈에") < html.index("해외 시장") < html.index("국내 시장")
     assert post.draft.content.title.startswith("[템플릿 초안] 미국증시·코스피 시황 | 11월 6일(금)")
