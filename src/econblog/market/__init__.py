@@ -29,7 +29,8 @@ def build_snapshot(settings: Settings, as_of: date, offline: bool = False) -> Ma
         try:
             if name not in instances:
                 instances[name] = registry.load(PROVIDERS, name)(settings)
-            series = instances[name].fetch(spec, start, as_of)
+            fetch_spec = spec.model_copy(update={"provider": "sample"}) if offline else spec
+            series = instances[name].fetch(fetch_spec, start, as_of)
             if not series.values:
                 raise ValueError("데이터 없음")
             snapshot.series[spec.key] = series

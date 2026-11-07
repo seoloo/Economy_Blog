@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Literal
 
@@ -96,8 +96,13 @@ class Series(BaseModel):
             return None
         return self.change / self.prev * 100
 
-    def tail(self, n: int) -> "Series":
-        return Series(spec=self.spec, dates=self.dates[-n:], values=self.values[-n:])
+    def last_days(self, days: int) -> "Series":
+        """마지막 날짜 기준 최근 days 일(달력 기준) 구간."""
+        if not self.dates:
+            return self
+        cutoff = self.dates[-1] - timedelta(days=days)
+        pairs = [(d, v) for d, v in zip(self.dates, self.values) if d >= cutoff]
+        return Series(spec=self.spec, dates=[d for d, _ in pairs], values=[v for _, v in pairs])
 
 
 class MarketSnapshot(BaseModel):
