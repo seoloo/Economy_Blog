@@ -13,6 +13,7 @@ import time
 import requests
 
 from econblog.classify.base import Classifier
+from econblog.classify.keyword import KeywordClassifier
 from econblog.config import env
 from econblog.models import Article, ClassifiedArticle
 
@@ -168,6 +169,20 @@ class LayaClassifier(Classifier):
             topic = "other"
         return ClassifiedArticle(article=a, topic=topic, importance=round(importance, 3))
 
+    def _blend_with_keywords(self, items: list[ClassifiedArticle]) -> None:
+        """Laya 점수에 시장 키워드 점수를 섞는다 (Laya 가 놓치는 '시황 관련성' 보강).
+
+        실측: Laya 만 쓰면 AI 범죄·인물 기사 같은 비(非)시황 글이 상위에 섞였다.
+        """
+        w = self.settings.classify.laya_weight
+        if w >= 1.0:
+            return
+        keyword = KeywordClassifier(self.settings).classify([x.article for x in items])
+        for x, k in zip(items, keyword):
+            x.importance = round(w * x.importance + (1 - w) * k.importance, 3)
+            if x.topic == "other" and k.topic != "other":
+                x.topic = k.topic
+
     def classify(self, articles: list[Article]) -> list[ClassifiedArticle]:
         states = [self._state(a) for a in articles]
         out: list[ClassifiedArticle] = []
@@ -177,5 +192,6 @@ class LayaClassifier(Classifier):
             if not out and results:
                 log.debug("Laya 응답 예시: %s", json.dumps(results[0], ensure_ascii=False)[:1500])
             out.extend(self._to_result(a, r) for a, r in zip(chunk, results))
+        self._blend_with_keywords(out)
         log.info("Laya 분류 완료 %d건", len(out))
         return out

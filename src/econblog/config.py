@@ -26,6 +26,7 @@ class ClassifySettings(BaseModel):
     fallback: str = "keyword"
     laya_model: str | None = "multilingual"
     laya_min_confidence: float = 0.3
+    laya_weight: float = 0.7
     topics: dict[str, str] = Field(default_factory=dict)
     top_n_per_region: int = 8
     dedupe_threshold: float = 0.55
