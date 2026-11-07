@@ -98,29 +98,18 @@
 
 <p style="margin:0 0 14px;line-height:1.8;">{{ c.lead | rich }}</p>
 
-{#- 오늘 시장 한눈에: 요약 한 줄 + 지표 카드 2열 -#}
-<div style="margin:24px 0 8px;padding:18px 18px 10px;background:{{ SOFT }};border-left:4px solid {{ ACCENT }};border-radius:6px;">
+{#- 오늘 시장 한눈에: 요약 한 줄 + 지표 목록.
+    표(table)는 티스토리 스킨이 칸마다 테두리를 덧씌우므로 배치용으로 쓰지 않는다. -#}
+<div style="margin:24px 0 8px;padding:18px 18px 12px;background-color:{{ SOFT }};border-left:4px solid {{ ACCENT }};">
   <p style="margin:0 0 4px;font-size:13px;font-weight:bold;color:{{ ACCENT }};">오늘 시장 한눈에</p>
-  <p style="margin:0 0 12px;font-size:17px;font-weight:bold;line-height:1.6;">{{ c.summary_line | plain }}</p>
+  <p style="margin:0 0 10px;font-size:17px;font-weight:bold;line-height:1.6;">{{ c.summary_line | plain }}</p>
 {%- if glance.rows %}
-  <table style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0 8px;">
-{% for pair in glance.rows | batch(2) %}
-    <tr>
-{% for r in pair %}
-      <td style="width:50%;padding:0 {{ '4px 0 0' if loop.first else '0 0 4px' }};border:none;vertical-align:top;">
-        <div style="padding:10px 12px;background:#ffffff;border:1px solid {{ LINE }};border-radius:8px;">
-          <div style="font-size:12px;color:{{ MUTED }};">{{ r.label }}</div>
-          <div style="font-size:17px;font-weight:bold;">{{ r.value }}</div>
-          <div style="font-size:13px;color:{{ r.color }};">{{ r.headline }}</div>
-        </div>
-      </td>
+  <ul style="margin:0 0 8px;padding-left:20px;line-height:1.9;">
+{% for r in glance.rows %}
+    <li>{{ r.label }} <b>{{ r.value }}</b> <span style="color:{{ r.color }};">{{ r.headline }}</span></li>
 {% endfor %}
-{% if pair | length < 2 %}      <td style="width:50%;border:none;"></td>
-{% endif %}
-    </tr>
-{% endfor %}
-  </table>
-  <p style="margin:0 0 6px;font-size:12px;color:{{ MUTED }};">{{ glance.note }}</p>
+  </ul>
+  <p style="margin:0;font-size:12px;color:{{ MUTED }};">{{ glance.note }}</p>
 {%- endif %}
 </div>
 {% for chart in lead_charts %}{{ chart_block(chart) }}
@@ -136,16 +125,9 @@
 {%- if c.korea_checkpoints %}
 
 {{ h2("한국 증시 체크포인트") }}
-<table style="width:100%;border-collapse:collapse;margin:8px 0 16px;">
 {% for k in c.korea_checkpoints %}
-  <tr>
-    <td style="width:34px;padding:10px 0;border:none;border-bottom:1px solid {{ LINE }};vertical-align:top;">
-      {{ label(loop.index) }}
-    </td>
-    <td style="padding:10px 0;border:none;border-bottom:1px solid {{ LINE }};line-height:1.7;">{{ k | rich }}</td>
-  </tr>
+<p style="margin:0 0 14px;line-height:1.8;">{{ label(loop.index) }}&nbsp; {{ k | rich }}</p>
 {% endfor %}
-</table>
 {%- endif %}
 {%- if body_charts %}
 
