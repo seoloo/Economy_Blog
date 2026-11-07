@@ -18,8 +18,14 @@ from econblog.models import Article, ClassifiedArticle
 log = logging.getLogger(__name__)
 
 API_BASE = "https://api.laya-ai.com/v1"
-BATCH_SIZE = 64
-STATE_MAX_CHARS = 800
+BATCH_SIZE = 64            # API 상한
+BATCH_CHAR_BUDGET = 6000   # 배치 입력 토큰 상한(약 16,000)을 넘지 않도록 글자 수로 묶는다
+STATE_MAX_CHARS = 400
+RELEVANCE_INSTRUCTIONS = (
+    "Is this article about the economy, financial markets, monetary policy, trade, energy prices or business news? "
+    "Answer no for culture, history, politics without market impact, personal essays and link round-ups."
+)
+IRRELEVANT_PENALTY = 0.2   # 경제와 무관하다고 판정되면 중요도에 곱한다
 
 IMPORTANCE_LEVELS = ["minor", "notable", "important", "major"]
 IMPORTANCE_INSTRUCTIONS = (
@@ -48,6 +54,36 @@ def level_to_importance(answer: dict) -> float:
     return 0.5
 
 
+def yes_probability(answer) -> float:
+    """noul 응답을 '예' 확률(0~1)로 바꾼다. 형식을 모르면 0.5."""
+    value = answer.get("noul") if isinstance(answer, dict) else answer
+    if isinstance(value, bool):
+        return 1.0 if value else 0.0
+    if isinstance(value, (int, float)):
+        return max(0.0, min(1.0, float(value)))
+    if isinstance(value, str):
+        return {"yes": 1.0, "no": 0.0}.get(value.lower(), 0.5)
+    if isinstance(value, dict):
+        return yes_probability(value.get("yes", value.get("probability", 0.5)))
+    return 0.5
+
+
+def chunk_by_budget(states: list[str], budget: int, max_items: int) -> list[list[int]]:
+    """글자 수 합이 budget 을 넘지 않도록 인덱스를 묶는다."""
+    chunks: list[list[int]] = []
+    current: list[int] = []
+    size = 0
+    for i, s in enumerate(states):
+        if current and (size + len(s) > budget or len(current) >= max_items):
+            chunks.append(current)
+            current, size = [], 0
+        current.append(i)
+        size += len(s)
+    if current:
+        chunks.append(current)
+    return chunks
+
+
 class LayaClassifier(Classifier):
     def __init__(self, settings):
         super().__init__(settings)
@@ -61,6 +97,7 @@ class LayaClassifier(Classifier):
         return {
             "topic": {"type": "choice", "instructions": TOPIC_INSTRUCTIONS, "criteria": dict(self.topics)},
             "importance": {"type": "score", "instructions": IMPORTANCE_INSTRUCTIONS, "criteria": IMPORTANCE_LEVELS},
+            "relevant": {"type": "noul", "instructions": RELEVANCE_INSTRUCTIONS},
         }
 
     def _base_body(self) -> dict:
@@ -84,7 +121,7 @@ class LayaClassifier(Classifier):
         return f"{a.title}\n{a.summary}"[:STATE_MAX_CHARS]
 
     def _classify_batch(self, chunk: list[Article]) -> list[dict]:
-        """배치 엔드포인트를 쓰고, 응답 형식을 해석하지 못하면 단건 호출로 대체한다."""
+        """배치로 호출한다. 413(너무 큼)이면 반으로 나눠 재시도, 응답 형식을 모르면 단건 호출."""
         try:
             data = self._post("/systemone/batch", {**self._base_body(), "states": [self._state(a) for a in chunk]})
             results = data if isinstance(data, list) else next(
@@ -92,8 +129,12 @@ class LayaClassifier(Classifier):
             )
             if results is not None and len(results) == len(chunk):
                 return results
-            log.warning("Laya 배치 응답 형식을 해석하지 못해 단건 호출로 전환")
+            keys = list(data) if isinstance(data, dict) else type(data).__name__
+            log.warning("Laya 배치 응답 형식을 해석하지 못해 단건 호출로 전환 (keys=%s)", keys)
         except requests.HTTPError as e:
+            if e.response is not None and e.response.status_code == 413 and len(chunk) > 1:
+                mid = len(chunk) // 2
+                return self._classify_batch(chunk[:mid]) + self._classify_batch(chunk[mid:])
             log.warning("Laya 배치 실패(%s), 단건 호출로 전환", e)
         return [self._post("/systemone", {**self._base_body(), "state": self._state(a)}) for a in chunk]
 
@@ -105,12 +146,16 @@ class LayaClassifier(Classifier):
         if topic not in self.topics or (conf is not None and conf < self.settings.classify.laya_min_confidence):
             topic = "other"
         importance = level_to_importance(answers.get("importance", {}))
+        if yes_probability(answers.get("relevant")) < 0.5:
+            importance *= IRRELEVANT_PENALTY
+            topic = "other"
         return ClassifiedArticle(article=a, topic=topic, importance=round(importance, 3))
 
     def classify(self, articles: list[Article]) -> list[ClassifiedArticle]:
+        states = [self._state(a) for a in articles]
         out: list[ClassifiedArticle] = []
-        for i in range(0, len(articles), BATCH_SIZE):
-            chunk = articles[i : i + BATCH_SIZE]
+        for idx in chunk_by_budget(states, BATCH_CHAR_BUDGET, BATCH_SIZE):
+            chunk = [articles[i] for i in idx]
             out.extend(self._to_result(a, r) for a, r in zip(chunk, self._classify_batch(chunk)))
         log.info("Laya 분류 완료 %d건", len(out))
         return out

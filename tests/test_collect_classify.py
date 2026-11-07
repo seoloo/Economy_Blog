@@ -6,7 +6,7 @@ from conftest import make_article
 from econblog.classify import classify_and_select
 from econblog.classify.dedupe import mark_duplicates, normalize_title, select_top
 from econblog.classify.keyword import KeywordClassifier
-from econblog.classify.laya import level_to_importance
+from econblog.classify.laya import chunk_by_budget, level_to_importance, yes_probability
 from econblog.collect import collect_all
 from econblog.collect.rss import RssCollector
 from econblog.models import ClassifiedArticle, Source
@@ -67,6 +67,15 @@ def test_laya_importance_parsing():
     assert level_to_importance({"score": "minor"}) == 0.0
     assert abs(level_to_importance({"probabilities": {"minor": 0.5, "major": 0.5}}) - 0.5) < 1e-9
     assert level_to_importance({}) == 0.5
+
+
+def test_laya_relevance_and_chunking():
+    assert yes_probability({"noul": 0.9}) == 0.9
+    assert yes_probability({"noul": False}) == 0.0
+    assert yes_probability(None) == 0.5
+    chunks = chunk_by_budget(["a" * 400] * 40, budget=6000, max_items=64)
+    assert all(len(c) * 400 <= 6000 for c in chunks)
+    assert sum(len(c) for c in chunks) == 40
 
 
 def test_offline_collect_and_classify(settings):

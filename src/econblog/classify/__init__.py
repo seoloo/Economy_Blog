@@ -32,4 +32,8 @@ def classify_and_select(
         classified = registry.load(CLASSIFIERS, cfg.fallback)(settings).classify(articles)
 
     mark_duplicates(classified, cfg.dedupe_threshold)
-    return select_top(classified, cfg.top_n_per_region)
+    selected = select_top(classified, cfg.top_n_per_region)
+    for x in selected:
+        log.info("선택 %-6s %-10s %.2f %s (%s)", x.article.region, x.topic, x.importance,
+                 x.article.title[:60], x.article.source_id)
+    return selected
