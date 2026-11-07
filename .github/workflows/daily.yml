@@ -12,6 +12,11 @@ on:
         description: "샘플 데이터로 실행 (외부 API 호출 없음)"
         type: boolean
         default: false
+      mode:
+        description: "run = 전체 실행, classify = 수집·분류만 점검 (글 작성·메일 없음)"
+        type: choice
+        options: [run, classify]
+        default: run
 
 permissions:
   contents: read
@@ -53,6 +58,10 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
         run: |
+          if [ "${{ inputs.mode }}" = "classify" ]; then
+            python -m econblog -v classify
+            exit 0
+          fi
           args=""
           if [ -n "${{ inputs.date }}" ]; then args="$args --date ${{ inputs.date }}"; fi
           if [ "${{ inputs.dry_run }}" = "true" ]; then args="$args --dry-run --deliver local,email"; fi

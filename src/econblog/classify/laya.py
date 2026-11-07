@@ -6,6 +6,7 @@ Laya 는 글을 생성하지 않고 choice/score 같은 판단만 돌려준다.
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 
@@ -156,6 +157,9 @@ class LayaClassifier(Classifier):
         out: list[ClassifiedArticle] = []
         for idx in chunk_by_budget(states, BATCH_CHAR_BUDGET, BATCH_SIZE):
             chunk = [articles[i] for i in idx]
-            out.extend(self._to_result(a, r) for a, r in zip(chunk, self._classify_batch(chunk)))
+            results = self._classify_batch(chunk)
+            if not out and results:
+                log.debug("Laya 응답 예시: %s", json.dumps(results[0], ensure_ascii=False)[:1500])
+            out.extend(self._to_result(a, r) for a, r in zip(chunk, results))
         log.info("Laya 분류 완료 %d건", len(out))
         return out

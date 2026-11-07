@@ -48,6 +48,19 @@ def _cmd_check_sources(args: argparse.Namespace) -> int:
     return 1 if failed else 0
 
 
+def _cmd_classify(args: argparse.Namespace) -> int:
+    """수집·분류만 실행해 선택 결과를 확인한다. 글 작성·메일 발송은 하지 않는다."""
+    from econblog.classify import classify_and_select
+    from econblog.collect import collect_all
+
+    settings = load_settings()
+    since = datetime.now(timezone.utc) - timedelta(hours=settings.collect.lookback_hours)
+    articles = collect_all(settings, since, offline=args.dry_run)
+    selected = classify_and_select(settings, articles, offline=args.dry_run)
+    print(f"수집 {len(articles)}건 → 선택 {len(selected)}건")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="econblog")
     parser.add_argument("-v", "--verbose", action="store_true")
@@ -58,6 +71,10 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--date", help="기준 날짜 YYYY-MM-DD (기본: 오늘, KST)")
     p_run.add_argument("--deliver", help="전달 방식 쉼표 구분 (예: local,email)")
     p_run.set_defaults(func=_cmd_run)
+
+    p_cls = sub.add_parser("classify", help="수집·분류만 실행 (글 작성·발송 없음)")
+    p_cls.add_argument("--dry-run", action="store_true")
+    p_cls.set_defaults(func=_cmd_classify)
 
     p_chk = sub.add_parser("check-sources", help="RSS 소스 점검")
     p_chk.add_argument("--hours", type=int, default=72)
