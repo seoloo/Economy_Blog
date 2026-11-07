@@ -76,3 +76,12 @@ def test_dry_run_end_to_end(settings):
     attachments = {p.get_filename() for p in msg.iter_attachments()}
     assert {"post.html", "index_change.png"} <= attachments
     assert any(p.get("Content-ID") == "<index_change>" for p in msg.walk())
+
+
+def test_ai_phrase_guard_counts_over_limit():
+    from econblog.guard.style import find_ai_phrases
+
+    content = _content("상승한 것으로 보입니다. 하락한 것으로 보입니다. 이른바 블루웨이브입니다.")
+    warnings = find_ai_phrases(content, {"로 보입니다": 1, "이른바": 0, "결국": 1})
+    assert len(warnings) == 1
+    assert "「로 보입니다」 2회" in warnings[0] and "「이른바」 1회" in warnings[0] and "결국" not in warnings[0]

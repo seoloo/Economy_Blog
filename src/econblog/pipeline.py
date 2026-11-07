@@ -12,6 +12,7 @@ from econblog.collect import collect_all
 from econblog.config import Settings
 from econblog.deliver import deliver_all
 from econblog.guard.copyright import find_copied_passages
+from econblog.guard.style import find_ai_phrases
 from econblog.market import build_snapshot
 from econblog.models import Draft, RenderedPost
 from econblog.render.html import render_post
@@ -60,6 +61,7 @@ def run(
     # 6. 저작권 검사
     references = [c.article for c in selected]
     warnings += find_copied_passages(content, references, settings.guard.max_shared_chars)
+    warnings += find_ai_phrases(content, settings.guard.ai_phrases)
     if snapshot.errors:
         warnings.append("데이터 수집 실패: " + ", ".join(sorted(snapshot.errors)))
 

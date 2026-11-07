@@ -55,6 +55,8 @@ class PostSettings(BaseModel):
 
 class GuardSettings(BaseModel):
     max_shared_chars: int = 40
+    # AI 가 쓴 티가 나는 표현과 글 한 편에서 허용하는 횟수. 넘으면 경고한다.
+    ai_phrases: dict[str, int] = Field(default_factory=dict)
 
 
 class DeliverSettings(BaseModel):
