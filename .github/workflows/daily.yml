@@ -59,6 +59,7 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
+          CHARTS_REPO_TOKEN: ${{ secrets.CHARTS_REPO_TOKEN }}
         run: |
           if [ "${{ inputs.mode }}" = "classify" ]; then
             python -m econblog -v classify

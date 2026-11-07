@@ -6,9 +6,11 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
+from markupsafe import Markup, escape
 
 from econblog.config import Settings
 from econblog.models import Draft, RenderedPost
@@ -27,6 +29,18 @@ def _cited_references(draft: Draft) -> list:
     return seen
 
 
+_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
+
+
+def rich(text: str) -> Markup:
+    """LLM 문장의 **강조** 를 <strong> 으로 바꾼다. 나머지는 모두 이스케이프한다."""
+    return Markup(_BOLD_RE.sub(lambda m: f"<strong>{m.group(1)}</strong>", str(escape(text))))
+
+
+def plain(text: str) -> str:
+    return text.replace("**", "")
+
+
 def render_post(settings: Settings, draft: Draft, out_dir: Path) -> RenderedPost:
     env = Environment(
         loader=FileSystemLoader(settings.templates_dir),
@@ -35,13 +49,17 @@ def render_post(settings: Settings, draft: Draft, out_dir: Path) -> RenderedPost
         trim_blocks=True,
         lstrip_blocks=True,
     )
+    env.filters["rich"] = rich
+    env.filters["plain"] = plain
     template = env.get_template("post.html.j2")
     references = _cited_references(draft)
     post = settings.post
     common = dict(
         draft=draft,
         c=draft.content,
-        charts=draft.charts,
+        cover=next((ch for ch in draft.charts if ch.position == "cover"), None),
+        lead_charts=[ch for ch in draft.charts if ch.position == "lead"],
+        body_charts=[ch for ch in draft.charts if ch.position == "body"],
         glance=build_table(draft.quotes, post.glance),
         global_table=build_table(draft.quotes, post.global_table),
         korea_table=build_table(draft.quotes, post.korea_table),

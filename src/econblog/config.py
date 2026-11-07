@@ -53,6 +53,14 @@ class PostSettings(BaseModel):
     korea_table: list[str] = Field(default_factory=list)     # 국내 시장 표
 
 
+class PublishSettings(BaseModel):
+    """차트 PNG 를 올릴 공개 레포. 비어 있거나 CHARTS_REPO_TOKEN 이 없으면 올리지 않는다."""
+
+    repo: str = ""        # 예: seoloo/econblog-assets
+    branch: str = "main"
+    base_url: str = ""    # 예: https://seoloo.github.io/econblog-assets (GitHub Pages)
+
+
 class GuardSettings(BaseModel):
     max_shared_chars: int = 40
     # AI 가 쓴 티가 나는 표현과 글 한 편에서 허용하는 횟수. 넘으면 경고한다.
@@ -73,6 +81,7 @@ class Settings(BaseModel):
     charts: list[ChartSpec] = Field(default_factory=list)
     write: WriteSettings = Field(default_factory=WriteSettings)
     post: PostSettings = Field(default_factory=PostSettings)
+    publish: PublishSettings = Field(default_factory=PublishSettings)
     guard: GuardSettings = Field(default_factory=GuardSettings)
     deliver: DeliverSettings = Field(default_factory=DeliverSettings)
 

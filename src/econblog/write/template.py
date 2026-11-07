@@ -11,9 +11,11 @@ from econblog.write.prompting import title_prefix
 
 
 def _move(s: Series | None) -> str | None:
-    if s is None or s.change_pct is None:
+    if s is None or s.change_pct is None or s.change is None:
         return None
-    direction = "상승" if s.change_pct > 0 else "하락" if s.change_pct < 0 else "보합"
+    direction = "상승" if s.change > 0 else "하락" if s.change < 0 else "보합"
+    if s.spec.unit == "%":  # 금리는 %p 변화로 쓴다
+        return f"{s.spec.label}은(는) {s.last:.2f}%로 전일 대비 {s.change:+.2f}%p {direction}"
     return f"{s.spec.label}은(는) {s.last:,.2f}{s.spec.unit}로 전일 대비 {s.change_pct:+.2f}% {direction}"
 
 

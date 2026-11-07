@@ -155,6 +155,7 @@ class ChartSpec(BaseModel):
     series: list[str]
     days: int = 90
     note: str = ""
+    position: Literal["cover", "lead", "body"] = "body"  # 본문 위치: 맨 위 대표 이미지 / 요약 상자 아래 / 차트 섹션
 
 
 class Chart(BaseModel):
@@ -163,6 +164,8 @@ class Chart(BaseModel):
     path: Path
     alt_text: str
     source_note: str
+    position: Literal["cover", "lead", "body"] = "body"
+    url: str | None = None  # 공개 주소에 올렸으면 그 주소 (없으면 본문에 업로드 안내 상자)
 
 
 # ---------------------------------------------------------------- 초안 (LLM 출력 스키마)

@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from econblog.charts import build_charts
+from econblog.charts.publish import publish_charts
 from econblog.classify import classify_and_select
 from econblog.collect import collect_all
 from econblog.config import Settings
@@ -53,6 +54,7 @@ def run(
     # 4. 차트
     charts = build_charts(settings, snapshot, out_dir / "charts")
     log.info("차트 %d개", len(charts))
+    publish_warnings = publish_charts(settings, charts, run_date, offline=offline)
 
     # 5. 초안
     ctx = WriteContext(date=run_date, articles=selected, snapshot=snapshot, charts=charts)
@@ -62,6 +64,7 @@ def run(
     references = [c.article for c in selected]
     warnings += find_copied_passages(content, references, settings.guard.max_shared_chars)
     warnings += find_ai_phrases(content, settings.guard.ai_phrases)
+    warnings += publish_warnings
     if snapshot.errors:
         warnings.append("데이터 수집 실패: " + ", ".join(sorted(snapshot.errors)))
 

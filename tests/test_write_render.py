@@ -61,7 +61,8 @@ def test_dry_run_end_to_end(settings):
     html = (out / "post.html").read_text(encoding="utf-8")
     preview = (out / "preview.html").read_text(encoding="utf-8")
     assert "[이미지 삽입]" in html and "<img" not in html
-    assert '<img src="charts/index_change.png"' in preview
+    assert '<img src="charts/index_change.png"' in preview and '<img src="charts/cover.png"' in preview
+    assert html.index("[이미지 삽입] cover.png") < html.index("오늘 시장 한눈에")  # 대표 이미지는 맨 위
     assert "투자를 권유하지" in html or "권유하지 않습니다" in html
     assert "발행 전 확인" in preview and "발행 전 확인" not in html
     # 데이터로 만든 요약 상자·표와 새 섹션
@@ -78,6 +79,12 @@ def test_dry_run_end_to_end(settings):
     assert any(p.get("Content-ID") == "<index_change>" for p in msg.walk())
 
 
+def test_rich_text_escapes_html_and_bolds_marked_phrase():
+    from econblog.render.html import rich
+
+    assert str(rich("<b>x</b> **핵심** 끝")) == "&lt;b&gt;x&lt;/b&gt; <strong>핵심</strong> 끝"
+
+
 def test_ai_phrase_guard_counts_over_limit():
     from econblog.guard.style import find_ai_phrases
 
@@ -85,3 +92,51 @@ def test_ai_phrase_guard_counts_over_limit():
     warnings = find_ai_phrases(content, {"로 보입니다": 1, "이른바": 0, "결국": 1})
     assert len(warnings) == 1
     assert "「로 보입니다」 2회" in warnings[0] and "「이른바」 1회" in warnings[0] and "결국" not in warnings[0]
+
+
+def test_published_charts_use_public_url(settings, monkeypatch):
+    """공개 레포에 올린 차트는 post.html·메일 모두 공개 주소를 쓴다 (붙여넣기 한 번으로 이미지까지)."""
+    from econblog.charts import publish
+
+    calls = []
+
+    class FakeResponse:
+        def __init__(self, status):
+            self.status_code = status
+
+        def json(self):
+            return {"sha": "old"}
+
+        def raise_for_status(self):
+            pass
+
+    class FakeSession:
+        headers: dict = {}
+
+        def __init__(self):
+            self.headers = {}
+
+        def get(self, url, **kw):
+            return FakeResponse(404)
+
+        def put(self, url, json, **kw):
+            calls.append((url, json))
+            return FakeResponse(201)
+
+    monkeypatch.setenv("CHARTS_REPO_TOKEN", "test-token")
+    monkeypatch.setattr(publish.requests, "Session", FakeSession)
+    settings.publish.repo = "owner/assets"
+    settings.publish.base_url = "https://owner.github.io/assets"
+
+    from econblog.market import build_snapshot
+    from econblog.charts import build_charts
+
+    snap = build_snapshot(settings, date(2026, 11, 6), offline=True)
+    charts = build_charts(settings, snap, settings.resolve_output_dir() / "charts")
+    assert publish.publish_charts(settings, charts, date(2026, 11, 6)) == []
+    assert {c.url for c in charts} == {f"https://owner.github.io/assets/2026-11-06/{c.path.name}" for c in charts}
+    assert calls[0][0].endswith("/repos/owner/assets/contents/2026-11-06/cover.png")
+    assert "sha" not in calls[0][1]
+
+    # 오프라인(dry run)에서는 올리지 않는다
+    assert publish.publish_charts(settings, charts, date(2026, 11, 6), offline=True) == []

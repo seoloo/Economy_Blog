@@ -34,6 +34,18 @@ def _pick_font() -> str | None:
     return next((name for name in KOREAN_FONTS if name in installed), None)
 
 
+def bold_font() -> font_manager.FontProperties:
+    """한글 굵은 글꼴. 나눔고딕 Bold 는 별도 패밀리 이름으로 잡혀 weight 지정만으로는 못 찾는다."""
+    family = _pick_font()
+    if family:
+        for f in font_manager.fontManager.ttflist:
+            is_bold = (isinstance(f.weight, int) and f.weight >= 600) or f.weight in ("bold", "heavy", "black") \
+                or "bold" in f.fname.lower() or "bd." in f.fname.lower()
+            if f.name.startswith(family) and is_bold:
+                return font_manager.FontProperties(fname=f.fname)
+    return font_manager.FontProperties(weight="bold")
+
+
 def apply() -> None:
     font = _pick_font()
     if font:
@@ -66,7 +78,7 @@ def apply() -> None:
 
 def decorate(fig, title: str, subtitle: str, source_note: str, brand: str) -> None:
     """제목·부제는 좌상단, 출처는 좌하단, 블로그 이름은 우하단."""
-    fig.text(0.02, 0.965, title, fontsize=14, fontweight="bold", color=INK, va="top")
+    fig.text(0.02, 0.965, title, fontsize=14, fontproperties=bold_font(), color=INK, va="top")
     fig.text(0.02, 0.895, subtitle, fontsize=9.5, color=INK_2, va="top")
     fig.text(0.02, 0.025, source_note, fontsize=8, color=MUTED, va="bottom")
     fig.text(0.98, 0.025, brand, fontsize=8, color=MUTED, va="bottom", ha="right")

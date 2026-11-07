@@ -14,8 +14,10 @@ RSS 수집 → Laya 분류·중복 제거 → 시장 데이터(yfinance·FRED·E
 ## 월~토 아침에 하는 일 (약 10분)
 
 1. 07시쯤 `[블로그 초안] 11/07 ...` 메일이 옵니다. 상단 「발행 전 확인」 상자를 먼저 봅니다.
-2. 티스토리 글쓰기에서 편집기를 **HTML 모드**로 바꾸고, 첨부된 `post.html` 내용을 붙여넣습니다.
-3. 기본 모드로 돌아와 `[이미지 삽입]` 상자 자리에 첨부된 차트 PNG를 올립니다.
+2. 티스토리 글쓰기에서 편집기를 **HTML 모드**로 바꾸고, 첨부된 `post.html` 내용을 통째로 붙여넣습니다.
+   차트와 대표 이미지는 공개 이미지 레포(`publish`)에 올라가 있어 붙여넣기 한 번으로 함께 들어갑니다.
+   (`CHARTS_REPO_TOKEN`이 없으면 `[이미지 삽입]` 상자 자리에 첨부된 PNG를 직접 올립니다.)
+3. 맨 위 그림을 대표 이미지로 지정하고, `[함께 보면 좋은 글]` 상자에 지난 글 링크를 넣습니다.
 4. 수치와 사실을 확인하고, 내 의견을 한두 문장 덧붙입니다. 메일의 제목과 태그를 넣고 발행합니다.
 
 메일 제목에 `[검토 N건]`이 붙어 있으면 출처 문장과 겹치는 구간이나 데이터 누락이 있다는 뜻입니다. 반드시 고친 뒤 발행합니다.
@@ -32,6 +34,7 @@ RSS 수집 → Laya 분류·중복 제거 → 시장 데이터(yfinance·FRED·E
 | `ECOS_API_KEY` | 한국 금리 | https://ecos.bok.or.kr/api/ | 무료 |
 | `SMTP_USER` / `SMTP_PASSWORD` | 초안 메일 발송 | Gmail: 2단계 인증 후 [앱 비밀번호](https://myaccount.google.com/apppasswords) | 무료 |
 | `MAIL_TO` | 받을 메일 주소 | - | - |
+| `CHARTS_REPO_TOKEN` | 차트 PNG를 공개 이미지 레포에 올리기 | GitHub fine-grained 토큰 (아래 3번) | 무료 |
 
 키가 없는 단계는 자동으로 대체 동작합니다.
 - Laya 키가 없으면 키워드 분류기를 씁니다.
@@ -43,7 +46,16 @@ RSS 수집 → Laya 분류·중복 제거 → 시장 데이터(yfinance·FRED·E
 레포 **Settings → Secrets and variables → Actions → New repository secret**에 위 이름 그대로 등록합니다.
 `SMTP_HOST`(smtp.gmail.com)와 `SMTP_PORT`(587)도 함께 등록합니다.
 
-### 3. 동작 확인
+### 3. 차트 이미지 공개 레포 (붙여넣기 한 번으로 이미지까지)
+
+이 레포는 나중에 비공개로 바꿀 예정이라, 차트 PNG는 별도 **공개** 레포에 올리고 GitHub Pages 주소를 본문에 넣습니다.
+1. 공개 레포 `seoloo/econblog-assets`를 만들고 **Settings → Pages**에서 `main` 브랜치 `/ (root)`로 배포를 켭니다.
+2. **Settings → Developer settings → Fine-grained tokens**에서 토큰을 만듭니다.
+   Repository access는 `econblog-assets` 하나만, 권한은 **Contents: Read and write** 하나만 줍니다.
+3. 이 레포 Secrets에 `CHARTS_REPO_TOKEN`으로 등록합니다.
+레포 이름이나 주소를 바꾸면 `config/settings.yaml`의 `publish`를 함께 고칩니다.
+
+### 4. 동작 확인
 
 **Actions → daily-post → Run workflow**에서 `dry_run`을 체크하고 실행합니다. 샘플 데이터로 만든 메일이 오면 설정이 끝난 것입니다.
 

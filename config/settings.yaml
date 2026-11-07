@@ -34,11 +34,18 @@ market:
   lookback_days: 200
 
 # 차트는 type(빌더 종류)만 맞으면 설정 추가만으로 늘릴 수 있다.
+#  position: cover = 글 맨 위 대표 이미지, lead = '오늘 시장 한눈에' 아래, body = '차트로 보는 주요 지표' (기본값)
 charts:
+  - key: cover
+    type: cover
+    title: 대표 이미지
+    series: [sp500, nasdaq, kospi, usdkrw]
+    position: cover
   - key: index_change
     type: change_bar
     title: 주요 지수 전일 대비 등락률
     series: [kospi, kosdaq, sp500, nasdaq, dow, nikkei]
+    position: lead
   - key: usdkrw
     type: line
     title: 원/달러 환율 추이 (최근 3개월)
@@ -60,12 +67,19 @@ write:
 # 글 구성. 표·요약 상자의 수치는 시장 데이터로 바로 채운다 (LLM 이 수치를 만들지 않도록).
 post:
   series_title: 미국증시·코스피 시황   # 제목 형식: <series_title> | 11월 7일(토) | 핵심 한 줄
-  glance: [sp500, nasdaq, kospi, kosdaq, usdkrw, us10y, wti]
+  glance: [sp500, nasdaq, kospi, kosdaq, usdkrw, us10y, wti, gold]   # 2열 카드라 짝수가 보기 좋다
   global_table: [sp500, nasdaq, dow, nikkei, us10y, us2y, dxy, wti, gold]
   korea_table: [kospi, kosdaq, usdkrw, kr3y, kr_base_rate]
 
+# 차트 PNG 를 공개 레포에 올려 post.html 에 이미지 주소를 바로 넣는다 (붙여넣기 한 번으로 끝).
+# CHARTS_REPO_TOKEN 이 없으면 올리지 않고, 본문에 [이미지 삽입] 안내 상자가 들어간다.
+publish:
+  repo: seoloo/econblog-assets
+  branch: main
+  base_url: https://seoloo.github.io/econblog-assets
+
 guard:
-  max_shared_chars: 40      # 출처와 연속으로 겹치는 글자 수 상한 (넘으면 경고)
+  max_shared_chars: 40
   # AI 가 쓴 티가 나는 표현: 글 한 편에서 허용 횟수 (넘으면 메일에 경고)
   ai_phrases:
     "로 보입니다": 2

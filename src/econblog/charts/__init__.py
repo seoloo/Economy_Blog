@@ -15,6 +15,7 @@ BUILDERS: dict[str, str] = {
     "change_bar": "econblog.charts.builders:ChangeBarChart",
     "line": "econblog.charts.builders:LineChart",
     "spread": "econblog.charts.builders:SpreadChart",
+    "cover": "econblog.charts.cover:CoverChart",
 }
 
 
@@ -30,5 +31,6 @@ def build_charts(settings: Settings, snapshot: MarketSnapshot, out_dir: Path) ->
         if chart is None:
             log.warning("차트 건너뜀 %s: 데이터 부족", spec.key)
             continue
+        chart.position = spec.position
         charts.append(chart)
     return charts

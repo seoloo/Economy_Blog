@@ -24,14 +24,17 @@ def build_message(post: RenderedPost, sender: str, recipients: str) -> EmailMess
     msg["From"] = sender
     msg["To"] = recipients
 
+    # 공개 주소에 올린 차트는 본문이 그 주소를 쓴다 (메일을 복사해 붙여넣어도 이미지가 살아 있음).
+    # 올리지 못한 차트만 메일 안에 이미지로 넣는다.
+    local = [c for c in draft.charts if not c.url]
     html = post.preview_html
-    for chart in draft.charts:
+    for chart in local:
         html = html.replace(f'src="charts/{chart.path.name}"', f'src="cid:{chart.key}"')
     msg.set_content(f"{draft.content.title}\n\nHTML 메일을 지원하는 메일 앱에서 확인하세요. 붙여넣기용 post.html 이 첨부되어 있습니다.")
     msg.add_alternative(html, subtype="html")
 
     html_part = msg.get_payload()[1]
-    for chart in draft.charts:
+    for chart in local:
         html_part.add_related(chart.path.read_bytes(), "image", "png", cid=f"<{chart.key}>")
 
     msg.add_attachment(post.html.encode("utf-8"), maintype="text", subtype="html", filename="post.html")
