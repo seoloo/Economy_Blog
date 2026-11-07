@@ -74,7 +74,7 @@ class DeliverSettings(BaseModel):
 class Settings(BaseModel):
     timezone: str = "Asia/Seoul"
     output_dir: Path = Path("output")
-    blog_name: str = "오늘의 경제 시황"
+    blog_name: str = "그냥모아"
     collect: CollectSettings = Field(default_factory=CollectSettings)
     classify: ClassifySettings = Field(default_factory=ClassifySettings)
     market: MarketSettings = Field(default_factory=MarketSettings)

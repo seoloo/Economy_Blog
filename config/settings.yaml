@@ -2,7 +2,7 @@
 
 timezone: Asia/Seoul
 output_dir: output
-blog_name: 오늘의 경제 시황
+blog_name: 그냥모아
 
 collect:
   lookback_hours: 30        # 이 시간 이내에 발행된 기사만 사용
