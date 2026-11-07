@@ -26,14 +26,14 @@
 
 ### 커밋 제목
 현업 개발자가 실제로 쓰는 형태로 쓴다.
-- 형식: `<type>: <요약>`
-  - type은 `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `ci` 중 하나다.
-  - 요약은 한국어로, 50자 안팎으로 쓴다.
+- 한국어 한 줄로, 50자 안팎으로 쓴다.
+- `feat:`, `fix:`, `chore:` 같은 **영어 접두어를 붙이지 않는다.**
 - 좋은 예:
-  - `feat: 해외 뉴스 RSS 소스 추가`
-  - `fix: 주말에 환율 데이터 비어 있을 때 차트 생성 실패 수정`
-  - `chore: 의존성 버전 고정`
+  - `해외 뉴스 RSS 소스 추가`
+  - `주말에 환율 데이터가 비면 차트 생성이 실패하던 문제 수정`
+  - `의존성 버전 고정`
 - 나쁜 예:
+  - `feat: 해외 뉴스 RSS 소스 추가` (영어 접두어)
   - `Implement comprehensive news collection pipeline with robust error handling` (과장되고 장황함)
   - `✨ Add feature` (이모지)
   - `Update files` (내용 없음)
