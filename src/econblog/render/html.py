@@ -8,24 +8,40 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import NamedTuple
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 from markupsafe import Markup, escape
 
 from econblog.config import Settings
-from econblog.models import Draft, RenderedPost
+from econblog.models import Article, Draft, RenderedPost
 from econblog.render.quotes import build_table
 
 
-def _cited_references(draft: Draft) -> list:
+class RefLink(NamedTuple):
+    url: str
+    title: str
+    source_name: str
+
+
+def ref_link(a: Article) -> RefLink:
+    """구글 뉴스 RSS 는 제목 끝에 ' - 언론사' 가 붙어 있다. 출처를 'Google 뉴스' 대신 실제 언론사로 표시한다."""
+    if a.source_id.startswith("gnews") and " - " in a.title:
+        title, publisher = a.title.rsplit(" - ", 1)
+        if title.strip() and publisher.strip():
+            return RefLink(a.url, title.strip(), publisher.strip())
+    return RefLink(a.url, a.title, a.source_name)
+
+
+def _cited_references(draft: Draft) -> list[RefLink]:
     """이슈에서 실제로 인용한 기사만 참고 자료로 남긴다 (등장 순서 유지)."""
     by_url = {a.url: a for a in draft.references}
-    seen: list = []
+    seen: list[RefLink] = []
     for issue in draft.content.issues:
         for url in issue.reference_urls:
             article = by_url.get(url)
-            if article and article not in seen:
-                seen.append(article)
+            if article and (link := ref_link(article)) not in seen:
+                seen.append(link)
     return seen
 
 
@@ -65,7 +81,7 @@ def render_post(settings: Settings, draft: Draft, out_dir: Path) -> RenderedPost
         korea_table=build_table(draft.quotes, post.korea_table),
         hashtags=" ".join("#" + t.replace(" ", "") for t in draft.content.tags if t.strip()),
         references=references,
-        ref_names={a.url: a.source_name for a in draft.references},
+        ref_names={a.url: ref_link(a).source_name for a in draft.references},
     )
     return RenderedPost(
         draft=draft,

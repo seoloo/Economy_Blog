@@ -140,3 +140,13 @@ def test_published_charts_use_public_url(settings, monkeypatch):
 
     # 오프라인(dry run)에서는 올리지 않는다
     assert publish.publish_charts(settings, charts, date(2026, 11, 6), offline=True) == []
+
+
+def test_google_news_reference_shows_real_publisher():
+    from econblog.render.html import ref_link
+
+    a = make_article("코스피 급락…외국인 매도 - 경향신문", url="https://news.google.com/x")
+    a = a.model_copy(update={"source_id": "gnews_kr_business", "source_name": "Google 뉴스 경제(한국)"})
+    assert ref_link(a)[1:] == ("코스피 급락…외국인 매도", "경향신문")
+    b = make_article("Fed holds rates - not a publisher split")  # 구글 뉴스가 아니면 그대로
+    assert ref_link(b)[1:] == (b.title, b.source_name)
