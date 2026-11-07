@@ -13,6 +13,7 @@ series:
   - {key: nasdaq, label: 나스닥, provider: yahoo, id: "^IXIC", unit: pt, category: index_global}
   - {key: dow, label: 다우존스, provider: yahoo, id: "^DJI", unit: pt, category: index_global}
   - {key: nikkei, label: 닛케이225, provider: yahoo, id: "^N225", unit: pt, category: index_global}
+  - {key: vix, label: VIX 변동성 지수, provider: yahoo, id: "^VIX", unit: pt, category: index_global}
 
   # ---------- 환율
   - {key: usdkrw, label: 원/달러 환율, provider: yahoo, id: "KRW=X", unit: 원, category: fx}

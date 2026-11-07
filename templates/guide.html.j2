@@ -1,0 +1,74 @@
+{#- 경제 공부 글. mode: "tistory" = 티스토리 HTML 모드에 붙여넣을 본문, "preview" = 메일/로컬 확인용
+    흐름: 대표 이미지 → 도입 → 이 글의 핵심 → 1.첫 소제목(뜻) → 2.지금 수치로 보기(표·차트) → 나머지 소제목 → 자주 묻는 질문 → 마무리
+    공통 부품(간격·라벨·표·상자)과 티스토리에서 남는 스타일 규칙은 _tistory.html.j2 에 있다. -#}
+{%- from "_tistory.html.j2" import ACCENT, SOFT, MUTED, sty, gap, p, h2, label, chart_block, paragraphs, preview_open, closing_box, footer with context -%}
+
+{%- macro now_table(rows) -%}
+{%- set td = "border:1px solid #dddddd;padding:8px;" %}
+<table border="1" data-ke-align="alignLeft" style="border-collapse:collapse;width:100%;{{ 'font-size:15px;' if mode == 'preview' }}">
+  <tbody>
+    <tr>
+      <td{{ sty("background-color:" ~ SOFT ~ ";color:" ~ ACCENT ~ ";", td) }}><b>지표</b></td>
+      <td{{ sty("background-color:" ~ SOFT ~ ";color:" ~ ACCENT ~ ";text-align:right;", td) }}><b>지금</b></td>
+      <td{{ sty("background-color:" ~ SOFT ~ ";color:" ~ ACCENT ~ ";text-align:right;", td) }}><b>1년 전</b></td>
+      <td{{ sty("background-color:" ~ SOFT ~ ";color:" ~ ACCENT ~ ";text-align:right;", td) }}><b>최근 5년 범위</b></td>
+    </tr>
+{% for r in rows %}
+    <tr>
+      <td{{ sty("", td) }}>{{ r.label }}</td>
+      <td{{ sty("text-align:right;", td) }}><b>{{ r.value }}</b></td>
+      <td{{ sty("text-align:right;", td) }}>{{ r.year_ago }}</td>
+      <td{{ sty("text-align:right;", td) }}>{{ r.range }}</td>
+    </tr>
+{% endfor %}
+  </tbody>
+</table>
+{{ p("기준일 " ~ (rows | map(attribute="as_of") | max) ~ " · " ~ source_note, "size14", "color:" ~ MUTED ~ ";", "font-size:13px;margin-top:4px;") }}
+{{ gap() }}
+{%- endmacro -%}
+
+{%- if mode == "preview" %}{{ preview_open(c, draft, ["카테고리를 '경제 공부'로 지정하기", "대표 이미지를 맨 위 그림으로 지정하기", "설명이 정확한지 다시 확인하고, 내 경험이나 의견 한두 문장 덧붙이기", "[함께 보면 좋은 글] 줄에 관련 글 링크 넣기 (없으면 줄 삭제)"]) }}{% endif %}
+
+{% if cover %}{{ chart_block(cover, caption=False) }}{% endif %}
+{{ gap() }}
+{{ p(c.lead | rich) }}
+{{ gap() }}
+
+{#- 이 글의 핵심: 티스토리 인용 상자(style3: 회색 테두리 상자) -#}
+<blockquote data-ke-style="style3"{{ sty("", "margin:20px 0;padding:18px 22px;background:#fcfcfc;border:1px solid #dddddd;") }}>
+{{ p("<b>이 글의 핵심</b>" | safe, "size14", "color:" ~ ACCENT ~ ";", "font-size:13px;margin-bottom:4px;") }}
+<p data-ke-size="size16"{{ sty("", "margin:0;line-height:1.9;") }}>
+{%- for s in c.summary_points %}{% if not loop.first %}<br>{% endif %}✓ {{ s | rich }}{% endfor %}</p>
+</blockquote>
+
+{%- for sec in c.sections %}
+{{ h2(sec.heading | plain) }}
+{{ paragraphs(sec.paragraphs) }}
+{%- if loop.first and (now_rows or body_charts) %}
+
+{{ h2("지금 수치로 보기") }}
+{%- if now_rows %}
+{{ now_table(now_rows) }}
+{%- endif %}
+{% for chart in body_charts %}{{ chart_block(chart) }}
+{{ gap() }}
+{% endfor %}
+{{ p(c.now_comment | rich) }}
+{%- endif %}
+{%- endfor %}
+{%- if not (now_rows or body_charts) %}
+{{ gap() }}
+{{ p(c.now_comment | rich) }}
+{%- endif %}
+{%- if c.faq %}
+
+{{ h2("자주 묻는 질문") }}
+{% for qa in c.faq %}{% if not loop.first %}{{ gap() }}{% endif %}
+{{ p(("<b>Q. " | safe) ~ (qa.question | plain) ~ ("</b>" | safe), "size16", "color:" ~ ACCENT ~ ";") }}
+{{ p(("A. " | safe) ~ (qa.answer | rich)) }}
+{% endfor %}
+{%- endif %}
+{{ gap(2) }}
+
+{{ closing_box(c.closing) }}
+{{ footer(hashtags, "관련된 경제 공부 글이나 최근 시황 글 링크를 넣거나, 넣을 글이 없으면 이 줄을 지우세요.") }}

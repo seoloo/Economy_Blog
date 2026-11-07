@@ -20,7 +20,8 @@ def build_message(post: RenderedPost, sender: str, recipients: str) -> EmailMess
     draft = post.draft
     flag = f"[검토 {len(draft.warnings)}건] " if draft.warnings else ""
     msg = EmailMessage()
-    msg["Subject"] = f"[블로그 초안] {flag}{draft.date:%m/%d} {draft.content.title}"
+    kind = "블로그 초안·경제 공부" if draft.kind == "guide" else "블로그 초안"
+    msg["Subject"] = f"[{kind}] {flag}{draft.date:%m/%d} {draft.content.title}"
     msg["From"] = sender
     msg["To"] = recipients
 

@@ -1,119 +1,9 @@
-{#- mode: "tistory" = 티스토리 HTML 모드에 붙여넣을 본문, "preview" = 메일/로컬 확인용
+{#- 시황 글. mode: "tistory" = 티스토리 HTML 모드에 붙여넣을 본문, "preview" = 메일/로컬 확인용
     흐름: 대표 이미지 → 도입 → 오늘 시장 한눈에 → 1.해외(표) → 2.국내(표) → 3.체크포인트 → 4.차트 → 5.이슈 → 6.일정 → 마무리
+    공통 부품(간격·라벨·표·상자)과 티스토리에서 남는 스타일 규칙은 _tistory.html.j2 에 있다. -#}
+{%- from "_tistory.html.j2" import ACCENT, SOFT, MUTED, sty, gap, p, h2, label, chart_block, quote_table, paragraphs, preview_open, closing_box, footer with context -%}
 
-    티스토리 편집기(기본 모드)가 남기는 것만 쓴다 (2026-11 실제 발행 글로 확인):
-    - 남음: 글자색(color), 배경색(background-color), 정렬(text-align), <b>, data-ke-size(글자 크기),
-            <blockquote data-ke-style>(인용 상자), 표의 tbody 칸, 목록, 이미지와 figcaption
-    - 지워짐: margin·padding·border·border-radius·font-size·font-weight(style), thead/th(글자로 풀림)
-    그래서 간격은 빈 문단, 상자는 티스토리 인용 상자, 굵기는 <b> 로 만든다.
-    메일·미리보기는 티스토리 본문 CSS 가 없으므로 같은 모양이 나도록 preview 전용 인라인 스타일을 덧붙인다. -#}
-{%- set ACCENT = "#13294b" -%}
-{%- set SOFT = "#f4f6fa" -%}
-{%- set MUTED = "#7d8593" -%}
-{%- set ns = namespace(n=0) -%}
-
-{#- style 속성: always 는 티스토리에도 남는 속성, preview 는 메일/미리보기에서만 쓰는 속성 -#}
-{%- macro sty(always="", preview="") -%}
-{%- set v = always ~ (preview if mode == "preview" else "") -%}
-{%- if v %} style="{{ v }}"{% endif -%}
-{%- endmacro -%}
-
-{#- 빈 문단. 티스토리 본문은 문단 간격이 0 이라 빈 줄로 간격을 만든다 (미리보기는 margin 으로 대신). -#}
-{%- macro gap(n=1) -%}
-{%- if mode == "tistory" %}{% for _ in range(n) %}
-<p data-ke-size="size16">&nbsp;</p>{% endfor %}{% endif -%}
-{%- endmacro -%}
-
-{%- macro p(text, size="size16", always="", preview="") -%}
-<p data-ke-size="{{ size }}"{{ sty(always, "margin:0 0 12px;line-height:1.8;" ~ preview) }}>{{ text }}</p>
-{%- endmacro -%}
-
-{%- macro h2(title) -%}
-{%- set ns.n = ns.n + 1 -%}
-{{ gap(2) }}
-<h2 data-ke-size="size26"{{ sty("color:" ~ ACCENT ~ ";", "font-size:22px;margin:40px 0 14px;padding-bottom:8px;border-bottom:2px solid " ~ ACCENT ~ ";") }}>{{ ns.n }}. {{ title }}</h2>
-{{ gap() }}
-{%- endmacro -%}
-
-{#- 라벨(이슈 번호·체크포인트 번호). 여백 대신 앞뒤 공백 문자(&nbsp;)를 쓴다. -#}
-{%- macro label(text) -%}
-<span style="background-color:{{ ACCENT }};color:#ffffff;"><b>&nbsp;{{ text }}&nbsp;</b></span>
-{%- endmacro -%}
-
-{%- macro chart_block(chart, caption=True) -%}
-<figure{{ sty("text-align:center;", "margin:20px 0;") }}>
-{%- if chart.url %}
-  <img src="{{ chart.url }}" alt="{{ chart.alt_text }}"{{ sty("", "max-width:100%;height:auto;") }}>
-{%- elif mode == "preview" %}
-  <img src="charts/{{ chart.path.name }}" alt="{{ chart.alt_text }}" style="max-width:100%;height:auto;">
-{%- else %}
-  <p data-ke-size="size14">[이미지 삽입] {{ chart.path.name }} — 이 줄을 지우고 차트 이미지를 올리세요. (대체 텍스트: {{ chart.alt_text }})</p>
-{%- endif %}
-{%- if caption %}
-  <figcaption{{ sty("", "font-size:13px;color:" ~ MUTED ~ ";margin-top:6px;") }}>{{ chart.title }} · {{ chart.source_note }}</figcaption>
-{%- endif %}
-</figure>
-{%- endmacro -%}
-
-{#- 표: 머리줄도 tbody 의 첫 줄로 둔다 (thead/th 는 티스토리에서 글자로 풀린다). -#}
-{%- macro quote_table(table) -%}
-{%- if table.rows %}
-{%- set td = "border:1px solid #dddddd;padding:8px;" %}
-<table border="1" data-ke-align="alignLeft" style="border-collapse:collapse;width:100%;{{ 'font-size:15px;' if mode == 'preview' }}">
-  <tbody>
-    <tr>
-      <td{{ sty("background-color:" ~ SOFT ~ ";color:" ~ ACCENT ~ ";", td) }}><b>지표</b></td>
-      <td{{ sty("background-color:" ~ SOFT ~ ";color:" ~ ACCENT ~ ";text-align:right;", td) }}><b>수치</b></td>
-      <td{{ sty("background-color:" ~ SOFT ~ ";color:" ~ ACCENT ~ ";text-align:right;", td) }}><b>전일 대비</b></td>
-      <td{{ sty("background-color:" ~ SOFT ~ ";color:" ~ ACCENT ~ ";text-align:right;", td) }}><b>등락률</b></td>
-    </tr>
-{% for r in table.rows %}
-    <tr>
-      <td{{ sty("", td) }}>{{ r.label }}</td>
-      <td{{ sty("text-align:right;", td) }}><b>{{ r.value }}</b></td>
-      <td{{ sty("color:" ~ r.color ~ ";text-align:right;", td) }}>{{ r.change }}</td>
-      <td{{ sty("color:" ~ r.color ~ ";text-align:right;", td) }}>{{ r.change_pct }}</td>
-    </tr>
-{% endfor %}
-  </tbody>
-</table>
-{{ p(table.note, "size14", "color:" ~ MUTED ~ ";", "font-size:13px;margin-top:4px;") }}
-{{ gap() }}
-{%- endif %}
-{%- endmacro -%}
-
-{%- macro paragraphs(items) -%}
-{% for text in items %}{{ p(text | rich) }}{% if not loop.last %}{{ gap() }}{% endif %}
-{% endfor %}
-{%- endmacro -%}
-
-{%- if mode == "preview" %}<!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{{ c.title | plain }}</title></head>
-<body style="max-width:760px;margin:0 auto;padding:16px;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;font-size:16px;line-height:1.8;color:#1b1f27;background:#ffffff;">
-<div style="background:#fffaf0;border:1px solid #f0e2c0;border-radius:8px;padding:14px 18px;margin-bottom:28px;font-size:14px;">
-  <strong>발행 전 확인</strong>
-  <ol style="margin:8px 0 0 18px;padding:0;">
-    <li>제목: {{ c.title | plain }}</li>
-    <li>태그: {{ c.tags | join(", ") }}</li>
-    <li>티스토리 편집기를 HTML 모드로 바꾸고 첨부한 post.html 내용을 통째로 붙여넣기</li>
-{%- if draft.charts | rejectattr("url") | list %}
-    <li>[이미지 삽입] 줄 자리에 첨부한 차트 PNG 올리기</li>
-{%- endif %}
-    <li>대표 이미지를 맨 위 그림으로 지정하기</li>
-    <li>[함께 보면 좋은 글] 줄에 지난 글 링크 넣기 (없으면 줄 삭제)</li>
-    <li>수치와 사실을 다시 확인하고, 내 의견 한두 문장 덧붙이기</li>
-  </ol>
-  {%- if draft.warnings %}
-  <p style="margin:12px 0 0;color:#d03b3b;"><strong>⚠ 검토 필요 {{ draft.warnings | length }}건</strong></p>
-  <ul style="margin:4px 0 0 18px;padding:0;color:#d03b3b;">
-    {%- for w in draft.warnings %}<li>{{ w }}</li>{% endfor %}
-  </ul>
-  {%- endif %}
-</div>
-<h1 style="font-size:26px;line-height:1.4;">{{ c.title | plain }}</h1>
-{%- endif %}
-
+{%- if mode == "preview" %}{{ preview_open(c, draft, ["대표 이미지를 맨 위 그림으로 지정하기", "[함께 보면 좋은 글] 줄에 지난 글 링크 넣기 (없으면 줄 삭제)", "수치와 사실을 다시 확인하고, 내 의견 한두 문장 덧붙이기"]) }}{% endif %}
 {% if cover %}{{ chart_block(cover, caption=False) }}{% endif %}
 {{ gap() }}
 {{ p(c.lead | rich) }}
@@ -174,12 +64,7 @@
 {%- endif %}
 {{ gap(2) }}
 
-{#- 마무리: 티스토리 인용 상자(style2: 왼쪽 세로선) -#}
-<blockquote data-ke-style="style2"{{ sty("", "margin:32px 0 20px;padding:2px 0 2px 14px;border-left:4px solid #d0d0d0;") }}>
-{{ p("<b>마무리</b>" | safe, "size14", "color:" ~ ACCENT ~ ";", "font-size:13px;margin-bottom:4px;") }}
-{{ p(c.closing | rich, "size16", "", "margin:0;") }}
-</blockquote>
-{{ gap() }}
+{{ closing_box(c.closing) }}
 
 {%- if references %}
 <p data-ke-size="size14"{{ sty("color:" ~ MUTED ~ ";", "font-size:13px;line-height:1.8;margin:24px 0 16px;") }}><b>참고 자료</b>
@@ -187,14 +72,4 @@
 {{ gap() }}
 {%- endif %}
 
-{{ p("<b>[함께 보면 좋은 글]</b> 지난 시황 글 링크 2~3개를 넣거나, 넣을 글이 없으면 이 줄을 지우세요." | safe, "size16", "background-color:#fff4d6;", "padding:8px 10px;") }}
-{{ gap() }}
-
-{{ p("이 글은 공개된 뉴스와 시장 데이터를 바탕으로 작성한 개인적인 정리이며, 특정 종목이나 자산의 매수·매도를 권유하지 않습니다. 투자 판단과 그 결과의 책임은 투자자 본인에게 있습니다. 차트와 표는 공개 데이터로 직접 작성했습니다.", "size14", "color:" ~ MUTED ~ ";", "font-size:12.5px;line-height:1.7;margin-top:24px;") }}
-{%- if hashtags %}
-{{ gap() }}
-{{ p(hashtags, "size14", "color:" ~ MUTED ~ ";", "font-size:14px;") }}
-{%- endif %}
-{%- if mode == "preview" %}
-</body></html>
-{%- endif %}
+{{ footer(hashtags, "지난 시황 글 링크 2~3개를 넣거나, 넣을 글이 없으면 이 줄을 지우세요.") }}

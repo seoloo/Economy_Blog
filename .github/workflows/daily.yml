@@ -5,6 +5,8 @@ on:
     # 월~토 07:00 KST = UTC 일~금 22:00. 일요일(KST)은 새 시장 데이터가 없어 쉰다.
     # GitHub 사정으로 수십 분 늦어질 수 있음
     - cron: "0 22 * * 0-5"
+    # 경제 공부 글: 수·토 08:00 KST = UTC 화·금 23:00 (settings.yaml guide.weekdays 와 맞춘다)
+    - cron: "0 23 * * 2,5"
   workflow_dispatch:
     inputs:
       date:
@@ -15,10 +17,13 @@ on:
         type: boolean
         default: false
       mode:
-        description: "run = 전체 실행, classify = 수집·분류만 점검 (글 작성·메일 없음)"
+        description: "run = 시황 글, guide = 경제 공부 글, classify = 수집·분류만 점검 (글 작성·메일 없음)"
         type: choice
-        options: [run, classify]
+        options: [run, guide, classify]
         default: run
+      topic:
+        description: "guide 일 때 주제 아이디 (config/guides.yaml, 비우면 오늘 차례)"
+        required: false
 
 permissions:
   contents: read
@@ -68,7 +73,17 @@ jobs:
           args=""
           if [ -n "${{ inputs.date }}" ]; then args="$args --date ${{ inputs.date }}"; fi
           if [ "${{ inputs.dry_run }}" = "true" ]; then args="$args --dry-run --deliver local,email"; fi
-          python -m econblog run $args
+          if [ "${{ github.event.schedule }}" = "0 23 * * 2,5" ]; then
+            python -m econblog guide --scheduled $args
+          elif [ "${{ inputs.mode }}" = "guide" ]; then
+            if [ -n "${{ inputs.topic }}" ]; then
+              python -m econblog guide --topic "${{ inputs.topic }}" $args
+            else
+              python -m econblog guide --scheduled $args
+            fi
+          else
+            python -m econblog run $args
+          fi
 
       # 메일이 안 왔을 때 대비용. 레포가 public 이면 로그인한 누구나 받을 수 있으므로 보관 기간을 짧게 둔다.
       - uses: actions/upload-artifact@v4

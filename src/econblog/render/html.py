@@ -14,7 +14,7 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoes
 from markupsafe import Markup, escape
 
 from econblog.config import Settings
-from econblog.models import Article, Draft, RenderedPost
+from econblog.models import Article, Draft, GuideDraft, RenderedPost
 from econblog.render.quotes import build_table
 
 
@@ -57,7 +57,7 @@ def plain(text: str) -> str:
     return text.replace("**", "")
 
 
-def render_post(settings: Settings, draft: Draft, out_dir: Path) -> RenderedPost:
+def _env(settings: Settings) -> Environment:
     env = Environment(
         loader=FileSystemLoader(settings.templates_dir),
         autoescape=select_autoescape(["html", "j2"]),
@@ -67,7 +67,15 @@ def render_post(settings: Settings, draft: Draft, out_dir: Path) -> RenderedPost
     )
     env.filters["rich"] = rich
     env.filters["plain"] = plain
-    template = env.get_template("post.html.j2")
+    return env
+
+
+def _hashtags(tags: list[str]) -> str:
+    return " ".join("#" + t.replace(" ", "") for t in tags if t.strip())
+
+
+def render_post(settings: Settings, draft: Draft, out_dir: Path) -> RenderedPost:
+    template = _env(settings).get_template("post.html.j2")
     references = _cited_references(draft)
     post = settings.post
     common = dict(
@@ -79,9 +87,31 @@ def render_post(settings: Settings, draft: Draft, out_dir: Path) -> RenderedPost
         glance=build_table(draft.quotes, post.glance),
         global_table=build_table(draft.quotes, post.global_table),
         korea_table=build_table(draft.quotes, post.korea_table),
-        hashtags=" ".join("#" + t.replace(" ", "") for t in draft.content.tags if t.strip()),
+        hashtags=_hashtags(draft.content.tags),
         references=references,
         ref_names={a.url: ref_link(a).source_name for a in draft.references},
+    )
+    return RenderedPost(
+        draft=draft,
+        html=template.render(mode="tistory", **common).strip() + "\n",
+        preview_html=template.render(mode="preview", **common).strip() + "\n",
+        output_dir=out_dir,
+    )
+
+
+def render_guide(settings: Settings, draft: GuideDraft, out_dir: Path) -> RenderedPost:
+    """경제 공부 글. 공통 부품은 시황 글과 같다 (templates/_tistory.html.j2)."""
+    template = _env(settings).get_template("guide.html.j2")
+    body_charts = [ch for ch in draft.charts if ch.position != "cover"]
+    sources = sorted({ch.source_note.removeprefix("자료: ") for ch in body_charts if ch.source_note})
+    common = dict(
+        draft=draft,
+        c=draft.content,
+        cover=next((ch for ch in draft.charts if ch.position == "cover"), None),
+        body_charts=body_charts,
+        now_rows=draft.now_rows,
+        source_note="자료: " + ", ".join(sources) if sources else "자료: Yahoo Finance, FRED, 한국은행 ECOS",
+        hashtags=_hashtags(draft.content.tags),
     )
     return RenderedPost(
         draft=draft,

@@ -19,12 +19,19 @@ PROVIDERS: dict[str, str] = {
 }
 
 
-def build_snapshot(settings: Settings, as_of: date, offline: bool = False) -> MarketSnapshot:
-    """series.yaml 의 모든 시리즈를 가져온다. 개별 실패는 snapshot.errors 에 기록한다."""
-    start = as_of - timedelta(days=settings.market.lookback_days)
+def build_snapshot(
+    settings: Settings,
+    as_of: date,
+    offline: bool = False,
+    keys: list[str] | None = None,
+    lookback_days: int | None = None,
+) -> MarketSnapshot:
+    """series.yaml 의 시리즈를 가져온다 (keys 가 있으면 그것만). 개별 실패는 snapshot.errors 에 기록한다."""
+    start = as_of - timedelta(days=lookback_days or settings.market.lookback_days)
     snapshot = MarketSnapshot(as_of=as_of)
     instances: dict[str, object] = {}
-    for spec in settings.series:
+    specs = [s for s in settings.series if keys is None or s.key in keys]
+    for spec in specs:
         name = "sample" if offline else spec.provider
         try:
             if name not in instances:

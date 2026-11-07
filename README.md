@@ -23,6 +23,15 @@ RSS 수집 → Laya 분류·중복 제거 → 시장 데이터(yfinance·FRED·E
 
 메일 제목에 `[검토 N건]`이 붙어 있으면 출처 문장과 겹치는 구간이나 데이터 누락이 있다는 뜻입니다. 반드시 고친 뒤 발행합니다.
 
+## 경제 공부 글 (수·토, 오래 읽히는 글)
+
+시황 글과 별도로, 경제 지표·개념을 쉽게 풀어 주는 글 초안이 **수·토 아침 8시쯤** `[블로그 초안·경제 공부]` 메일로 옵니다.
+- 주제는 `config/guides.yaml` 순서대로 하나씩 씁니다 (장단기 금리차, 환율과 코스피, CPI, FOMC, VIX …).
+- 대표 이미지(크림 바탕 키워드 카드), 우리 데이터로 그린 5년 차트, '지금 수치' 표(지금·1년 전·5년 범위)가 들어갑니다.
+- 티스토리 카테고리는 '경제 공부'로 두고, 발행 방법은 시황 글과 같습니다. 예약 발행으로 원하는 날에 올려도 됩니다.
+- 원하는 주제를 바로 만들려면 **Actions → daily-post → Run workflow**에서 `mode`를 `guide`, `topic`에 아이디(예: `vix`)를 넣고 실행합니다.
+- 수동으로 몇 편을 먼저 만들었다면 `config/settings.yaml`의 `guide.start_index`를 그만큼 올려야 자동 실행이 같은 주제를 다시 쓰지 않습니다.
+
 ## 처음 설정
 
 ### 0. 티스토리 스킨 (Book Club)
@@ -77,6 +86,8 @@ cp .env.example .env              # 키 입력
 python -m econblog run --dry-run  # 외부 호출 없이 샘플로 전체 흐름 확인 → output/<날짜>/preview.html
 python -m econblog run            # 실제 실행
 python -m econblog check-sources  # RSS 소스 점검
+python -m econblog guide --list   # 경제 공부 주제 목록과 오늘 차례
+python -m econblog guide --topic vix --dry-run   # 경제 공부 글 샘플 → output/<날짜>-guide-vix/
 pytest
 ```
 
@@ -85,8 +96,9 @@ pytest
 - 뉴스·블로그 추가: `config/sources.yaml`
 - 지표 추가: `config/series.yaml`
 - 차트 추가: `config/settings.yaml`의 `charts`
-- 글 스타일 변경: `prompts/`
-- 레이아웃 변경: `templates/post.html.j2`
+- 경제 공부 주제 추가: `config/guides.yaml` 맨 아래에 한 항목
+- 글 스타일 변경: `prompts/` (말투 공통 규칙은 `prompts/_human.md`)
+- 레이아웃 변경: `templates/post.html.j2`(시황), `templates/guide.html.j2`(경제 공부), 공통 부품은 `templates/_tistory.html.j2`
 
 ## 참고
 

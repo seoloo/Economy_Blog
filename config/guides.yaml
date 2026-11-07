@@ -1,0 +1,164 @@
+# 경제 공부 글(오래 읽히는 개념 설명) 주제 목록. 위에서부터 순서대로 쓴다.
+# 주제 추가는 이 파일 맨 아래에 한 항목만 붙이면 된다. 순서를 바꾸면 자동 실행 순서도 바뀐다.
+#
+#  id:       파일 이름에 쓰는 영문 아이디 (바꾸지 않는다)
+#  keyword:  검색 키워드. 제목 앞부분과 대표 이미지의 큰 글자로 쓴다.
+#  subtitle: 대표 이미지 아래 줄
+#  angle:    글에서 꼭 다룰 내용 (LLM 에게 주는 방향)
+#  series:   본문 '지금 수치'에 넣을 시장 데이터 (config/series.yaml 의 key)
+#  charts:   직접 그려 넣을 장기 차트 (type 은 charts/ 빌더 이름, days 는 기간)
+
+guides:
+  - id: yield_curve
+    keyword: 장단기 금리차
+    subtitle: 금리 역전은 왜 경기침체 신호로 불릴까
+    angle: 10년물과 2년물 금리차의 뜻, 평소에는 왜 양수인지, 금리 역전이 무엇이고 왜 침체 신호로 불리는지, 신호의 한계(시차와 예외), 지금 수치 해석, 한국 투자자가 볼 점
+    series: [us10y, us2y]
+    charts:
+      - {key: spread, type: spread, title: 미 국채 10년·2년 금리와 금리차 (최근 5년), series: [us10y, us2y], days: 1825}
+
+  - id: fx_kospi
+    keyword: 환율과 코스피
+    subtitle: 원/달러 환율이 오르면 주가는 왜 흔들릴까
+    angle: 환율 상승(원화 약세)의 뜻, 외국인 투자자의 환차손 관점, 수출주와 내수주에 다른 영향, 둘이 항상 반대로 움직이지는 않는다는 점, 지금 수치 해석
+    series: [usdkrw, kospi]
+    charts:
+      - {key: usdkrw, type: line, title: 원/달러 환율 (최근 5년), series: [usdkrw], days: 1825}
+      - {key: kospi, type: line, title: 코스피 (최근 5년), series: [kospi], days: 1825}
+
+  - id: cpi
+    keyword: CPI 소비자물가지수
+    subtitle: 물가 지표 하나에 증시가 크게 흔들리는 이유
+    angle: CPI와 근원 CPI의 차이, 전년 대비와 전월 대비 읽는 법, 발표 시기(매달 중순, 정확한 날짜는 미국 노동통계국 일정 확인), 예상치와 실제치의 차이가 중요한 이유, 금리·주가와의 연결
+    series: [us2y, us10y]
+    charts:
+      - {key: us2y, type: line, title: 미 국채 2년 금리 (최근 5년), series: [us2y], days: 1825}
+
+  - id: fomc
+    keyword: FOMC
+    subtitle: 미국 금리를 정하는 회의, 언제 무엇을 봐야 할까
+    angle: FOMC가 무엇이고 1년에 몇 번 열리는지, 성명서·점도표·기자회견에서 볼 것, 시장이 결정보다 '앞으로의 신호'에 반응하는 이유, 한국 증시와 환율에 미치는 영향. 회의 날짜는 단정하지 말고 연준 일정 확인을 권한다
+    series: [us2y, us10y, usdkrw]
+    charts:
+      - {key: us2y, type: line, title: 정책금리 기대를 반영하는 미 국채 2년 금리 (최근 5년), series: [us2y], days: 1825}
+
+  - id: vix
+    keyword: VIX 공포지수
+    subtitle: 시장의 불안을 숫자로 보는 법
+    angle: VIX가 무엇을 재는지(S&P 500 옵션으로 본 향후 30일 예상 변동성), 수치 구간별 의미, 주가와 반대로 움직이는 경향, 한계, 지금 수치 해석
+    series: [vix, sp500]
+    charts:
+      - {key: vix, type: line, title: VIX 변동성 지수 (최근 5년), series: [vix], days: 1825}
+
+  - id: circuit_breaker
+    keyword: 서킷브레이커와 사이드카
+    subtitle: 급락장에서 매매가 멈추는 이유
+    angle: 서킷브레이커와 사이드카가 무엇이고 왜 있는지, 발동 기준과 단계(확실한 기준만 쓰고 세부는 한국거래소 안내 확인을 권한다), 발동 뒤 시장 흐름, 개인 투자자가 그때 할 일
+    series: [kospi, kosdaq]
+    charts: []
+
+  - id: us10y
+    keyword: 미국 10년물 국채 금리
+    subtitle: 전 세계 자산 가격의 기준이 되는 금리
+    angle: 10년물 금리가 왜 기준 금리처럼 쓰이는지, 성장주·부동산·환율에 주는 영향, 오르는 이유와 내리는 이유, 지금 수치 해석
+    series: [us10y]
+    charts:
+      - {key: us10y, type: line, title: 미 국채 10년 금리 (최근 5년), series: [us10y], days: 1825}
+
+  - id: dollar_index
+    keyword: 달러인덱스
+    subtitle: 달러가 강한지 약한지 한 번에 보는 지표
+    angle: 달러인덱스의 뜻과 구성 통화(유로 비중이 크다는 점), 원/달러 환율과의 관계, 달러 강세가 신흥국·원자재에 주는 영향, 지금 수치 해석
+    series: [dxy, usdkrw]
+    charts:
+      - {key: dxy, type: line, title: 달러인덱스 (최근 5년), series: [dxy], days: 1825}
+
+  - id: kr_base_rate
+    keyword: 한국은행 기준금리
+    subtitle: 금통위 결정이 대출과 주식에 미치는 영향
+    angle: 기준금리의 뜻, 금융통화위원회가 무엇을 보고 정하는지, 시중 금리·대출·예금으로 퍼지는 과정, 미국 금리와의 차이가 환율에 주는 영향, 지금 수치 해석
+    series: [kr_base_rate, kr3y]
+    charts:
+      - {key: kr_rates, type: line, title: 한국은행 기준금리와 국고채 3년 금리 (최근 5년), series: [kr_base_rate, kr3y], days: 1825}
+
+  - id: jobs_report
+    keyword: 미국 고용지표
+    subtitle: 비농업 고용 발표에 시장이 숨죽이는 이유
+    angle: 비농업 고용·실업률·임금상승률이 무엇인지, 발표 시기(보통 매달 첫 금요일, 정확한 날짜는 노동통계국 일정 확인), 고용이 좋으면 오히려 주가가 내리기도 하는 이유, 금리와의 연결
+    series: [us2y]
+    charts: []
+
+  - id: us_indices
+    keyword: S&P 500 나스닥 다우 차이
+    subtitle: 미국 3대 지수는 무엇이 다를까
+    angle: 세 지수의 구성 방식(시가총액 가중과 가격 가중)과 대표 종목 성격, 같은 날 다르게 움직이는 이유, 투자자가 주로 보는 지수
+    series: [sp500, nasdaq, dow]
+    charts:
+      - {key: sp500, type: line, title: S&P 500 (최근 5년), series: [sp500], days: 1825}
+
+  - id: kospi_kosdaq
+    keyword: 코스피 코스닥 차이
+    subtitle: 두 시장은 무엇이 다르고 어떻게 움직일까
+    angle: 상장 기업의 성격 차이, 업종 구성(반도체·바이오 등), 변동성 차이, 개인과 외국인 비중 차이, 지금 수치 해석
+    series: [kospi, kosdaq]
+    charts:
+      - {key: kosdaq, type: line, title: 코스닥 (최근 5년), series: [kosdaq], days: 1825}
+
+  - id: foreign_flow
+    keyword: 외국인 순매수 보는 법
+    subtitle: 외국인 수급으로 코스피 방향을 읽을 수 있을까
+    angle: 외국인·기관·개인 순매수의 뜻, 외국인 수급이 코스피에 중요한 이유, 환율과의 관계, 하루 수치만 보면 안 되는 이유. 수급 수치는 데이터가 없으므로 지어내지 않는다
+    series: [kospi, usdkrw]
+    charts: []
+
+  - id: leverage_etf
+    keyword: 레버리지 ETF 위험
+    subtitle: 지수가 제자리여도 손실이 나는 이유
+    angle: 레버리지 ETF가 하루 수익률의 배수를 따른다는 점, 오르내림이 반복될 때 생기는 손실을 간단한 가상 숫자 예시로 설명(예시임을 밝힌다), 장기 보유의 위험, 확인할 점
+    series: [nasdaq]
+    charts: []
+
+  - id: oil
+    keyword: WTI 브렌트유 차이
+    subtitle: 국제유가가 물가와 증시에 주는 영향
+    angle: WTI와 브렌트유의 차이, 유가를 움직이는 요인(수요·공급·지정학), 유가가 물가와 금리, 업종별 주가에 주는 영향, 지금 수치 해석
+    series: [wti]
+    charts:
+      - {key: wti, type: line, title: WTI 유가 (최근 5년), series: [wti], days: 1825}
+
+  - id: gold
+    keyword: 금값 오르는 이유
+    subtitle: 금리·달러와 금의 관계
+    angle: 금이 안전자산으로 불리는 이유, 실질금리와 달러가 금값에 주는 영향, 중앙은행 매수 같은 다른 요인, 지금 수치 해석
+    series: [gold, dxy, us10y]
+    charts:
+      - {key: gold, type: line, title: 금 가격 (최근 5년), series: [gold], days: 1825}
+
+  - id: bond_price
+    keyword: 금리와 채권 가격 관계
+    subtitle: 금리가 오르면 채권 가격은 왜 떨어질까
+    angle: 채권 가격과 금리가 반대로 움직이는 이유를 쉬운 숫자 예시로(예시임을 밝힌다), 만기가 길수록 더 크게 움직이는 이유, 채권 투자와 금리 전망의 관계, 지금 수치 해석
+    series: [us10y, kr3y]
+    charts: []
+
+  - id: per_pbr
+    keyword: PER PBR 뜻
+    subtitle: 주식이 비싼지 싼지 가늠하는 기본 지표
+    angle: PER과 PBR의 뜻과 계산, 업종마다 적정 수준이 다른 이유, 낮다고 무조건 싼 것은 아닌 이유, 같이 보면 좋은 지표
+    series: []
+    charts: []
+
+  - id: earnings_season
+    keyword: 실적 시즌 보는 법
+    subtitle: EPS와 가이던스, 무엇이 주가를 움직일까
+    angle: 실적 시즌이 언제인지(분기 마감 뒤 약 한 달), EPS·매출·가이던스의 뜻, 예상치 대비가 중요한 이유, 실적이 좋아도 주가가 내리는 이유
+    series: [sp500, nasdaq]
+    charts: []
+
+  - id: nikkei
+    keyword: 닛케이 지수와 코스피
+    subtitle: 일본 증시가 한국 증시에 주는 신호
+    angle: 닛케이225가 무엇인지, 엔화와 일본 증시의 관계, 한국 증시와 같이 또는 다르게 움직이는 이유, 지금 수치 해석
+    series: [nikkei, kospi]
+    charts:
+      - {key: nikkei, type: line, title: 닛케이225 (최근 5년), series: [nikkei], days: 1825}

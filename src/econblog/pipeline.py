@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from econblog.charts import build_charts
+from econblog.charts.cover import guide_cover
 from econblog.charts.publish import publish_charts
 from econblog.classify import classify_and_select
 from econblog.collect import collect_all
@@ -15,10 +16,12 @@ from econblog.deliver import deliver_all
 from econblog.guard.copyright import find_copied_passages
 from econblog.guard.style import find_ai_phrases
 from econblog.market import build_snapshot
-from econblog.models import Draft, RenderedPost
-from econblog.render.html import render_post
+from econblog.models import Draft, GuideDraft, GuideTopic, RenderedPost
+from econblog.render.html import render_guide, render_post
 from econblog.write import write_post
-from econblog.write.base import WriteContext
+from econblog.write.base import GuideContext, WriteContext
+from econblog.write.guide import write_guide
+from econblog.write.prompting import guide_rows
 
 log = logging.getLogger(__name__)
 
@@ -72,6 +75,79 @@ def run(
     draft = Draft(date=run_date, content=content, charts=charts, quotes=snapshot.quotes(),
                   references=references, warnings=warnings)
     post = render_post(settings, draft, out_dir)
+    for line in deliver_all(settings, post, deliver_methods):
+        log.info("전달: %s", line)
+    if warnings:
+        log.warning("검토 필요 %d건: %s", len(warnings), " | ".join(warnings))
+    return post
+
+
+# ---------------------------------------------------------------- 경제 공부 글
+
+
+def pick_topic(settings: Settings, run_date: date) -> GuideTopic | None:
+    """자동 실행일(guide.weekdays)마다 다음 주제로 넘어간다.
+
+    상태를 저장하지 않고, start_date 부터 run_date 까지 지난 실행일 수로 몇 번째 주제인지 계산한다.
+    run_date 가 실행일이 아니거나 주제를 다 썼으면 None.
+    """
+    g = settings.guide
+    if g.start_date is None or run_date < g.start_date or run_date.weekday() not in g.weekdays:
+        return None
+    slots = sum(1 for i in range((run_date - g.start_date).days + 1)
+                if (g.start_date + timedelta(days=i)).weekday() in g.weekdays)
+    index = g.start_index + slots - 1
+    return settings.guides[index] if index < len(settings.guides) else None
+
+
+def find_topic(settings: Settings, topic_id: str) -> GuideTopic:
+    for t in settings.guides:
+        if t.id == topic_id:
+            return t
+    raise KeyError(f"주제 '{topic_id}' 가 config/guides.yaml 에 없음")
+
+
+def run_guide(
+    settings: Settings,
+    topic: GuideTopic,
+    run_date: date | None = None,
+    offline: bool = False,
+    deliver_methods: list[str] | None = None,
+) -> RenderedPost:
+    run_date = run_date or today(settings)
+    out_dir = settings.resolve_output_dir() / f"{run_date.isoformat()}-guide-{topic.id}"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    log.info("=== 경제 공부 %s: %s (offline=%s) → %s", run_date, topic.keyword, offline, out_dir)
+
+    # 1. 시장 데이터 (주제에 필요한 시리즈만, 장기 차트용으로 길게)
+    keys = sorted(set(topic.series) | {k for c in topic.charts for k in c.series})
+    snapshot = build_snapshot(settings, run_date, offline=offline, keys=keys,
+                              lookback_days=settings.guide.lookback_days)
+    log.info("시장 데이터 %d개 (실패 %d개)", len(snapshot.series), len(snapshot.errors))
+
+    # 2. 차트: 대표 이미지 + 주제별 장기 차트 (파일 이름이 시황 차트와 겹치지 않게 주제 아이디를 붙인다)
+    chart_dir = out_dir / "charts"
+    chart_dir.mkdir(parents=True, exist_ok=True)
+    specs = [c.model_copy(update={"key": f"{topic.id}_{c.key}"}) for c in topic.charts]
+    charts = [guide_cover(settings, topic.keyword, topic.subtitle, chart_dir / f"{topic.id}_cover.png")]
+    charts += build_charts(settings, snapshot, chart_dir, specs)
+    log.info("차트 %d개", len(charts))
+    warnings = publish_charts(settings, charts, run_date, offline=offline)
+
+    # 3. 초안
+    ctx = GuideContext(date=run_date, topic=topic, snapshot=snapshot, charts=charts[1:])
+    content, write_warnings = write_guide(settings, ctx, offline=offline)
+    warnings = write_warnings + warnings
+
+    # 4. 말투 검사 (참고 기사가 없으므로 원문 복사 검사는 하지 않는다)
+    warnings += find_ai_phrases(content, settings.guard.ai_phrases)
+    if snapshot.errors:
+        warnings.append("데이터 수집 실패: " + ", ".join(sorted(snapshot.errors)))
+
+    # 5. 렌더링·전달
+    draft = GuideDraft(date=run_date, topic=topic, content=content, charts=charts,
+                       now_rows=guide_rows(ctx), warnings=warnings)
+    post = render_guide(settings, draft, out_dir)
     for line in deliver_all(settings, post, deliver_methods):
         log.info("전달: %s", line)
     if warnings:

@@ -15,6 +15,7 @@ class LocalDeliverer(Deliverer):
         (out / "post.html").write_text(post.html, encoding="utf-8")
         (out / "preview.html").write_text(post.preview_html, encoding="utf-8")
         meta = {
+            "kind": post.draft.kind,
             "date": post.draft.date.isoformat(),
             "title": post.draft.content.title,
             "tags": post.draft.content.tags,

@@ -6,10 +6,10 @@ settings.yaml guard.ai_phrases 에 표현과 허용 횟수를 둔다. 넘으면 
 from __future__ import annotations
 
 from econblog.guard.copyright import post_texts
-from econblog.models import PostContent
+from econblog.models import GuidePost, PostContent
 
 
-def find_ai_phrases(content: PostContent, limits: dict[str, int]) -> list[str]:
+def find_ai_phrases(content: PostContent | GuidePost, limits: dict[str, int]) -> list[str]:
     text = "\n".join(post_texts(content))
     over = []
     for phrase, allowed in limits.items():

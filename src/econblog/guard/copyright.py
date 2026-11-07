@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from difflib import SequenceMatcher
 
-from econblog.models import Article, PostContent
+from econblog.models import Article, GuidePost, PostContent
 
 _WS_RE = re.compile(r"\s+")
 
@@ -18,8 +18,15 @@ def _norm(text: str) -> str:
     return _WS_RE.sub(" ", text.replace("**", "")).strip().lower()
 
 
-def post_texts(content: PostContent) -> list[str]:
+def post_texts(content: PostContent | GuidePost) -> list[str]:
     """글에 들어가는 모든 문장 덩어리 (제목·문단·목록·이슈)."""
+    if isinstance(content, GuidePost):
+        texts = [content.title, content.lead, *content.summary_points, content.now_comment, content.closing]
+        for sec in content.sections:
+            texts += [sec.heading, *sec.paragraphs]
+        for qa in content.faq:
+            texts += [qa.question, qa.answer]
+        return [t for t in texts if t]
     texts = [
         content.title, content.lead, content.summary_line, *content.global_market, *content.korea_market,
         *content.korea_checkpoints, *content.watch_points, content.closing,

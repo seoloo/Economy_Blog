@@ -17,6 +17,15 @@ def _fmt_signed(v: float, unit: str = "%") -> str:
     return f"{v:+.2f}{unit}"
 
 
+def _date_axis(ax, days: int) -> None:
+    """1년이 넘는 기간은 월/일 대신 연.월로 표시한다."""
+    if days > 400:
+        ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=[1, 7]))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%y.%m"))
+    else:
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d"))
+
+
 class ChangeBarChart(ChartBuilder):
     """시리즈별 전일 대비 등락률 가로 막대. 위에서부터 설정 순서대로 표시."""
 
@@ -76,7 +85,7 @@ class LineChart(ChartBuilder):
             ax.annotate(f"{s.last:,.2f}", (s.dates[-1], s.last), xytext=(8, 0), textcoords="offset points",
                         va="center", fontsize=9.5, color=style.INK)
         ax.grid(axis="x", visible=False)
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d"))
+        _date_axis(ax, spec.days)
         ax.yaxis.set_major_formatter(lambda y, _: f"{y:,.0f}" if abs(y) >= 1000 else f"{y:,.2f}")
         if len(series) >= 2:
             ax.legend(loc="upper left", ncols=len(series))
@@ -131,7 +140,7 @@ class SpreadChart(ChartBuilder):
         ax2.text(0.0, 1.02, f"금리차({a.spec.label} - {b.spec.label}, %p)", transform=ax2.transAxes,
                  fontsize=8.5, color=style.INK_2, va="bottom")
         ax2.grid(axis="x", visible=False)
-        ax2.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d"))
+        _date_axis(ax2, spec.days)
 
         sub = f"{a.spec.label} {va[-1]:.2f}% · {b.spec.label} {vb[-1]:.2f}% · 차이 {spread[-1]:+.2f}%p"
         style.decorate(fig, spec.title, f"기준: {dates[-1]:%Y-%m-%d} · {sub}",

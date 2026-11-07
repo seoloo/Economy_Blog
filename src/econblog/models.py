@@ -196,6 +196,7 @@ class PostContent(BaseModel):
 
 
 class Draft(BaseModel):
+    kind: Literal["daily"] = "daily"
     date: date
     content: PostContent
     charts: list[Chart] = Field(default_factory=list)
@@ -204,8 +205,66 @@ class Draft(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+# ---------------------------------------------------------------- 경제 공부 글 (오래 읽히는 개념 설명)
+
+
+class GuideTopic(BaseModel):
+    """config/guides.yaml 의 한 항목."""
+
+    id: str
+    keyword: str            # 검색 키워드이자 대표 이미지의 큰 글자 (예: 장단기 금리차)
+    subtitle: str           # 대표 이미지 아래 줄 (예: 금리 역전은 왜 경기침체 신호일까)
+    angle: str              # 글에서 꼭 다룰 내용
+    series: list[str] = Field(default_factory=list)   # 본문에 '지금 수치'로 넣을 시리즈
+    charts: list[ChartSpec] = Field(default_factory=list)
+
+
+class GuideSection(BaseModel):
+    heading: str = Field(description="소제목. 독자가 궁금해할 질문이나 핵심을 짧게.")
+    paragraphs: list[str] = Field(description="문단 목록. 문단마다 1~3문장.")
+
+
+class GuideQA(BaseModel):
+    question: str = Field(description="독자가 실제로 검색할 법한 질문.")
+    answer: str = Field(description="2~3문장 답변.")
+
+
+class GuidePost(BaseModel):
+    """경제 공부 글 본문. 필드 순서가 곧 LLM 이 쓰는 순서다."""
+
+    title: str = Field(description="검색 키워드로 시작하는 제목 (40자 안팎).")
+    lead: str = Field(description="도입부 2~3문장. 독자가 왜 이 글을 찾았을지 짚고, 무엇을 알 수 있는지 말한다.")
+    summary_points: list[str] = Field(description="핵심 요약 3개. 각 한 문장.")
+    sections: list[GuideSection] = Field(description="본문 소제목 4~6개.")
+    now_comment: str = Field(description="'지금 수치' 데이터를 근거로 현재 상황을 해석하는 2~3문장.")
+    faq: list[GuideQA] = Field(description="자주 묻는 질문 2~3개.")
+    closing: str = Field(description="마무리 1~2문장.")
+    tags: list[str] = Field(description="티스토리 태그 5~10개.")
+
+
+class NowRow(BaseModel):
+    """경제 공부 글의 '지금 수치' 한 줄. 수집한 데이터에서 계산한 문자열."""
+
+    key: str
+    label: str
+    as_of: str
+    value: str
+    year_ago: str
+    range: str
+
+
+class GuideDraft(BaseModel):
+    kind: Literal["guide"] = "guide"
+    date: date
+    topic: GuideTopic
+    content: GuidePost
+    charts: list[Chart] = Field(default_factory=list)
+    now_rows: list[NowRow] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
 class RenderedPost(BaseModel):
-    draft: Draft
+    draft: Draft | GuideDraft
     html: str
     preview_html: str
     output_dir: Path

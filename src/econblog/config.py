@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import os
+from datetime import date
 from pathlib import Path
 
 import yaml
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
-from econblog.models import ChartSpec, SeriesSpec, Source
+from econblog.models import ChartSpec, GuideTopic, SeriesSpec, Source
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -61,6 +62,20 @@ class PublishSettings(BaseModel):
     base_url: str = ""    # 예: https://seoloo.github.io/econblog-assets (GitHub Pages)
 
 
+class GuideSettings(BaseModel):
+    """경제 공부 글. 주제는 config/guides.yaml 순서대로 쓴다.
+
+    자동 실행일(weekdays)마다 다음 주제로 넘어간다. 상태를 저장하지 않으려고
+    start_date 부터 오늘까지 지난 실행일 수로 주제 번호를 계산한다.
+    수동으로 몇 편을 먼저 만들었다면 start_index 를 그만큼 올린다.
+    """
+
+    weekdays: list[int] = Field(default_factory=lambda: [2, 5])  # 0=월 ... 6=일 (KST)
+    start_date: date | None = None
+    start_index: int = 0
+    lookback_days: int = 1900   # 장기 차트용 데이터 기간 (약 5년)
+
+
 class GuardSettings(BaseModel):
     max_shared_chars: int = 40
     # AI 가 쓴 티가 나는 표현과 글 한 편에서 허용하는 횟수. 넘으면 경고한다.
@@ -82,11 +97,13 @@ class Settings(BaseModel):
     write: WriteSettings = Field(default_factory=WriteSettings)
     post: PostSettings = Field(default_factory=PostSettings)
     publish: PublishSettings = Field(default_factory=PublishSettings)
+    guide: GuideSettings = Field(default_factory=GuideSettings)
     guard: GuardSettings = Field(default_factory=GuardSettings)
     deliver: DeliverSettings = Field(default_factory=DeliverSettings)
 
     sources: list[Source] = Field(default_factory=list)
     series: list[SeriesSpec] = Field(default_factory=list)
+    guides: list[GuideTopic] = Field(default_factory=list)
     root: Path = PROJECT_ROOT
 
     @property
@@ -118,6 +135,8 @@ def load_settings(root: Path | None = None) -> Settings:
     data = _read_yaml(cfg / "settings.yaml")
     data["sources"] = _read_yaml(cfg / "sources.yaml").get("sources", [])
     data["series"] = _read_yaml(cfg / "series.yaml").get("series", [])
+    guides = cfg / "guides.yaml"
+    data["guides"] = _read_yaml(guides).get("guides", []) if guides.exists() else []
     data["root"] = root
     return Settings.model_validate(data)
 

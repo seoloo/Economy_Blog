@@ -7,7 +7,7 @@ from pathlib import Path
 
 from econblog import registry
 from econblog.config import Settings
-from econblog.models import Chart, MarketSnapshot
+from econblog.models import Chart, ChartSpec, MarketSnapshot
 
 log = logging.getLogger(__name__)
 
@@ -19,10 +19,13 @@ BUILDERS: dict[str, str] = {
 }
 
 
-def build_charts(settings: Settings, snapshot: MarketSnapshot, out_dir: Path) -> list[Chart]:
+def build_charts(
+    settings: Settings, snapshot: MarketSnapshot, out_dir: Path, specs: list[ChartSpec] | None = None
+) -> list[Chart]:
+    """specs 가 없으면 settings.yaml 의 charts 를 그린다."""
     out_dir.mkdir(parents=True, exist_ok=True)
     charts: list[Chart] = []
-    for spec in settings.charts:
+    for spec in settings.charts if specs is None else specs:
         try:
             chart = registry.load(BUILDERS, spec.type)(settings).build(spec, snapshot, out_dir)
         except Exception as e:  # noqa: BLE001

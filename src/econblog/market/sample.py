@@ -10,7 +10,7 @@ from econblog.market.base import MarketDataProvider
 from econblog.models import Series, SeriesSpec
 
 BASE_LEVELS = {
-    "kospi": 2600, "kosdaq": 750, "sp500": 6000, "nasdaq": 19500, "dow": 44000, "nikkei": 39000,
+    "kospi": 2600, "kosdaq": 750, "sp500": 6000, "nasdaq": 19500, "dow": 44000, "nikkei": 39000, "vix": 18,
     "usdkrw": 1380, "dxy": 104, "wti": 70, "gold": 2700,
     "us10y": 4.3, "us2y": 3.9, "kr3y": 2.6, "kr_base_rate": 2.5,
 }

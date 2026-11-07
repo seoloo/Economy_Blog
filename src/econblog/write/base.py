@@ -6,7 +6,7 @@ from datetime import date
 from pydantic import BaseModel
 
 from econblog.config import Settings
-from econblog.models import Chart, ClassifiedArticle, MarketSnapshot, PostContent
+from econblog.models import Chart, ClassifiedArticle, GuideTopic, MarketSnapshot, PostContent
 
 
 class WriteContext(BaseModel):
@@ -14,6 +14,15 @@ class WriteContext(BaseModel):
 
     date: date
     articles: list[ClassifiedArticle]
+    snapshot: MarketSnapshot
+    charts: list[Chart]
+
+
+class GuideContext(BaseModel):
+    """경제 공부 글을 쓰는 데 필요한 재료."""
+
+    date: date
+    topic: GuideTopic
     snapshot: MarketSnapshot
     charts: list[Chart]
 
