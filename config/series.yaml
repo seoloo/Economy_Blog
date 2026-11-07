@@ -1,0 +1,29 @@
+# 시장 데이터 시리즈 정의. 차트와 글의 수치는 여기 정의된 데이터만 사용한다.
+#  provider: yahoo | fred | ecos
+#   - yahoo: yfinance(비공식 Yahoo Finance). 지수·환율·원자재. 차트에 출처 표기.
+#   - fred:  FRED API (FRED_API_KEY 필요). 미국 금리 등.
+#   - ecos:  한국은행 ECOS API (ECOS_API_KEY 필요). params에 cycle/item 코드 지정.
+#  category: index_kr | index_global | fx | rates | commodity
+
+series:
+  # ---------- 지수
+  - {key: kospi, label: 코스피, provider: yahoo, id: "^KS11", unit: pt, category: index_kr}
+  - {key: kosdaq, label: 코스닥, provider: yahoo, id: "^KQ11", unit: pt, category: index_kr}
+  - {key: sp500, label: S&P 500, provider: yahoo, id: "^GSPC", unit: pt, category: index_global}
+  - {key: nasdaq, label: 나스닥, provider: yahoo, id: "^IXIC", unit: pt, category: index_global}
+  - {key: dow, label: 다우존스, provider: yahoo, id: "^DJI", unit: pt, category: index_global}
+  - {key: nikkei, label: 닛케이225, provider: yahoo, id: "^N225", unit: pt, category: index_global}
+
+  # ---------- 환율
+  - {key: usdkrw, label: 원/달러 환율, provider: yahoo, id: "KRW=X", unit: 원, category: fx}
+  - {key: dxy, label: 달러인덱스, provider: yahoo, id: "DX-Y.NYB", unit: pt, category: fx}
+
+  # ---------- 원자재
+  - {key: wti, label: WTI 유가, provider: yahoo, id: "CL=F", unit: 달러, category: commodity}
+  - {key: gold, label: 금, provider: yahoo, id: "GC=F", unit: 달러, category: commodity}
+
+  # ---------- 금리
+  - {key: us10y, label: 미 국채 10년, provider: fred, id: DGS10, unit: "%", category: rates}
+  - {key: us2y, label: 미 국채 2년, provider: fred, id: DGS2, unit: "%", category: rates}
+  - {key: kr3y, label: 국고채 3년, provider: ecos, id: 817Y002, unit: "%", category: rates, params: {cycle: D, item: "010200000"}}
+  - {key: kr_base_rate, label: 한국은행 기준금리, provider: ecos, id: 722Y001, unit: "%", category: rates, params: {cycle: D, item: "0101000"}}

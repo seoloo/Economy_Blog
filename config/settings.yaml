@@ -1,0 +1,61 @@
+# 파이프라인 동작 설정. 비밀값은 여기 두지 않는다 (.env / GitHub Secrets).
+
+timezone: Asia/Seoul
+output_dir: output
+blog_name: 오늘의 경제 시황
+
+collect:
+  lookback_hours: 30        # 이 시간 이내에 발행된 기사만 사용
+  max_per_source: 30
+  timeout_sec: 15
+
+classify:
+  provider: laya            # laya | keyword
+  fallback: keyword         # provider 실패/키 없음 시 사용
+  top_n_per_region: 8       # 국내/해외 각각 글쓰기에 넘길 기사 수
+  dedupe_threshold: 0.55    # 제목 유사도 이상이면 중복으로 처리
+  topics:                   # id: 설명 (Laya choice 기준이자 키워드 분류 라벨)
+    rates: 금리, 중앙은행, 통화정책, 채권
+    fx: 환율, 달러, 원화, 외환
+    equity: 주식시장, 증시, 지수, 투자심리
+    tech: 반도체, AI, 빅테크, 기술주
+    macro: 물가, 고용, 성장률, 경기지표
+    trade: 무역, 관세, 지정학, 공급망
+    energy: 유가, 원자재, 금, 에너지
+    realestate: 부동산, 주택, 가계부채
+    earnings: 기업 실적, 가이던스, 개별 기업
+    crypto: 비트코인, 가상자산
+    other: 기타
+
+market:
+  lookback_days: 200
+
+# 차트는 type(빌더 종류)만 맞으면 설정 추가만으로 늘릴 수 있다.
+charts:
+  - key: index_change
+    type: change_bar
+    title: 주요 지수 전일 대비 등락률
+    series: [kospi, kosdaq, sp500, nasdaq, dow, nikkei]
+  - key: usdkrw
+    type: line
+    title: 원/달러 환율 추이 (최근 3개월)
+    series: [usdkrw]
+    days: 90
+  - key: us_rates
+    type: spread
+    title: 미 국채 10년·2년 금리와 장단기 금리차
+    series: [us10y, us2y]
+    days: 180
+
+write:
+  provider: claude          # claude | template
+  fallback: template
+  model: claude-opus-5-5
+  effort: medium            # low | medium | high
+  max_tokens: 16000
+
+guard:
+  max_shared_chars: 40      # 출처와 연속으로 겹치는 글자 수 상한 (넘으면 경고)
+
+deliver:
+  methods: [local, email]   # local: output/ 저장, email: 메일 발송 (설정 없으면 건너뜀)

@@ -1,0 +1,34 @@
+# 뉴스·블로그 소스 목록. 소스 추가는 이 파일만 수정한다.
+#  region: kr | global
+#  kind:   news | blog | official
+#  collector: rss (기본값). RSS가 없는 사이트만 별도 Collector 구현.
+#
+# 저작권: 제목·요약·링크만 사용하고 원문 본문은 가져오지 않는다.
+# 유료/스크래핑 금지 매체(Reuters, Bloomberg, WSJ, FT)는 직접 수집하지 않는다.
+
+sources:
+  # ---------- 국내 뉴스
+  - {id: hankyung_economy, name: 한국경제 경제, url: "https://www.hankyung.com/feed/economy", region: kr, kind: news, lang: ko}
+  - {id: hankyung_finance, name: 한국경제 증권, url: "https://www.hankyung.com/feed/finance", region: kr, kind: news, lang: ko}
+  - {id: mk_economy, name: 매일경제 경제, url: "https://www.mk.co.kr/rss/30100041/", region: kr, kind: news, lang: ko}
+  - {id: mk_stock, name: 매일경제 증권, url: "https://www.mk.co.kr/rss/50200011/", region: kr, kind: news, lang: ko}
+  - {id: yna_economy, name: 연합뉴스 경제, url: "https://www.yna.co.kr/rss/economy.xml", region: kr, kind: news, lang: ko}
+  - {id: yna_market, name: 연합뉴스 마켓+, url: "https://www.yna.co.kr/rss/market.xml", region: kr, kind: news, lang: ko}
+  - {id: gnews_kr_business, name: Google 뉴스 경제(한국), url: "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=ko&gl=KR&ceid=KR:ko", region: kr, kind: news, lang: ko}
+
+  # ---------- 해외 뉴스
+  - {id: cnbc_finance, name: CNBC Finance, url: "https://www.cnbc.com/id/10000664/device/rss/rss.html", region: global, kind: news, lang: en}
+  - {id: cnbc_economy, name: CNBC Economy, url: "https://www.cnbc.com/id/20910258/device/rss/rss.html", region: global, kind: news, lang: en}
+  - {id: marketwatch_top, name: MarketWatch Top Stories, url: "https://feeds.content.dowjones.io/public/rss/mw_topstories", region: global, kind: news, lang: en}
+  - {id: yahoo_finance, name: Yahoo Finance, url: "https://finance.yahoo.com/news/rssindex", region: global, kind: news, lang: en}
+  - {id: gnews_us_business, name: Google News Business(US), url: "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en-US&gl=US&ceid=US:en", region: global, kind: news, lang: en}
+
+  # ---------- 공식 기관 (미국 정부 저작물은 퍼블릭 도메인)
+  - {id: fed_press, name: Federal Reserve Press Releases, url: "https://www.federalreserve.gov/feeds/press_all.xml", region: global, kind: official, lang: en}
+
+  # ---------- 해외 경제 블로그
+  - {id: calculated_risk, name: Calculated Risk, url: "https://www.calculatedriskblog.com/feeds/posts/default", region: global, kind: blog, lang: en}
+  - {id: wolf_street, name: Wolf Street, url: "https://wolfstreet.com/feed/", region: global, kind: blog, lang: en}
+  - {id: marginal_revolution, name: Marginal Revolution, url: "https://marginalrevolution.com/feed", region: global, kind: blog, lang: en}
+  - {id: liberty_street, name: Liberty Street Economics (NY Fed), url: "https://libertystreeteconomics.newyorkfed.org/feed/", region: global, kind: blog, lang: en}
+  - {id: big_picture, name: The Big Picture, url: "https://ritholtz.com/feed/", region: global, kind: blog, lang: en}
