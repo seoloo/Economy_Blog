@@ -9,9 +9,11 @@
 
 {%- macro h2(title) -%}
 {%- set ns.n = ns.n + 1 -%}
-<h2 style="margin:44px 0 16px;padding:0 0 10px;border-bottom:2px solid {{ ACCENT }};font-size:21px;line-height:1.4;color:{{ ACCENT }};">{{ ns.n }}. {{ title }}</h2>
+<h2 data-ke-size="size26" style="margin:44px 0 16px;padding:0 0 10px;border-bottom:2px solid {{ ACCENT }};font-size:21px;line-height:1.4;color:{{ ACCENT }};">{{ ns.n }}. {{ title }}</h2>
 {%- endmacro -%}
 
+{#- data-ke-size: 티스토리 기본 편집기의 글자 크기 표시(본문1 size18 / 본문2 size16 / 본문3 size14,
+    제목1 size26 / 제목2 size22). HTML 모드에서 기본 모드로 돌아가면 font-size 대신 이 값을 쓴다. -#}
 {#- 라벨(이슈 번호·체크포인트 번호). 티스토리 편집기는 span 의 padding·margin·border-radius·display 를 지우고
     글자색·배경색만 남기므로, 여백은 앞뒤 공백 문자(&nbsp;)로 만든다. -#}
 {%- macro label(text) -%}
@@ -58,12 +60,12 @@
 {% endfor %}
   </tbody>
 </table>
-<p style="margin:0 0 20px;font-size:12px;color:{{ MUTED }};">{{ table.note }}</p>
+<p data-ke-size="size14" style="margin:0 0 20px;font-size:12px;color:{{ MUTED }};">{{ table.note }}</p>
 {%- endif %}
 {%- endmacro -%}
 
 {%- macro paragraphs(items) -%}
-{% for p in items %}<p style="margin:0 0 14px;line-height:1.8;">{{ p | rich }}</p>
+{% for p in items %}<p data-ke-size="size16" style="margin:0 0 14px;line-height:1.8;">{{ p | rich }}</p>
 {% endfor %}
 {%- endmacro -%}
 
@@ -96,20 +98,20 @@
 
 {% if cover %}{{ chart_block(cover, caption=False) }}{% endif %}
 
-<p style="margin:0 0 14px;line-height:1.8;">{{ c.lead | rich }}</p>
+<p data-ke-size="size16" style="margin:0 0 14px;line-height:1.8;">{{ c.lead | rich }}</p>
 
 {#- 오늘 시장 한눈에: 요약 한 줄 + 지표 목록.
     표(table)는 티스토리 스킨이 칸마다 테두리를 덧씌우므로 배치용으로 쓰지 않는다. -#}
 <div style="margin:24px 0 8px;padding:18px 18px 12px;background-color:{{ SOFT }};border-left:4px solid {{ ACCENT }};">
-  <p style="margin:0 0 4px;font-size:13px;font-weight:bold;color:{{ ACCENT }};">오늘 시장 한눈에</p>
-  <p style="margin:0 0 10px;font-size:17px;font-weight:bold;line-height:1.6;">{{ c.summary_line | plain }}</p>
+  <p data-ke-size="size14" style="margin:0 0 4px;font-size:13px;font-weight:bold;color:{{ ACCENT }};">오늘 시장 한눈에</p>
+  <p data-ke-size="size18" style="margin:0 0 10px;font-size:17px;font-weight:bold;line-height:1.6;">{{ c.summary_line | plain }}</p>
 {%- if glance.rows %}
   <ul style="margin:0 0 8px;padding-left:20px;line-height:1.9;">
 {% for r in glance.rows %}
     <li>{{ r.label }} <b>{{ r.value }}</b> <span style="color:{{ r.color }};">{{ r.headline }}</span></li>
 {% endfor %}
   </ul>
-  <p style="margin:0;font-size:12px;color:{{ MUTED }};">{{ glance.note }}</p>
+  <p data-ke-size="size14" style="margin:0;font-size:12px;color:{{ MUTED }};">{{ glance.note }}</p>
 {%- endif %}
 </div>
 {% for chart in lead_charts %}{{ chart_block(chart) }}
@@ -126,7 +128,7 @@
 
 {{ h2("한국 증시 체크포인트") }}
 {% for k in c.korea_checkpoints %}
-<p style="margin:0 0 14px;line-height:1.8;">{{ label(loop.index) }}&nbsp; {{ k | rich }}</p>
+<p data-ke-size="size16" style="margin:0 0 14px;line-height:1.8;">{{ label(loop.index) }}&nbsp; {{ k | rich }}</p>
 {% endfor %}
 {%- endif %}
 {%- if body_charts %}
@@ -138,10 +140,10 @@
 
 {{ h2("오늘의 주요 이슈") }}
 {% for issue in c.issues %}
-<h3 style="margin:30px 0 12px;font-size:18px;line-height:1.5;">{{ label("이슈 " ~ loop.index) }}&nbsp; {{ issue.title | plain }}</h3>
+<h3 data-ke-size="size22" style="margin:30px 0 12px;font-size:18px;line-height:1.5;">{{ label("이슈 " ~ loop.index) }}&nbsp; {{ issue.title | plain }}</h3>
 {{ paragraphs(issue.paragraphs) }}
 {%- if issue.reference_urls %}
-<p style="margin:0 0 8px;font-size:13px;color:{{ MUTED }};">참고:
+<p data-ke-size="size14" style="margin:0 0 8px;font-size:13px;color:{{ MUTED }};">참고:
 {%- for url in issue.reference_urls %} <a href="{{ url }}" target="_blank" rel="noopener nofollow" style="color:{{ MUTED }};">{{ ref_names.get(url, "원문") }}</a>{% if not loop.last %},{% endif %}{% endfor %}</p>
 {%- endif %}
 {% endfor %}
@@ -154,26 +156,24 @@
 {%- endif %}
 
 <div style="margin:40px 0 24px;padding:18px;border:1px solid {{ LINE }};border-radius:8px;">
-  <p style="margin:0 0 6px;font-size:13px;font-weight:bold;color:{{ ACCENT }};">마무리</p>
-  <p style="margin:0;line-height:1.8;">{{ c.closing | rich }}</p>
+  <p data-ke-size="size14" style="margin:0 0 6px;font-size:13px;font-weight:bold;color:{{ ACCENT }};">마무리</p>
+  <p data-ke-size="size16" style="margin:0;line-height:1.8;">{{ c.closing | rich }}</p>
 </div>
 
 {%- if references %}
-<p style="margin:28px 0 6px;font-size:14px;font-weight:bold;">참고 자료</p>
-<ul style="margin:0 0 16px;padding-left:20px;font-size:13px;color:{{ MUTED }};">
-{% for r in references %}  <li><a href="{{ r.url }}" target="_blank" rel="noopener nofollow" style="color:{{ MUTED }};">{{ r.title }}</a> · {{ r.source_name }}</li>
-{% endfor %}</ul>
+<p data-ke-size="size14" style="margin:28px 0 16px;font-size:13px;line-height:1.8;color:{{ MUTED }};"><b>참고 자료</b>
+{%- for r in references %}<br>· <a href="{{ r.url }}" target="_blank" rel="noopener nofollow" style="color:{{ MUTED }};">{{ r.title }}</a> · {{ r.source_name }}{% endfor %}</p>
 {%- endif %}
 
 <div style="margin:24px 0;padding:16px 12px;border:2px dashed #c3c2b7;color:#52514e;font-size:14px;">
   [함께 보면 좋은 글] 지난 시황 글 링크 2~3개를 넣거나, 넣을 글이 없으면 이 상자를 지우세요.
 </div>
 
-<p style="margin-top:28px;padding:12px 14px;background:{{ SOFT }};border-radius:6px;font-size:12px;line-height:1.7;color:{{ MUTED }};">
+<p data-ke-size="size14" style="margin-top:28px;padding:12px 14px;background:{{ SOFT }};border-radius:6px;font-size:12px;line-height:1.7;color:{{ MUTED }};">
 이 글은 공개된 뉴스와 시장 데이터를 바탕으로 작성한 개인적인 정리이며, 특정 종목이나 자산의 매수·매도를 권유하지 않습니다. 투자 판단과 그 결과의 책임은 투자자 본인에게 있습니다. 차트와 표는 공개 데이터로 직접 작성했습니다.
 </p>
 {%- if hashtags %}
-<p style="font-size:14px;color:{{ MUTED }};">{{ hashtags }}</p>
+<p data-ke-size="size14" style="font-size:14px;color:{{ MUTED }};">{{ hashtags }}</p>
 {%- endif %}
 {%- if mode == "preview" %}
 </body></html>
