@@ -4,16 +4,45 @@ from conftest import make_article
 
 from econblog.deliver.email import build_message
 from econblog.guard.copyright import find_copied_passages
-from econblog.models import Issue, PostContent
+from econblog.models import Issue, PostContent, Quote
 from econblog.pipeline import run
+from econblog.render.quotes import DOWN_COLOR, FLAT_COLOR, UP_COLOR, build_table, format_quote
 
 
 def _content(paragraph: str) -> PostContent:
     return PostContent(
-        title="11월 7일 시황", lead="요약", global_market=[paragraph], korea_market=["국내"],
+        title="11월 7일 시황", lead="요약", summary_line="한 줄", global_market=[paragraph], korea_market=["국내"],
+        korea_checkpoints=["체크"],
         issues=[Issue(title="이슈", paragraphs=["분석"], reference_urls=["https://example.com/a"])],
-        watch_points=["FOMC"], tags=["경제"],
+        watch_points=["FOMC"], closing="마무리", tags=["경제"],
     )
+
+
+def _quote(key: str, unit: str, last: float, change: float | None) -> Quote:
+    prev = last - change if change is not None else None
+    pct = change / prev * 100 if change is not None and prev else None
+    return Quote(key=key, label=key, unit=unit, category="", provider="yahoo", as_of=date(2026, 11, 6),
+                 last=last, change=change, change_pct=pct)
+
+
+def test_quote_formatting_uses_arrows_and_percent_points():
+    up = format_quote(_quote("kospi", "pt", 2612.3, 31.2))
+    assert (up.value, up.change, up.color) == ("2,612.30", "▲31.20", UP_COLOR)
+    assert up.change_pct == "+1.21%" and up.headline == "▲1.21%"
+    rate = format_quote(_quote("us10y", "%", 4.12, -0.05))
+    assert (rate.value, rate.change, rate.change_pct, rate.headline) == ("4.12%", "▼0.05%p", "-", "▼0.05%p")
+    assert rate.color == DOWN_COLOR
+    flat = format_quote(_quote("base", "%", 2.5, 0.0))
+    assert flat.change == "0.00%p" and flat.color == FLAT_COLOR
+    assert format_quote(_quote("fx", "원", 1385.2, None)).change == "-"
+
+
+def test_table_note_lists_dates_that_differ():
+    quotes = {"a": _quote("a", "pt", 1.0, 0.1), "b": _quote("b", "pt", 2.0, 0.1)}
+    quotes["c"] = _quote("c", "%", 3.0, 0.1).model_copy(update={"as_of": date(2026, 11, 5), "provider": "ecos"})
+    table = build_table(quotes, ["a", "b", "c", "missing"])
+    assert [r.label for r in table.rows] == ["a", "b", "c"]
+    assert table.note == "기준일 11/6 (단, c 11/5) · 자료: Yahoo Finance, 한국은행 ECOS"
 
 
 def test_copyright_guard_flags_copied_sentence():
@@ -35,6 +64,11 @@ def test_dry_run_end_to_end(settings):
     assert '<img src="charts/index_change.png"' in preview
     assert "투자를 권유하지" in html or "권유하지 않습니다" in html
     assert "발행 전 확인" in preview and "발행 전 확인" not in html
+    # 데이터로 만든 요약 상자·표와 새 섹션
+    for text in ("오늘 시장 한눈에", "<table", "코스피", "오늘 한국 증시 체크포인트", "마무리", "[함께 보면 좋은 글]", "#미국증시"):
+        assert text in html, text
+    assert html.index("오늘 시장 한눈에") < html.index("해외 시장") < html.index("국내 시장")
+    assert post.draft.content.title.startswith("[템플릿 초안] 미국증시·코스피 시황 | 11월 6일(금)")
 
     msg = build_message(post, "me@example.com", "me@example.com")
     html_body = next(p.get_content() for p in msg.walk() if p.get_content_type() == "text/html" and not p.get_filename())

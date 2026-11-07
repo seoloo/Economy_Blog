@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 
 from econblog.config import Settings
-from econblog.models import Chart, ChartSpec, MarketSnapshot, Series
+from econblog.models import PROVIDER_NAMES, Chart, ChartSpec, MarketSnapshot, Series
 
 
 class ChartBuilder(ABC):
@@ -22,6 +22,5 @@ class ChartBuilder(ABC):
 
     @staticmethod
     def source_note(series: list[Series]) -> str:
-        names = {"yahoo": "Yahoo Finance", "fred": "FRED", "ecos": "한국은행 ECOS", "sample": "샘플 데이터"}
-        providers = sorted({names.get(s.spec.provider, s.spec.provider) for s in series})
+        providers = sorted({PROVIDER_NAMES.get(s.spec.provider, s.spec.provider) for s in series})
         return "자료: " + ", ".join(providers)

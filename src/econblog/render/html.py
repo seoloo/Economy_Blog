@@ -12,6 +12,7 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoes
 
 from econblog.config import Settings
 from econblog.models import Draft, RenderedPost
+from econblog.render.quotes import build_table
 
 
 def _cited_references(draft: Draft) -> list:
@@ -36,10 +37,15 @@ def render_post(settings: Settings, draft: Draft, out_dir: Path) -> RenderedPost
     )
     template = env.get_template("post.html.j2")
     references = _cited_references(draft)
+    post = settings.post
     common = dict(
         draft=draft,
         c=draft.content,
         charts=draft.charts,
+        glance=build_table(draft.quotes, post.glance),
+        global_table=build_table(draft.quotes, post.global_table),
+        korea_table=build_table(draft.quotes, post.korea_table),
+        hashtags=" ".join("#" + t.replace(" ", "") for t in draft.content.tags if t.strip()),
         references=references,
         ref_names={a.url: a.source_name for a in draft.references},
     )

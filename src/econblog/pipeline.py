@@ -64,7 +64,8 @@ def run(
         warnings.append("데이터 수집 실패: " + ", ".join(sorted(snapshot.errors)))
 
     # 7. 렌더링·전달
-    draft = Draft(date=run_date, content=content, charts=charts, references=references, warnings=warnings)
+    draft = Draft(date=run_date, content=content, charts=charts, quotes=snapshot.quotes(),
+                  references=references, warnings=warnings)
     post = render_post(settings, draft, out_dir)
     for line in deliver_all(settings, post, deliver_methods):
         log.info("전달: %s", line)

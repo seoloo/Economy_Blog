@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from econblog.config import Settings
@@ -10,8 +12,20 @@ from econblog.write.base import WriteContext
 WEEKDAYS = "월화수목금토일"
 
 
+def signed(x: float) -> str:
+    """+1,234.56 형식. 반올림해서 0 이 되는 음수가 -0.00 으로 찍히지 않게 한다."""
+    return f"{round(x, 2) + 0.0:+,.2f}"
+
+
 def _env(settings: Settings) -> Environment:
-    return Environment(loader=FileSystemLoader(settings.prompts_dir), undefined=StrictUndefined, autoescape=False)
+    env = Environment(loader=FileSystemLoader(settings.prompts_dir), undefined=StrictUndefined, autoescape=False)
+    env.filters["signed"] = signed
+    return env
+
+
+def title_prefix(settings: Settings, d: date) -> str:
+    """제목 앞부분(연재 머리말 | 날짜). 매일 같은 형식이라 검색에서 연재로 묶인다."""
+    return f"{settings.post.series_title} | {d.month}월 {d.day}일({WEEKDAYS[d.weekday()]})"
 
 
 def system_prompt(settings: Settings) -> str:
@@ -20,12 +34,20 @@ def system_prompt(settings: Settings) -> str:
 
 def user_prompt(settings: Settings, ctx: WriteContext) -> str:
     series = [ctx.snapshot.series[s.key] for s in settings.series if s.key in ctx.snapshot.series]
+
+    def labels(keys: list[str]) -> list[str]:
+        return [ctx.snapshot.series[k].spec.label for k in keys if k in ctx.snapshot.series]
+
     return _env(settings).get_template("daily_post.md.j2").render(
         date=ctx.date,
         weekday=WEEKDAYS[ctx.date.weekday()],
+        title_prefix=title_prefix(settings, ctx.date),
         series=series,
         missing=sorted(ctx.snapshot.errors),
         charts=ctx.charts,
+        glance_labels=labels(settings.post.glance),
+        global_labels=labels(settings.post.global_table),
+        korea_labels=labels(settings.post.korea_table),
         global_articles=[x for x in ctx.articles if x.article.region == "global"],
         kr_articles=[x for x in ctx.articles if x.article.region == "kr"],
     )

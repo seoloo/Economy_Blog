@@ -19,7 +19,10 @@ def _norm(text: str) -> str:
 
 
 def _paragraphs(content: PostContent) -> list[str]:
-    texts = [content.title, content.lead, *content.global_market, *content.korea_market, *content.watch_points]
+    texts = [
+        content.title, content.lead, content.summary_line, *content.global_market, *content.korea_market,
+        *content.korea_checkpoints, *content.watch_points, content.closing,
+    ]
     for issue in content.issues:
         texts += [issue.title, *issue.paragraphs]
     return [t for t in texts if t]

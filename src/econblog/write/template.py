@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from econblog.models import Issue, PostContent, Series
 from econblog.write.base import WriteContext, Writer
+from econblog.write.prompting import title_prefix
 
 
 def _move(s: Series | None) -> str | None:
@@ -39,11 +40,14 @@ class TemplateWriter(Writer):
         ]
         top = ctx.articles[0].topic if ctx.articles else "시장"
         return PostContent(
-            title=f"[템플릿 초안] {ctx.date.month}월 {ctx.date.day}일 경제 시황 정리 ({top})",
+            title=f"[템플릿 초안] {title_prefix(self.settings, ctx.date)} | {top} 정리",
             lead="LLM 없이 데이터로만 만든 뼈대 초안입니다. 도입부와 분석을 직접 채워 넣어야 합니다.",
+            summary_line="(오늘 시장 한 줄 요약을 직접 작성하세요)",
             global_market=para("index_global", "rates", "commodity"),
             korea_market=para("index_kr", "fx"),
+            korea_checkpoints=["(해외 흐름이 오늘 국내 증시에 줄 영향을 직접 작성하세요)"],
             issues=issues,
             watch_points=["(직접 작성)"],
-            tags=["경제", "시황", "증시", "환율", "금리"],
+            closing="(마무리 한두 문장을 직접 작성하세요)",
+            tags=["미국증시", "코스피", "경제", "시황", "환율", "금리"],
         )

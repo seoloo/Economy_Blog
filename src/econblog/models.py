@@ -15,6 +15,9 @@ from pydantic import BaseModel, Field
 Region = Literal["kr", "global"]
 SourceKind = Literal["news", "blog", "official"]
 
+# 차트·표 하단 출처 표기에 쓰는 데이터 제공처 이름
+PROVIDER_NAMES = {"yahoo": "Yahoo Finance", "fred": "FRED", "ecos": "한국은행 ECOS", "sample": "샘플 데이터"}
+
 
 # ---------------------------------------------------------------- 수집 / 분류
 
@@ -105,6 +108,20 @@ class Series(BaseModel):
         return Series(spec=self.spec, dates=[d for d, _ in pairs], values=[v for _, v in pairs])
 
 
+class Quote(BaseModel):
+    """시리즈의 마지막 값과 전일 대비 변화. 본문 표와 '오늘 시장 한눈에' 상자에 쓴다."""
+
+    key: str
+    label: str
+    unit: str
+    category: str
+    provider: str
+    as_of: date
+    last: float
+    change: float | None = None
+    change_pct: float | None = None
+
+
 class MarketSnapshot(BaseModel):
     as_of: date
     series: dict[str, Series] = Field(default_factory=dict)
@@ -112,6 +129,18 @@ class MarketSnapshot(BaseModel):
 
     def get(self, key: str) -> Series | None:
         return self.series.get(key)
+
+    def quotes(self) -> dict[str, Quote]:
+        out: dict[str, Quote] = {}
+        for key, s in self.series.items():
+            if s.last is None or s.last_date is None:
+                continue
+            out[key] = Quote(
+                key=key, label=s.spec.label, unit=s.spec.unit, category=s.spec.category,
+                provider=s.spec.provider, as_of=s.last_date, last=s.last,
+                change=s.change, change_pct=s.change_pct,
+            )
+        return out
 
 
 # ---------------------------------------------------------------- 차트
@@ -141,26 +170,33 @@ class Chart(BaseModel):
 
 class Issue(BaseModel):
     title: str = Field(description="이슈 제목. 기사 제목을 그대로 쓰지 말고 직접 요약한다.")
-    paragraphs: list[str] = Field(description="이슈 설명과 분석. 2~4개 문단.")
+    paragraphs: list[str] = Field(description="이슈 설명과 분석. 3~5개 문단, 문단마다 1~2문장.")
     reference_urls: list[str] = Field(description="참고한 기사 URL. 입력으로 받은 URL만 사용한다.")
 
 
 class PostContent(BaseModel):
-    """글쓴이(Writer)가 만들어야 하는 본문 구조. 레이아웃은 templates/ 가 담당한다."""
+    """글쓴이(Writer)가 만들어야 하는 본문 구조. 레이아웃은 templates/ 가 담당한다.
 
-    title: str = Field(description="SEO를 고려한 글 제목. 날짜와 핵심 이슈를 포함한다.")
-    lead: str = Field(description="오늘 시장을 2~3문장으로 요약한 도입부.")
-    global_market: list[str] = Field(description="해외 시장 시황 문단 목록.")
-    korea_market: list[str] = Field(description="국내 시장 시황 문단 목록.")
+    필드 순서가 곧 LLM 이 쓰는 순서이므로, 글의 흐름대로 둔다.
+    """
+
+    title: str = Field(description="글 제목. 작성 요청에 적힌 형식(연재 머리말 | 날짜 | 핵심 한 줄)을 그대로 따른다.")
+    lead: str = Field(description="도입부 2~3문장. 첫 문장은 독자에게 오늘 무엇을 정리했는지 말하고, 이어서 핵심 흐름을 요약한다.")
+    summary_line: str = Field(description="오늘 시장을 한 문장(40자 안팎)으로 요약. '오늘 시장 한눈에' 상자 맨 위에 들어간다.")
+    global_market: list[str] = Field(description="해외 시장 시황 문단 목록. 문단마다 1~2문장.")
+    korea_market: list[str] = Field(description="국내 시장 시황 문단 목록. 문단마다 1~2문장.")
+    korea_checkpoints: list[str] = Field(description="해외 흐름이 오늘 한국 증시에 줄 수 있는 영향 2~4개. 항목마다 1~2문장.")
     issues: list[Issue] = Field(description="오늘의 주요 이슈 3~5개.")
     watch_points: list[str] = Field(description="앞으로 확인할 일정·지표 체크포인트.")
-    tags: list[str] = Field(description="티스토리 태그 5~10개.")
+    closing: str = Field(description="마무리 1~2문장. 오늘 내용을 한 줄로 정리하고 독자에게 건네는 짧은 말로 끝낸다.")
+    tags: list[str] = Field(description="티스토리 태그 5~10개. 본문 끝 해시태그로도 쓴다.")
 
 
 class Draft(BaseModel):
     date: date
     content: PostContent
     charts: list[Chart] = Field(default_factory=list)
+    quotes: dict[str, Quote] = Field(default_factory=dict)
     references: list[Article] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
 

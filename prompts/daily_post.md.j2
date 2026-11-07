@@ -2,19 +2,24 @@
 
 ## 시장 데이터 (마지막 거래일 기준)
 
+금리(단위 %)는 등락률 대신 %p 변화로 씁니다. 예: "0.05%p 올랐습니다".
+
 | 항목 | 기준일 | 값 | 전일 대비 | 등락률 |
 |---|---|---|---|---|
 {% for s in series -%}
-| {{ s.spec.label }} | {{ s.last_date }} | {{ "{:,.2f}".format(s.last) }}{{ s.spec.unit }} | {{ "{:+,.2f}".format(s.change) if s.change is not none else "-" }} | {{ "{:+.2f}%".format(s.change_pct) if s.change_pct is not none else "-" }} |
+| {{ s.spec.label }} | {{ s.last_date }} | {{ "{:,.2f}".format(s.last) }}{{ s.spec.unit }} | {{ s.change | signed if s.change is not none else "-" }}{{ "%p" if s.spec.unit == "%" and s.change is not none else "" }} | {{ (s.change_pct | signed) ~ "%" if s.change_pct is not none and s.spec.unit != "%" else "-" }} |
 {% endfor %}
 {% if missing %}
 수집하지 못한 데이터: {{ missing | join(", ") }} (이 항목의 수치는 쓰지 마세요)
 {% endif %}
 
-## 본문에 들어갈 차트
+## 본문에 자동으로 들어가는 요소
 
+- 「오늘 시장 한눈에」 상자: summary_line 과 함께 {{ glance_labels | join(", ") }} 의 수치가 들어갑니다.
+- 해외 시장 표: {{ global_labels | join(", ") }}
+- 국내 시장 표: {{ korea_labels | join(", ") }}
 {% for c in charts -%}
-- {{ c.title }}: {{ c.alt_text }}
+- 차트 「{{ c.title }}」: {{ c.alt_text }}
 {% endfor %}
 
 ## 해외 기사·블로그 (중요도 순)
@@ -35,7 +40,13 @@
 
 ## 작성 요청
 
-- global_market: 해외 시장 흐름 2~3문단 (미국 증시, 금리, 달러, 유가 중심)
-- korea_market: 국내 시장 흐름 2~3문단 (코스피·코스닥, 환율, 수급)
+- title: 「{{ title_prefix }} | 핵심 한 줄」 형식으로 씁니다. 「{{ title_prefix }} | 」 부분은 글자 하나 바꾸지 않습니다.
+- lead: 2~3문장. 첫 문장은 독자에게 오늘 글에서 확인할 내용을 알려 주고, 이어서 밤사이 미국 증시와 국내 시장의 핵심 흐름을 요약합니다.
+- summary_line: 오늘 시장을 한 문장(40자 안팎)으로 요약합니다.
+- global_market: 해외 시장 흐름 3~5문단, 문단마다 1~2문장 (미국 증시, 금리, 달러, 유가 중심)
+- korea_market: 국내 시장 흐름 3~5문단, 문단마다 1~2문장 (코스피·코스닥, 환율, 금리)
+- korea_checkpoints: 해외 흐름이 오늘 한국 증시에 줄 수 있는 영향 2~4개. 어떤 업종이나 지표를 볼지 근거와 함께 씁니다. 단정하지 말고 가능성으로 씁니다.
 - issues: 오늘의 주요 이슈 3~5개. 해외 이슈와 국내 이슈를 섞고, 각 이슈는 무슨 일인지, 왜 중요한지, 시장에 어떤 영향이 있을지 순서로 분석합니다.
 - watch_points: 앞으로 확인할 일정·지표 3~5개 (기사에 나온 것만)
+- closing: 1~2문장. 오늘 내용을 한 줄로 정리하고 독자에게 건네는 짧은 말로 끝냅니다. 투자를 권하는 말은 쓰지 않습니다.
+- tags: 5~10개. 첫 두 개는 「미국증시」, 「코스피」로 하고 나머지는 오늘 이슈에서 고릅니다.
