@@ -150,3 +150,16 @@ def test_google_news_reference_shows_real_publisher():
     assert ref_link(a)[1:] == ("코스피 급락…외국인 매도", "경향신문")
     b = make_article("Fed holds rates - not a publisher split")  # 구글 뉴스가 아니면 그대로
     assert ref_link(b)[1:] == (b.title, b.source_name)
+
+
+def test_tistory_html_uses_only_styles_the_editor_keeps(settings):
+    """티스토리 기본 편집기는 margin·padding·border·font-size 등을 지우고 thead/th 를 글자로 풀어 버린다."""
+    import re
+
+    post = run(settings, run_date=date(2026, 11, 6), offline=True, deliver_methods=[])
+    assert "<th" not in post.html and "<thead" not in post.html
+    kept = {"color", "background-color", "text-align", "border-collapse", "width", "list-style-type"}
+    used = {prop.strip() for style in re.findall(r'(?<![-\w])style="([^"]*)"', post.html)
+            for prop in (d.split(":")[0] for d in style.split(";")) if prop.strip()}
+    assert used <= kept, used - kept
+    assert 'blockquote data-ke-style="style3"' in post.html  # 오늘 시장 한눈에 상자
