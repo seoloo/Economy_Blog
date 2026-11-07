@@ -27,6 +27,7 @@ RELEVANCE_INSTRUCTIONS = (
     "Answer no for culture, history, politics without market impact, personal essays and link round-ups."
 )
 IRRELEVANT_PENALTY = 0.2   # 경제와 무관하다고 판정되면 중요도에 곱한다
+RELEVANCE_CUTOFF = 0.05    # 실측상 noul 이 낮게 나오는 편이라 확실한 '아니오'만 거른다
 
 IMPORTANCE_LEVELS = ["minor", "notable", "important", "major"]
 IMPORTANCE_INSTRUCTIONS = (
@@ -38,12 +39,27 @@ TOPIC_INSTRUCTIONS = "Which economic topic does this news article mainly cover?"
 
 
 def level_to_importance(answer: dict) -> float:
-    """score 응답을 0~1 로 바꾼다. probabilities 가 있으면 기대값, 없으면 단계 위치."""
+    """score 응답을 0~1 로 바꾼다.
+
+    실제 응답 예: {"score": 0.38, "legend": {"0": "minor", ...}, "probabilities": {"0": 0.81, "1": 0.07, ...}}
+    probabilities 의 키는 단계 번호(문자열)이고, score 는 단계 번호의 기대값(0~3)이다.
+    """
     n = len(IMPORTANCE_LEVELS)
     probs = answer.get("probabilities")
     if isinstance(probs, dict) and probs:
+        legend = answer.get("legend") or {}
         total = sum(probs.values()) or 1.0
-        return sum(IMPORTANCE_LEVELS.index(k) / (n - 1) * v for k, v in probs.items() if k in IMPORTANCE_LEVELS) / total
+        acc = 0.0
+        for key, p in probs.items():
+            label = legend.get(key, key)
+            if label in IMPORTANCE_LEVELS:
+                idx = IMPORTANCE_LEVELS.index(label)
+            elif str(key).isdigit():
+                idx = int(key)
+            else:
+                continue
+            acc += idx / (n - 1) * p
+        return acc / total
     if isinstance(probs, list) and len(probs) == n:
         total = sum(probs) or 1.0
         return sum(i / (n - 1) * p for i, p in enumerate(probs)) / total
@@ -147,7 +163,7 @@ class LayaClassifier(Classifier):
         if topic not in self.topics or (conf is not None and conf < self.settings.classify.laya_min_confidence):
             topic = "other"
         importance = level_to_importance(answers.get("importance", {}))
-        if yes_probability(answers.get("relevant")) < 0.5:
+        if yes_probability(answers.get("relevant")) < RELEVANCE_CUTOFF:
             importance *= IRRELEVANT_PENALTY
             topic = "other"
         return ClassifiedArticle(article=a, topic=topic, importance=round(importance, 3))

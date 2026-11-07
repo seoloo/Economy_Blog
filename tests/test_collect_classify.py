@@ -67,6 +67,10 @@ def test_laya_importance_parsing():
     assert level_to_importance({"score": "minor"}) == 0.0
     assert abs(level_to_importance({"probabilities": {"minor": 0.5, "major": 0.5}}) - 0.5) < 1e-9
     assert level_to_importance({}) == 0.5
+    # 실제 Laya 응답 형식: 단계 번호 키 + legend
+    real = {"score": 0.3818, "legend": {"0": "minor", "1": "notable", "2": "important", "3": "major"},
+            "probabilities": {"0": 0.8053, "1": 0.0704, "2": 0.0615, "3": 0.0628}}
+    assert abs(level_to_importance(real) - 0.3818 / 3) < 0.01
 
 
 def test_laya_relevance_and_chunking():

@@ -25,8 +25,7 @@ sources:
   # ---------- 공식 기관 (미국 정부 저작물은 퍼블릭 도메인)
   - {id: fed_press, name: Federal Reserve Press Releases, url: "https://www.federalreserve.gov/feeds/press_all.xml", region: global, kind: official, lang: en}
 
-  # ---------- 해외 경제 블로그
-  - {id: calculated_risk, name: Calculated Risk, url: "https://calculatedrisk.substack.com/feed", region: global, kind: blog, lang: en}
+  # ---------- 해외 경제 블로그 (Substack 피드는 GitHub 서버에서 403 이라 제외)
   - {id: wolf_street, name: Wolf Street, url: "https://wolfstreet.com/feed/", region: global, kind: blog, lang: en}
   - {id: marginal_revolution, name: Marginal Revolution, url: "https://marginalrevolution.com/feed", region: global, kind: blog, lang: en}
   - {id: liberty_street, name: Liberty Street Economics (NY Fed), url: "https://libertystreeteconomics.newyorkfed.org/feed/", region: global, kind: blog, lang: en}
