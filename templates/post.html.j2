@@ -12,6 +12,12 @@
 <h2 style="margin:44px 0 16px;padding:0 0 10px;border-bottom:2px solid {{ ACCENT }};font-size:21px;line-height:1.4;color:{{ ACCENT }};">{{ ns.n }}. {{ title }}</h2>
 {%- endmacro -%}
 
+{#- 라벨(이슈 번호·체크포인트 번호). 티스토리 편집기는 span 의 padding·margin·border-radius·display 를 지우고
+    글자색·배경색만 남기므로, 여백은 앞뒤 공백 문자(&nbsp;)로 만든다. -#}
+{%- macro label(text) -%}
+<span style="background-color:{{ ACCENT }};color:#ffffff;font-weight:bold;">&nbsp;{{ text }}&nbsp;</span>
+{%- endmacro -%}
+
 {%- macro chart_block(chart, caption=True) -%}
 <figure style="margin:24px 0;text-align:center;">
 {%- if chart.url %}
@@ -134,7 +140,7 @@
 {% for k in c.korea_checkpoints %}
   <tr>
     <td style="width:34px;padding:10px 0;border:none;border-bottom:1px solid {{ LINE }};vertical-align:top;">
-      <span style="display:inline-block;width:24px;height:24px;border-radius:12px;background:{{ ACCENT }};color:#ffffff;text-align:center;font-size:13px;line-height:24px;font-weight:bold;">{{ loop.index }}</span>
+      {{ label(loop.index) }}
     </td>
     <td style="padding:10px 0;border:none;border-bottom:1px solid {{ LINE }};line-height:1.7;">{{ k | rich }}</td>
   </tr>
@@ -150,9 +156,7 @@
 
 {{ h2("오늘의 주요 이슈") }}
 {% for issue in c.issues %}
-<h3 style="margin:30px 0 12px;font-size:18px;line-height:1.5;">
-  <span style="display:inline-block;margin-right:6px;padding:2px 8px;border-radius:4px;background:{{ ACCENT }};color:#ffffff;font-size:12px;vertical-align:middle;">이슈 {{ loop.index }}</span>{{ issue.title | plain }}
-</h3>
+<h3 style="margin:30px 0 12px;font-size:18px;line-height:1.5;">{{ label("이슈 " ~ loop.index) }}&nbsp; {{ issue.title | plain }}</h3>
 {{ paragraphs(issue.paragraphs) }}
 {%- if issue.reference_urls %}
 <p style="margin:0 0 8px;font-size:13px;color:{{ MUTED }};">참고:
