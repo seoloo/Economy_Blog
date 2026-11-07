@@ -1,0 +1,84 @@
+{#- mode: "tistory" = 티스토리 HTML 모드에 붙여넣을 본문, "preview" = 메일/로컬 확인용 -#}
+{%- macro chart_block(chart) -%}
+<figure style="margin:24px 0;text-align:center;">
+{%- if mode == "preview" %}
+  <img src="charts/{{ chart.path.name }}" alt="{{ chart.alt_text }}" style="max-width:100%;height:auto;">
+{%- else %}
+  <div style="padding:28px 12px;border:2px dashed #c3c2b7;color:#52514e;font-size:14px;">
+    [이미지 삽입] {{ chart.path.name }} — 이 상자를 지우고 차트 이미지를 올리세요.<br>
+    대체 텍스트: {{ chart.alt_text }}
+  </div>
+{%- endif %}
+  <figcaption style="font-size:13px;color:#898781;margin-top:6px;">{{ chart.title }} · {{ chart.source_note }}</figcaption>
+</figure>
+{%- endmacro -%}
+
+{%- if mode == "preview" %}<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ c.title }}</title></head>
+<body style="max-width:760px;margin:0 auto;padding:16px;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;line-height:1.75;color:#0b0b0b;background:#ffffff;">
+<div style="background:#f9f9f7;border:1px solid #e1e0d9;border-radius:8px;padding:14px 18px;margin-bottom:28px;font-size:14px;">
+  <strong>발행 전 확인</strong>
+  <ol style="margin:8px 0 0 18px;padding:0;">
+    <li>제목: {{ c.title }}</li>
+    <li>태그: {{ c.tags | join(", ") }}</li>
+    <li>티스토리 편집기를 HTML 모드로 바꾸고 첨부한 post.html 내용을 붙여넣기</li>
+    <li>[이미지 삽입] 상자 자리에 첨부한 차트 PNG 올리기</li>
+    <li>수치와 사실을 다시 확인하고, 내 의견 한두 문장 덧붙이기</li>
+  </ol>
+  {%- if draft.warnings %}
+  <p style="margin:12px 0 0;color:#d03b3b;"><strong>⚠ 검토 필요 {{ draft.warnings | length }}건</strong></p>
+  <ul style="margin:4px 0 0 18px;padding:0;color:#d03b3b;">
+    {%- for w in draft.warnings %}<li>{{ w }}</li>{% endfor %}
+  </ul>
+  {%- endif %}
+</div>
+<h1 style="font-size:26px;line-height:1.4;">{{ c.title }}</h1>
+{%- endif %}
+
+<p>{{ c.lead }}</p>
+{% if charts %}{{ chart_block(charts[0]) }}{% endif %}
+
+<h2>해외 시장</h2>
+{% for p in c.global_market %}<p>{{ p }}</p>
+{% endfor %}
+<h2>국내 시장</h2>
+{% for p in c.korea_market %}<p>{{ p }}</p>
+{% endfor %}
+{%- if charts | length > 1 %}
+<h2>차트로 보는 주요 지표</h2>
+{% for chart in charts[1:] %}{{ chart_block(chart) }}
+{% endfor %}
+{%- endif %}
+
+<h2>오늘의 주요 이슈</h2>
+{% for issue in c.issues %}
+<h3>{{ loop.index }}. {{ issue.title }}</h3>
+{% for p in issue.paragraphs %}<p>{{ p }}</p>
+{% endfor %}
+{%- if issue.reference_urls %}
+<p style="font-size:13px;color:#898781;">참고:
+{%- for url in issue.reference_urls %} <a href="{{ url }}" target="_blank" rel="noopener nofollow">{{ ref_names.get(url, "원문") }}</a>{% if not loop.last %},{% endif %}{% endfor %}</p>
+{%- endif %}
+{% endfor %}
+
+{%- if c.watch_points %}
+<h2>앞으로 확인할 일정·지표</h2>
+<ul>
+{% for w in c.watch_points %}  <li>{{ w }}</li>
+{% endfor %}</ul>
+{%- endif %}
+
+{%- if references %}
+<h2>참고 자료</h2>
+<ul style="font-size:14px;">
+{% for r in references %}  <li><a href="{{ r.url }}" target="_blank" rel="noopener nofollow">{{ r.title }}</a> — {{ r.source_name }}</li>
+{% endfor %}</ul>
+{%- endif %}
+
+<p style="margin-top:32px;padding:12px 14px;background:#f9f9f7;border-radius:6px;font-size:13px;color:#52514e;">
+이 글은 공개된 뉴스와 시장 데이터를 바탕으로 작성한 개인적인 정리이며, 특정 종목이나 자산의 매수·매도를 권유하지 않습니다. 투자 판단과 그 결과의 책임은 투자자 본인에게 있습니다. 차트는 공개 데이터로 직접 작성했습니다.
+</p>
+{%- if mode == "preview" %}
+</body></html>
+{%- endif %}

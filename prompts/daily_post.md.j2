@@ -1,0 +1,41 @@
+오늘은 {{ date.year }}년 {{ date.month }}월 {{ date.day }}일({{ weekday }})입니다. 아래 자료로 오늘의 경제 시황 글을 써 주세요.
+
+## 시장 데이터 (마지막 거래일 기준)
+
+| 항목 | 기준일 | 값 | 전일 대비 | 등락률 |
+|---|---|---|---|---|
+{% for s in series -%}
+| {{ s.spec.label }} | {{ s.last_date }} | {{ "{:,.2f}".format(s.last) }}{{ s.spec.unit }} | {{ "{:+,.2f}".format(s.change) if s.change is not none else "-" }} | {{ "{:+.2f}%".format(s.change_pct) if s.change_pct is not none else "-" }} |
+{% endfor %}
+{% if missing %}
+수집하지 못한 데이터: {{ missing | join(", ") }} (이 항목의 수치는 쓰지 마세요)
+{% endif %}
+
+## 본문에 들어갈 차트
+
+{% for c in charts -%}
+- {{ c.title }}: {{ c.alt_text }}
+{% endfor %}
+
+## 해외 기사·블로그 (중요도 순)
+
+{% for x in global_articles -%}
+- [{{ x.topic }}] {{ x.article.title }} ({{ x.article.source_name }}{% if x.article.kind == "blog" %}, 블로그{% endif %})
+  요약: {{ x.article.summary or "(요약 없음)" }}
+  URL: {{ x.article.url }}
+{% endfor %}
+
+## 국내 기사 (중요도 순)
+
+{% for x in kr_articles -%}
+- [{{ x.topic }}] {{ x.article.title }} ({{ x.article.source_name }})
+  요약: {{ x.article.summary or "(요약 없음)" }}
+  URL: {{ x.article.url }}
+{% endfor %}
+
+## 작성 요청
+
+- global_market: 해외 시장 흐름 2~3문단 (미국 증시, 금리, 달러, 유가 중심)
+- korea_market: 국내 시장 흐름 2~3문단 (코스피·코스닥, 환율, 수급)
+- issues: 오늘의 주요 이슈 3~5개. 해외 이슈와 국내 이슈를 섞고, 각 이슈는 무슨 일인지, 왜 중요한지, 시장에 어떤 영향이 있을지 순서로 분석합니다.
+- watch_points: 앞으로 확인할 일정·지표 3~5개 (기사에 나온 것만)

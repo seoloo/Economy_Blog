@@ -1,0 +1,68 @@
+name: daily-post
+
+on:
+  schedule:
+    - cron: "0 22 * * *" # 매일 07:00 KST (UTC 22:00). GitHub 사정으로 수십 분 늦어질 수 있음
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "기준 날짜 YYYY-MM-DD (비우면 오늘, KST)"
+        required: false
+      dry_run:
+        description: "샘플 데이터로 실행 (외부 API 호출 없음)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-post
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: 한글 폰트 설치
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-nanum
+          rm -rf ~/.cache/matplotlib
+
+      - name: 의존성 설치
+        run: pip install -e .
+
+      - name: 초안 생성
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LAYA_API_KEY: ${{ secrets.LAYA_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+        run: |
+          args=""
+          if [ -n "${{ inputs.date }}" ]; then args="$args --date ${{ inputs.date }}"; fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then args="$args --dry-run --deliver local,email"; fi
+          python -m econblog run $args
+
+      # 메일이 안 왔을 때 대비용. 레포가 public 이면 로그인한 누구나 받을 수 있으므로 보관 기간을 짧게 둔다.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: draft-${{ github.run_id }}
+          path: output/
+          retention-days: 3
+          if-no-files-found: ignore
