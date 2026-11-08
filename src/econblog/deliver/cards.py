@@ -250,6 +250,9 @@ def deliver_cards(settings: Settings, cardsets: list[CardSet], methods: list[str
             if not (env(account.token_env) and env(account.user_env)):
                 log.info("인스타 게시 건너뜀 %s: 토큰 없음", cs.account)
                 continue
+            if cs.date.weekday() not in settings.instagram.publish_weekdays:
+                log.info("인스타 게시 건너뜀 %s: 자동 게시 요일 아님", cs.account)
+                continue
             if cs.warnings:   # 검토 경고(숫자·저작권·모호한 표현)가 있는 날은 사람이 보고 올린다
                 log.info("인스타 게시 건너뜀 %s: 검토 경고 %d건", cs.account, len(cs.warnings))
                 cs.warnings.append("검토 경고가 있어 자동 게시하지 않았습니다 (확인 후 insta-post 로 올리세요)")

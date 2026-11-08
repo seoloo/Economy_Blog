@@ -25,6 +25,8 @@ def post_texts(content: PostContent | GuidePost | CardCopy) -> list[str]:
                  content.asia_note, content.caption]
         for c in content.checklist:
             texts += [c.title, c.detail]
+        for e in content.events:   # 일정 칸도 검사한다 (근거 없는 숫자·의혹이 일정에 끼어들 수 있다)
+            texts += [e.title, e.detail]
         for st in content.stories:
             texts += [*st.headline, *st.paragraphs, st.why]
         return [t for t in texts if t]

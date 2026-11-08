@@ -366,3 +366,26 @@ def test_upload_path_keeps_same_day_sets_apart(settings, tmp_path, monkeypatch):
     kr = next(a for a in settings.instagram.accounts if a.key == "kr")
     card_deliver._publish(settings, kr, cs)
     assert sent["paths"] == ["2026-11-08-intro/insta/kr/01.jpg"]
+
+
+def test_monday_cards_are_not_auto_posted(settings, tmp_path, monkeypatch):
+    # 월요일 아침엔 토요일 이후 새 장이 없어 같은 숫자가 두 번 올라간다
+    settings.instagram.publish = True
+    monkeypatch.setenv("INSTAGRAM_ACCESS_TOKEN", "IGAAtest")
+    monkeypatch.setenv("INSTAGRAM_USER_ID", "1")
+    posted = []
+    monkeypatch.setattr(card_deliver, "_publish", lambda s, a, cs: posted.append(cs.date) or "M1")
+    for day in (date(2026, 11, 9), date(2026, 11, 10)):   # 월, 화
+        cs = CardSet(account="kr", brand="그냥모아", lang="ko", date=day, text=_copy(), output_dir=tmp_path / str(day))
+        card_deliver.deliver_cards(settings, [cs], ["local"])
+    assert posted == [date(2026, 11, 10)]
+
+
+def test_allegations_about_people_are_flagged(settings):
+    from econblog.guard.style import find_vague_phrases
+
+    text = _copy("en").model_copy(update={"events": [CardEvent(when="This week", title="Nvidia AI Day",
+                                                              detail="Follow-up on the Jensen Huang allegations", tag="Tech")]})
+    warning = find_vague_phrases(text, settings.instagram.sensitive_phrases["en"], label="개인 의혹·소문 표현")
+    assert warning and "allegation" in warning[0]
+    assert find_vague_phrases(_copy(), settings.instagram.sensitive_phrases["ko"]) == []

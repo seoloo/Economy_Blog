@@ -121,13 +121,18 @@ deliver:
 #               check 아시아·한국 체크, events 일정(없으면 빠짐), closing 오늘의 한 줄
 instagram:
   enabled: true
-  publish: false
+  publish: true        # 경고가 없는 날만 자동 게시 (경고가 있으면 메일로만 보내고 insta-edit/insta-post 로 올린다)
+  publish_weekdays: [1, 2, 3, 4, 5]   # 화~토(0=월). 월요일 아침은 토요일과 같은 금요일 숫자라 메일로만 보낸다
   disclaimer: false    # true 면 캡션 끝·마지막 카드 아래에 "투자 권유 아님" 문구를 넣는다 (블로그 글에는 항상 들어감)
   graph_version: v23.0
   # 카드에 쓰면 안 되는 모호한 표현. 나오면 [검토] 경고를 붙인다 (도시 이름으로 시장 부르기, 비유, 막연한 예측).
   vague_phrases:
     ko: ["서울은", "뉴욕은", "도쿄는", "월가는", "어디쯤", "온도차", "온도 차", "정반대의 하루", "웃었다", "울었다", "지켜볼 일", "일 겁니다"]
     en: ["Seoul sold", "New York bought", "Wall Street shrugged", "far from settled", "somewhere in between", "remains to be seen", "only time will tell", "rages on"]
+  # 개인 의혹·소문처럼 사람이 사실을 확인해야 하는 표현. 나오면 [검토] 경고를 붙여 그날은 자동 게시하지 않는다.
+  sensitive_phrases:
+    ko: ["의혹", "스캔들", "불륜", "스파이", "간첩", "루머", "소문", "사생활", "혐의", "고발", "고소", "기소", "구속"]
+    en: ["allegation", "alleged", "scandal", "affair", "spy", "rumor", "rumour", "private life", "indicted", "lawsuit", "accused"]
   accounts:
     - key: kr
       lang: ko

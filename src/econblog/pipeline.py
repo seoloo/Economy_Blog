@@ -124,6 +124,8 @@ def run_cards(
         if account.lang == "ko":
             warnings += find_ai_phrases(text, settings.guard.ai_phrases)
         warnings += find_vague_phrases(text, settings.instagram.vague_phrases.get(account.lang, []))
+        warnings += find_vague_phrases(text, settings.instagram.sensitive_phrases.get(account.lang, []),
+                                       label="개인 의혹·소문 표현, 사실 확인 필요")
         warnings += find_unverified_numbers(text, snapshot)
         photos = PhotoPicker(settings, card_dir / "photos", seed=f"{run_date}-{account.key}", offline=offline)
         slides = build_slides(account, text, snapshot, run_date, photos)
