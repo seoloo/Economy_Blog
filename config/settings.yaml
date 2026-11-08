@@ -122,7 +122,7 @@ deliver:
 instagram:
   enabled: true
   publish: true        # 경고가 없는 날만 자동 게시 (경고가 있으면 메일로만 보내고 insta-edit/insta-post 로 올린다)
-  publish_weekdays: [1, 2, 3, 4, 5]   # 화~토(0=월). 월요일 아침은 토요일과 같은 금요일 숫자라 메일로만 보낸다
+  publish_weekdays: [1, 2, 3, 4, 5]   # 화~토(0=월). 정기 실행도 화~토. 월요일에 손으로 돌려도 게시하지 않는다
   disclaimer: false    # true 면 캡션 끝·마지막 카드 아래에 "투자 권유 아님" 문구를 넣는다 (블로그 글에는 항상 들어감)
   graph_version: v23.0
   # 카드에 쓰면 안 되는 모호한 표현. 나오면 [검토] 경고를 붙인다 (도시 이름으로 시장 부르기, 비유, 막연한 예측).
