@@ -85,6 +85,24 @@ def _cmd_check_sources(args: argparse.Namespace) -> int:
     return 1 if failed else 0
 
 
+def _cmd_insta_check(args: argparse.Namespace) -> int:
+    """인스타 계정 토큰 점검 (게시하지 않음). 토큰이 없는 계정은 건너뛴다."""
+    from econblog.config import env
+    from econblog.deliver.cards import check_account
+
+    settings = load_settings()
+    failed = 0
+    for account in settings.instagram.accounts:
+        if not env(account.token_env):
+            print(f"{account.key}: 토큰 없음, 건너뜀")
+            continue
+        ok, line = check_account(settings, account)
+        failed += not ok
+        print(("OK   " if ok else "FAIL ") + line)
+    print(f"instagram.publish = {settings.instagram.publish}")
+    return 1 if failed else 0
+
+
 def _cmd_classify(args: argparse.Namespace) -> int:
     """수집·분류만 실행해 선택 결과를 확인한다. 글 작성·메일 발송은 하지 않는다."""
     from econblog.classify import classify_and_select
@@ -122,6 +140,9 @@ def main(argv: list[str] | None = None) -> int:
     p_cls = sub.add_parser("classify", help="수집·분류만 실행 (글 작성·발송 없음)")
     p_cls.add_argument("--dry-run", action="store_true")
     p_cls.set_defaults(func=_cmd_classify)
+
+    p_ig = sub.add_parser("insta-check", help="인스타 계정 토큰 점검 (게시하지 않음)")
+    p_ig.set_defaults(func=_cmd_insta_check)
 
     p_chk = sub.add_parser("check-sources", help="RSS 소스 점검")
     p_chk.add_argument("--hours", type=int, default=72)

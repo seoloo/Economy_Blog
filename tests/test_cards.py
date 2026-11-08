@@ -175,3 +175,22 @@ def test_photo_picker_downloads_and_never_repeats(settings, tmp_path, monkeypatc
     a, b = picker.find("chip"), picker.find("chip")
     assert a != b and a.read_bytes() == b"jpeg" and picker.find("chip") is None
     assert PhotoPicker(settings, tmp_path, seed="x", offline=True).find("chip") is None
+
+
+def test_check_account_reads_without_posting(settings, monkeypatch):
+    calls = []
+
+    class FakeSession:
+        def request(self, method, url, timeout, data=None, params=None):
+            calls.append(method)
+            if url.endswith("content_publishing_limit"):
+                return FakeResponse({"data": [{"quota_usage": 0}]})
+            return FakeResponse({"username": "dailyjustmoa", "media_count": 0})
+
+    monkeypatch.setattr(card_deliver.requests, "Session", FakeSession)
+    monkeypatch.setenv("INSTAGRAM_ACCESS_TOKEN", "EAAtest")
+    monkeypatch.setenv("INSTAGRAM_USER_ID", "1784")
+    kr = next(a for a in settings.instagram.accounts if a.key == "kr")
+    ok, line = card_deliver.check_account(settings, kr)
+    assert ok and "@dailyjustmoa" in line and "graph.facebook.com" in line and "EAAtest" not in line
+    assert set(calls) == {"GET"}

@@ -106,6 +106,26 @@ def publish_instagram(settings: Settings, account: CardAccount, image_urls: list
     return _call(session, "POST", f"{base}/{user}/media_publish", creation_id=parent, access_token=token)["id"]
 
 
+def check_account(settings: Settings, account: CardAccount) -> tuple[bool, str]:
+    """게시 없이 토큰·계정 ID 가 맞는지 확인한다 (계정 이름과 게시 한도 조회만). 토큰 값은 출력하지 않는다."""
+    token, user = env(account.token_env), env(account.user_env)
+    if not token or not user:
+        return False, f"{account.key}: 토큰 또는 계정 ID 없음 ({account.token_env}, {account.user_env})"
+    session, base = _graph(token, settings.instagram.graph_version)
+    host = base.split("/")[2]
+    try:
+        info = _call(session, "GET", f"{base}/{user}", fields="username,media_count", access_token=token)
+    except GraphError as e:
+        return False, f"{account.key}: 계정 조회 실패 ({host}): {e}"
+    try:
+        quota = _call(session, "GET", f"{base}/{user}/content_publishing_limit", fields="quota_usage", access_token=token)
+        used = (quota.get("data") or [{}])[0].get("quota_usage", "?")
+        limit = f"게시 권한 확인됨 (최근 24시간 게시 {used}건)"
+    except GraphError as e:
+        return False, f"{account.key}: @{info.get('username')} 연결됨, 게시 권한 확인 실패: {e}"
+    return True, f"{account.key}: @{info.get('username')} 연결됨 ({host}, 게시물 {info.get('media_count', 0)}개), {limit}"
+
+
 def _publish(settings: Settings, account: CardAccount, cs: CardSet) -> str:
     if not cs.images:
         raise GraphError("카드 이미지가 없음")

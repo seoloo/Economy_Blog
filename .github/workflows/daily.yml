@@ -17,9 +17,9 @@ on:
         type: boolean
         default: false
       mode:
-        description: "run = 시황 글(+인스타 카드), cards = 인스타 카드만 메일로, guide = 경제 공부 글, classify = 수집·분류만 점검"
+        description: "run = 시황 글(+인스타 카드), cards = 인스타 카드만 메일로, guide = 경제 공부 글, classify = 수집·분류만 점검, insta-check = 인스타 토큰 점검"
         type: choice
-        options: [run, cards, guide, classify]
+        options: [run, cards, guide, classify, insta-check]
         default: run
       topic:
         description: "guide 일 때 주제 아이디 (config/guides.yaml, 비우면 오늘 차례)"
@@ -74,6 +74,10 @@ jobs:
           if [ "${{ inputs.mode }}" = "classify" ]; then
             python -m econblog -v classify
             exit 0
+          fi
+          if [ "${{ inputs.mode }}" = "insta-check" ]; then
+            python -m econblog insta-check
+            exit $?
           fi
           args=""
           if [ -n "${{ inputs.date }}" ]; then args="$args --date ${{ inputs.date }}"; fi
