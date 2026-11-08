@@ -31,11 +31,13 @@ def post_texts(content: PostContent | GuidePost | CardCopy) -> list[str]:
             texts += [*st.headline, *st.paragraphs, st.why]
         return [t for t in texts if t]
     if isinstance(content, GuidePost):
-        texts = [content.title, content.lead, *content.summary_points, content.now_comment, content.closing]
+        texts = [content.title, *content.lead, content.now_comment, content.closing]
         for sec in content.sections:
             texts += [sec.heading, *sec.paragraphs]
-        for qa in content.faq:
-            texts += [qa.question, qa.answer]
+            if sec.table:
+                texts += [cell for row in sec.table.rows for cell in row]
+        for m in content.myths:
+            texts += [m.myth, m.fact]
         return [t for t in texts if t]
     texts = [
         content.title, content.lead, content.summary_line, *content.global_market, *content.korea_market,

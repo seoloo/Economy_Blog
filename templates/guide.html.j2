@@ -1,7 +1,8 @@
-{#- 경제 공부 글. mode: "tistory" = 티스토리 HTML 모드에 붙여넣을 본문, "preview" = 메일/로컬 확인용
-    흐름: 대표 이미지 → 도입 → 이 글의 핵심 → 1.첫 소제목(뜻) → 2.지금 수치로 보기(표·차트) → 나머지 소제목 → 자주 묻는 질문 → 마무리
+{#- 경제 공부 글. mode: "tistory" = 티스토리 HTML 모드에 붙여넣을 본문, "preview" = 메일/로컬 확인용, "naver" = 네이버 블로그 붙여넣기용
+    흐름: 인사 도입 → 제목 큰 소제목 + 대표 이미지 → 질문형 소제목(문단 + 간단한 표) → 첫 소제목 뒤 지금 수치(표·차트)
+          → 흔히 하는 오해 → 정리하면 → 면책 문구 → 최근에 올라온 글 → 키워드 줄
     공통 부품(간격·라벨·표·상자)과 티스토리에서 남는 스타일 규칙은 _tistory.html.j2 에 있다. -#}
-{%- from "_tistory.html.j2" import ACCENT, SOFT, MUTED, sty, gap, p, h2, label, chart_block, paragraphs, preview_open, closing_box, footer with context -%}
+{%- from "_tistory.html.j2" import ACCENT, SOFT, MUTED, sty, gap, p, h2, h3, chart_block, simple_table, paragraphs, preview_open, naver_open, wrap_up, footer with context -%}
 
 {%- macro now_table(rows) -%}
 {%- set td = "border:1px solid #dddddd;padding:8px;" %}
@@ -27,26 +28,23 @@
 {{ gap() }}
 {%- endmacro -%}
 
-{%- if mode == "preview" %}{{ preview_open(c, draft, ["카테고리를 '경제 공부'로 지정하기", "대표 이미지를 맨 위 그림으로 지정하기", "설명이 정확한지 다시 확인하고, 내 경험이나 의견 한두 문장 덧붙이기", "[함께 보면 좋은 글] 줄에 관련 글 링크 넣기 (없으면 줄 삭제)"]) }}{% endif %}
+{%- if mode == "preview" %}{{ preview_open(c, draft, ["카테고리를 '경제 공부'로 지정하기", "대표 이미지를 맨 위 그림으로 지정하기", "설명이 정확한지 다시 확인하고, 내 경험이나 의견 한두 문장 덧붙이기"]) }}{% elif mode == "naver" %}{{ naver_open(c) }}{% endif %}
 
-{% if cover %}{{ chart_block(cover, caption=False) }}{% endif %}
-{{ gap() }}
-{{ p(c.lead | rich) }}
-{{ gap() }}
-
-{#- 이 글의 핵심: 티스토리 인용 상자(style3: 회색 테두리 상자) -#}
-<blockquote data-ke-style="style3"{{ sty("", "margin:20px 0;padding:18px 22px;background:#fcfcfc;border:1px solid #dddddd;") }}>
-{{ p("<b>이 글의 핵심</b>" | safe, "size14", "color:" ~ ACCENT ~ ";", "font-size:13px;margin-bottom:4px;") }}
-<p data-ke-size="size16"{{ sty("", "margin:0;line-height:1.9;") }}>
-{%- for s in c.summary_points %}{% if not loop.first %}<br>{% endif %}✓ {{ s | rich }}{% endfor %}</p>
-</blockquote>
+{{ paragraphs(c.lead) }}
+{{ h2(c.title | plain, num=False) }}
+{% if cover %}{{ chart_block(cover, caption=False) }}
+{{ gap() }}{% endif %}
 
 {%- for sec in c.sections %}
-{{ h2(sec.heading | plain) }}
+{{ h3(sec.heading | plain) }}
 {{ paragraphs(sec.paragraphs) }}
+{%- if sec.table and sec.table.rows %}
+{{ gap() }}
+{{ simple_table(sec.table.columns, sec.table.rows) }}
+{%- endif %}
 {%- if loop.first and (now_rows or body_charts) %}
 
-{{ h2("지금 수치로 보기") }}
+{{ h3("지금 수치로 보면?") }}
 {%- if now_rows %}
 {{ now_table(now_rows) }}
 {%- endif %}
@@ -60,15 +58,14 @@
 {{ gap() }}
 {{ p(c.now_comment | rich) }}
 {%- endif %}
-{%- if c.faq %}
+{%- if c.myths %}
 
-{{ h2("자주 묻는 질문") }}
-{% for qa in c.faq %}{% if not loop.first %}{{ gap() }}{% endif %}
-{{ p(("<b>Q. " | safe) ~ (qa.question | plain) ~ ("</b>" | safe), "size16", "color:" ~ ACCENT ~ ";") }}
-{{ p(("A. " | safe) ~ (qa.answer | rich)) }}
+{{ h3("흔히 하는 오해") }}
+{% for m in c.myths %}{% if not loop.first %}{{ gap() }}{% endif %}
+{{ p(("<b>" | safe) ~ "①②③④⑤⑥"[loop.index0] ~ " " ~ (m.myth | plain) ~ ("</b>" | safe), "size16", "color:" ~ ACCENT ~ ";") }}
+{{ p(("→ " | safe) ~ (m.fact | rich)) }}
 {% endfor %}
 {%- endif %}
-{{ gap(2) }}
 
-{{ closing_box(c.closing) }}
-{{ footer(hashtags, "관련된 경제 공부 글이나 최근 시황 글 링크를 넣거나, 넣을 글이 없으면 이 줄을 지우세요.") }}
+{{ wrap_up(c.closing, "h3") }}
+{{ footer(c.keywords or c.tags, recent, "관련된 경제 공부 글이나 최근 시황 글 링크 2~3개를 넣거나, 넣을 글이 없으면 이 줄을 지우세요.") }}

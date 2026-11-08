@@ -185,16 +185,18 @@ class PostContent(BaseModel):
     필드 순서가 곧 LLM 이 쓰는 순서이므로, 글의 흐름대로 둔다.
     """
 
-    title: str = Field(description="글 제목. 작성 요청에 적힌 형식(연재 머리말 | 날짜 | 핵심 한 줄)을 그대로 따른다.")
-    lead: str = Field(description="도입부 2~3문장. 첫 문장은 독자에게 오늘 무엇을 정리했는지 말하고, 이어서 핵심 흐름을 요약한다.")
+    title: str = Field(description="글 제목. 작성 요청에 적힌 형식(연재 머리말 | 날짜 | 질문 한 줄)을 그대로 따른다.")
+    lead: str = Field(description="도입부 2~3문장. 오늘 무엇을 정리했는지 말하고, 글에서 어떤 순서로 무엇을 볼 수 있는지 짚는다.")
     summary_line: str = Field(description="오늘 시장을 한 문장(40자 안팎)으로 요약. '오늘 시장 한눈에' 상자 맨 위에 들어간다.")
     global_market: list[str] = Field(description="해외 시장 시황 문단 목록. 문단마다 1~2문장.")
     korea_market: list[str] = Field(description="국내 시장 시황 문단 목록. 문단마다 1~2문장.")
     korea_checkpoints: list[str] = Field(description="해외 흐름이 오늘 한국 증시에 줄 수 있는 영향 2~4개. 항목마다 1~2문장.")
     issues: list[Issue] = Field(description="오늘의 주요 이슈 3~5개.")
     watch_points: list[str] = Field(description="앞으로 확인할 일정·지표 체크포인트.")
-    closing: str = Field(description="마무리 1~2문장. 오늘 내용을 한 줄로 정리하고 독자에게 건네는 짧은 말로 끝낸다.")
-    tags: list[str] = Field(description="티스토리 태그 5~10개. 본문 끝 해시태그로도 쓴다.")
+    closing: str = Field(description="'정리하면' 문단 2~3문장. 오늘 흐름을 다시 짚고 다음 거래일에 볼 것 하나로 끝낸다.")
+    tags: list[str] = Field(description="티스토리·네이버 태그 5~10개. 띄어쓰기 없는 짧은 단어.")
+    keywords: list[str] = Field(default_factory=list,
+                                description="글 맨 끝 키워드 줄에 넣을 검색어 5~8개. 사람들이 검색창에 칠 법한 말 (띄어쓰기 가능).")
 
 
 class Draft(BaseModel):
@@ -221,27 +223,39 @@ class GuideTopic(BaseModel):
     charts: list[ChartSpec] = Field(default_factory=list)
 
 
+class GuideTable(BaseModel):
+    """소제목 아래 간단한 비교표 (2~3열). 개념 비교용이며 시장 수치를 넣지 않는다."""
+
+    columns: list[str] = Field(description="열 이름 2~3개. 예: [\"구분\", \"뜻\", \"시장에 주는 영향\"]")
+    rows: list[list[str]] = Field(description="2~5줄. 줄마다 columns 개수만큼 짧은 칸 (칸마다 25자 안팎).")
+
+
 class GuideSection(BaseModel):
-    heading: str = Field(description="소제목. 독자가 궁금해할 질문이나 핵심을 짧게.")
-    paragraphs: list[str] = Field(description="문단 목록. 문단마다 1~3문장.")
+    heading: str = Field(description="소제목. 독자가 검색창에 칠 법한 질문형 (예: \"~란?\", \"~하면 어떻게 될까?\").")
+    paragraphs: list[str] = Field(description="문단 2~4개. 문단마다 1~3문장.")
+    table: GuideTable | None = Field(default=None, description="이 소제목 내용을 정리하는 간단한 표. 표가 어울리지 않으면 null.")
 
 
-class GuideQA(BaseModel):
-    question: str = Field(description="독자가 실제로 검색할 법한 질문.")
-    answer: str = Field(description="2~3문장 답변.")
+class GuideMyth(BaseModel):
+    myth: str = Field(description="사람들이 흔히 하는 오해 한 문장 (예: \"환율이 오르면 무조건 주가가 빠진다\").")
+    fact: str = Field(description="실제로는 어떤지 1~2문장.")
 
 
 class GuidePost(BaseModel):
-    """경제 공부 글 본문. 필드 순서가 곧 LLM 이 쓰는 순서다."""
+    """경제 공부 글 본문. 필드 순서가 곧 LLM 이 쓰는 순서다.
 
-    title: str = Field(description="검색 키워드로 시작하는 제목 (40자 안팎).")
-    lead: str = Field(description="도입부 2~3문장. 독자가 왜 이 글을 찾았을지 짚고, 무엇을 알 수 있는지 말한다.")
-    summary_points: list[str] = Field(description="핵심 요약 3개. 각 한 문장.")
-    sections: list[GuideSection] = Field(description="본문 소제목 4~6개.")
+    흐름: 인사 도입 → 질문형 소제목(문단 + 간단한 표) → 지금 수치 → 흔히 하는 오해 → 정리하면 → 키워드 줄
+    """
+
+    title: str = Field(description="'키워드 정리｜질문형 부제' 형식 (40자 안팎).")
+    lead: list[str] = Field(description="도입 문단 2개. 독자가 왜 이 글을 찾았을지 짚고, 글에서 무엇을 다루는지와 "
+                                        "마지막에 흔히 하는 오해까지 정리한다는 것을 말한다.")
+    sections: list[GuideSection] = Field(description="본문 소제목 4~6개. 첫 소제목은 뜻을 설명하는 \"~란?\".")
     now_comment: str = Field(description="'지금 수치' 데이터를 근거로 현재 상황을 해석하는 2~3문장.")
-    faq: list[GuideQA] = Field(description="자주 묻는 질문 2~3개.")
-    closing: str = Field(description="마무리 1~2문장.")
-    tags: list[str] = Field(description="티스토리 태그 5~10개.")
+    myths: list[GuideMyth] = Field(description="흔히 하는 오해 3~4개.")
+    closing: str = Field(description="'정리하면' 문단 2~3문장. 글 전체를 짧게 다시 묶는다.")
+    tags: list[str] = Field(description="티스토리·네이버 태그 5~10개. 띄어쓰기 없는 짧은 단어.")
+    keywords: list[str] = Field(description="글 맨 끝 키워드 줄에 넣을 검색어 5~8개 (띄어쓰기 가능).")
 
 
 class NowRow(BaseModel):
@@ -265,11 +279,20 @@ class GuideDraft(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+class RecentPost(BaseModel):
+    """글 끝 '최근에 올라온 글'에 넣을 우리 블로그 글 (블로그 RSS 에서)."""
+
+    title: str
+    url: str
+    summary: str = ""
+
+
 class RenderedPost(BaseModel):
     draft: Draft | GuideDraft
-    html: str
-    preview_html: str
+    html: str                 # 티스토리 HTML 모드 붙여넣기용
+    preview_html: str         # 메일·로컬 확인용
     output_dir: Path
+    naver_html: str = ""      # 네이버 블로그 붙여넣기용 (브라우저로 열어 전체 복사)
 
 
 # ---------------------------------------------------------------- 인스타 카드뉴스 (LLM 출력 스키마)

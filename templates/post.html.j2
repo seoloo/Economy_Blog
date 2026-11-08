@@ -1,9 +1,10 @@
-{#- 시황 글. mode: "tistory" = 티스토리 HTML 모드에 붙여넣을 본문, "preview" = 메일/로컬 확인용
-    흐름: 대표 이미지 → 도입 → 오늘 시장 한눈에 → 1.해외(표) → 2.국내(표) → 3.체크포인트 → 4.차트 → 5.이슈 → 6.일정 → 마무리
+{#- 시황 글. mode: "tistory" = 티스토리 HTML 모드에 붙여넣을 본문, "preview" = 메일/로컬 확인용, "naver" = 네이버 블로그 붙여넣기용
+    흐름: 대표 이미지 → 도입 → 오늘 시장 한눈에 → 1.해외(표) → 2.국내(표) → 3.체크포인트 → 4.차트 → 5.이슈 → 6.일정
+          → 7.정리하면 → 참고 자료 → 면책 문구 → 최근에 올라온 글 → 키워드 줄
     공통 부품(간격·라벨·표·상자)과 티스토리에서 남는 스타일 규칙은 _tistory.html.j2 에 있다. -#}
-{%- from "_tistory.html.j2" import ACCENT, SOFT, MUTED, sty, gap, p, h2, label, chart_block, quote_table, paragraphs, preview_open, closing_box, footer with context -%}
+{%- from "_tistory.html.j2" import ACCENT, SOFT, MUTED, sty, gap, p, h2, label, chart_block, quote_table, paragraphs, preview_open, naver_open, wrap_up, footer with context -%}
 
-{%- if mode == "preview" %}{{ preview_open(c, draft, ["대표 이미지를 맨 위 그림으로 지정하기", "[함께 보면 좋은 글] 줄에 지난 글 링크 넣기 (없으면 줄 삭제)", "수치와 사실을 다시 확인하고, 내 의견 한두 문장 덧붙이기"]) }}{% endif %}
+{%- if mode == "preview" %}{{ preview_open(c, draft, ["대표 이미지를 맨 위 그림으로 지정하기", "수치와 사실을 다시 확인하고, 내 의견 한두 문장 덧붙이기"]) }}{% elif mode == "naver" %}{{ naver_open(c) }}{% endif %}
 {% if cover %}{{ chart_block(cover, caption=False) }}{% endif %}
 {{ gap() }}
 {{ p(c.lead | rich) }}
@@ -62,9 +63,8 @@
 {% for w in c.watch_points %}  <li>{{ w | rich }}</li>
 {% endfor %}</ul>
 {%- endif %}
-{{ gap(2) }}
 
-{{ closing_box(c.closing) }}
+{{ wrap_up(c.closing) }}
 
 {%- if references %}
 <p data-ke-size="size14"{{ sty("color:" ~ MUTED ~ ";", "font-size:13px;line-height:1.8;margin:24px 0 16px;") }}><b>참고 자료</b>
@@ -72,4 +72,4 @@
 {{ gap() }}
 {%- endif %}
 
-{{ footer(hashtags, "지난 시황 글 링크 2~3개를 넣거나, 넣을 글이 없으면 이 줄을 지우세요.") }}
+{{ footer(c.keywords or c.tags, recent, "지난 시황 글 링크 2~3개를 넣거나, 넣을 글이 없으면 이 줄을 지우세요.") }}

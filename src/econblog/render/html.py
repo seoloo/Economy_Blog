@@ -1,7 +1,8 @@
-"""templates/post.html.j2 로 두 가지 HTML 을 만든다.
+"""templates/post.html.j2 로 세 가지 HTML 을 만든다.
 
 - post.html:    티스토리 HTML 모드에 붙여넣는 본문. 차트 자리는 업로드 안내 상자로 표시.
 - preview.html: 로컬/메일 확인용. 발행 체크리스트와 차트 이미지를 함께 보여준다.
+- naver.html:   네이버 블로그용. 브라우저로 열어 전체 복사해 스마트에디터에 붙여넣는다 (이미지는 [사진] 자리에 직접 올림).
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoes
 from markupsafe import Markup, escape
 
 from econblog.config import Settings
-from econblog.models import Article, Draft, GuideDraft, RenderedPost
+from econblog.models import Article, Draft, GuideDraft, RecentPost, RenderedPost
 from econblog.render.quotes import build_table
 
 
@@ -70,11 +71,16 @@ def _env(settings: Settings) -> Environment:
     return env
 
 
-def _hashtags(tags: list[str]) -> str:
-    return " ".join("#" + t.replace(" ", "") for t in tags if t.strip())
+def _render_all(template, draft: Draft | GuideDraft, out_dir: Path, common: dict) -> RenderedPost:
+    def one(mode: str) -> str:
+        return template.render(mode=mode, **common).strip() + "\n"
+
+    return RenderedPost(draft=draft, html=one("tistory"), preview_html=one("preview"),
+                        naver_html=one("naver"), output_dir=out_dir)
 
 
-def render_post(settings: Settings, draft: Draft, out_dir: Path) -> RenderedPost:
+def render_post(settings: Settings, draft: Draft, out_dir: Path,
+                recent: list[RecentPost] | None = None) -> RenderedPost:
     template = _env(settings).get_template("post.html.j2")
     references = _cited_references(draft)
     post = settings.post
@@ -87,19 +93,15 @@ def render_post(settings: Settings, draft: Draft, out_dir: Path) -> RenderedPost
         glance=build_table(draft.quotes, post.glance),
         global_table=build_table(draft.quotes, post.global_table),
         korea_table=build_table(draft.quotes, post.korea_table),
-        hashtags=_hashtags(draft.content.tags),
         references=references,
         ref_names={a.url: ref_link(a).source_name for a in draft.references},
+        recent=recent or [],
     )
-    return RenderedPost(
-        draft=draft,
-        html=template.render(mode="tistory", **common).strip() + "\n",
-        preview_html=template.render(mode="preview", **common).strip() + "\n",
-        output_dir=out_dir,
-    )
+    return _render_all(template, draft, out_dir, common)
 
 
-def render_guide(settings: Settings, draft: GuideDraft, out_dir: Path) -> RenderedPost:
+def render_guide(settings: Settings, draft: GuideDraft, out_dir: Path,
+                 recent: list[RecentPost] | None = None) -> RenderedPost:
     """경제 공부 글. 공통 부품은 시황 글과 같다 (templates/_tistory.html.j2)."""
     template = _env(settings).get_template("guide.html.j2")
     body_charts = [ch for ch in draft.charts if ch.position != "cover"]
@@ -111,11 +113,6 @@ def render_guide(settings: Settings, draft: GuideDraft, out_dir: Path) -> Render
         body_charts=body_charts,
         now_rows=draft.now_rows,
         source_note="자료: " + ", ".join(sources) if sources else "자료: Yahoo Finance, FRED, 한국은행 ECOS",
-        hashtags=_hashtags(draft.content.tags),
+        recent=recent or [],
     )
-    return RenderedPost(
-        draft=draft,
-        html=template.render(mode="tistory", **common).strip() + "\n",
-        preview_html=template.render(mode="preview", **common).strip() + "\n",
-        output_dir=out_dir,
-    )
+    return _render_all(template, draft, out_dir, common)

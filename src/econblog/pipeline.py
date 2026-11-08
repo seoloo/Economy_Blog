@@ -24,6 +24,7 @@ from econblog.render.cards import build_slides, render_cards
 from econblog.render.reels import build_reel
 from econblog.render.photos import PhotoPicker
 from econblog.render.html import render_guide, render_post
+from econblog.render.recent import fetch_recent
 from econblog.write import write_post
 from econblog.write.base import CardContext, GuideContext, WriteContext
 from econblog.write.cards import write_cards
@@ -86,7 +87,7 @@ def run(
     # 7. 렌더링·전달
     draft = Draft(date=run_date, content=content, charts=charts, quotes=snapshot.quotes(),
                   references=references, warnings=warnings)
-    post = render_post(settings, draft, out_dir)
+    post = render_post(settings, draft, out_dir, recent=fetch_recent(settings, offline, content.title))
     for line in deliver_all(settings, post, deliver_methods):
         log.info("전달: %s", line)
     if warnings:
@@ -265,7 +266,7 @@ def run_guide(
     # 5. 렌더링·전달
     draft = GuideDraft(date=run_date, topic=topic, content=content, charts=charts,
                        now_rows=guide_rows(ctx), warnings=warnings)
-    post = render_guide(settings, draft, out_dir)
+    post = render_guide(settings, draft, out_dir, recent=fetch_recent(settings, offline, content.title))
     for line in deliver_all(settings, post, deliver_methods):
         log.info("전달: %s", line)
     if warnings:

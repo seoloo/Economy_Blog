@@ -6,7 +6,7 @@ import logging
 
 from econblog import registry
 from econblog.config import Settings
-from econblog.models import GuidePost, GuideQA, GuideSection
+from econblog.models import GuideMyth, GuidePost, GuideSection, GuideTable
 from econblog.write.base import GuideContext
 from econblog.write.prompting import guide_rows, guide_system_prompt, guide_user_prompt
 
@@ -43,14 +43,16 @@ class TemplateGuideWriter:
         rows = guide_rows(ctx)
         now = " / ".join(f"{r.label} {r.value} (1년 전 {r.year_ago})" for r in rows) or "(데이터 없음)"
         return GuidePost(
-            title=f"[템플릿 초안] {t.keyword}란? {t.subtitle}",
-            lead=f"{t.keyword}에 대해 정리하는 글입니다. 도입부를 직접 작성하세요.",
-            summary_points=["(핵심 요약 1)", "(핵심 요약 2)", "(핵심 요약 3)"],
-            sections=[GuideSection(heading=f"{t.keyword}란?", paragraphs=[f"다룰 내용: {t.angle}"])],
+            title=f"[템플릿 초안] {t.keyword} 정리｜{t.subtitle}",
+            lead=[f"{t.keyword}에 대해 정리하는 글입니다. 도입부를 직접 작성하세요.",
+                  "글 마지막에는 흔히 하는 오해도 정리합니다."],
+            sections=[GuideSection(heading=f"{t.keyword}란?", paragraphs=[f"다룰 내용: {t.angle}"],
+                                   table=GuideTable(columns=["구분", "내용"], rows=[["(직접 작성)", "(직접 작성)"]]))],
             now_comment=f"지금 수치: {now}",
-            faq=[GuideQA(question=f"{t.keyword}는 어디서 확인하나요?", answer="(직접 작성)")],
-            closing="(마무리를 직접 작성하세요)",
+            myths=[GuideMyth(myth="(흔히 하는 오해)", fact="(실제로는 어떤지 직접 작성)")],
+            closing="(정리하면 문단을 직접 작성하세요)",
             tags=[t.keyword.replace(" ", ""), "경제공부", "경제용어"],
+            keywords=[t.keyword, f"{t.keyword} 뜻", "경제 공부"],
         )
 
 

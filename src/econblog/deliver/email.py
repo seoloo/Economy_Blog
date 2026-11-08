@@ -1,7 +1,7 @@
 """SMTP 로 초안 메일을 보낸다.
 
 본문: preview.html (차트를 메일 안에 이미지로 표시)
-첨부: post.html (티스토리 붙여넣기용), 차트 PNG
+첨부: post.html (티스토리 붙여넣기용), naver.html (네이버 블로그 붙여넣기용), 차트 PNG
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ def build_message(post: RenderedPost, sender: str, recipients: str) -> EmailMess
     html = post.preview_html
     for chart in local:
         html = html.replace(f'src="charts/{chart.path.name}"', f'src="cid:{chart.key}"')
-    msg.set_content(f"{draft.content.title}\n\nHTML 메일을 지원하는 메일 앱에서 확인하세요. 붙여넣기용 post.html 이 첨부되어 있습니다.")
+    msg.set_content(f"{draft.content.title}\n\nHTML 메일을 지원하는 메일 앱에서 확인하세요. 붙여넣기용 post.html(티스토리)과 naver.html(네이버 블로그)이 첨부되어 있습니다.")
     msg.add_alternative(html, subtype="html")
 
     html_part = msg.get_payload()[1]
@@ -44,6 +44,8 @@ def build_message(post: RenderedPost, sender: str, recipients: str) -> EmailMess
         html_part.add_related(chart.path.read_bytes(), "image", _subtype(chart.path), cid=f"<{chart.key}>")
 
     msg.add_attachment(post.html.encode("utf-8"), maintype="text", subtype="html", filename="post.html")
+    if post.naver_html:
+        msg.add_attachment(post.naver_html.encode("utf-8"), maintype="text", subtype="html", filename="naver.html")
     for chart in draft.charts:
         msg.add_attachment(chart.path.read_bytes(), maintype="image", subtype=_subtype(chart.path),
                            filename=chart.path.name)

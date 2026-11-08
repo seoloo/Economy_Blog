@@ -53,6 +53,8 @@ class PostSettings(BaseModel):
     glance: list[str] = Field(default_factory=list)          # '오늘 시장 한눈에' 상자
     global_table: list[str] = Field(default_factory=list)    # 해외 시장 표
     korea_table: list[str] = Field(default_factory=list)     # 국내 시장 표
+    blog_rss: str = ""            # 우리 블로그 RSS. 글 끝 '최근에 올라온 글' 링크를 여기서 가져온다
+    recent_posts: int = 3
 
 
 class PublishSettings(BaseModel):

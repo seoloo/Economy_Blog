@@ -6,7 +6,10 @@
     - 지워짐: margin·padding·border·border-radius·font-size·font-weight(style), thead/th(글자로 풀림)
     그래서 간격은 빈 문단, 상자는 티스토리 인용 상자, 굵기는 <b> 로 만든다.
     메일·미리보기는 티스토리 본문 CSS 가 없으므로 같은 모양이 나도록 preview 전용 인라인 스타일을 덧붙인다.
-    mode 는 렌더링할 때 넘기는 값("tistory" | "preview")이다. -#}
+    mode 는 렌더링할 때 넘기는 값("tistory" | "preview" | "naver")이다.
+    naver = 네이버 블로그 붙여넣기용. 브라우저로 열어 전체 복사해 스마트에디터에 붙여넣는다.
+            붙여넣으면 여백(margin)이 사라지므로 티스토리처럼 빈 문단으로 간격을 만들고, 보이는 모양은 preview 스타일을 쓴다.
+            이미지는 붙여넣기로 옮겨지지 않으므로 [사진] 안내 줄을 넣는다. -#}
 {%- set ACCENT = "#13294b" -%}
 {%- set SOFT = "#f4f6fa" -%}
 {%- set MUTED = "#7d8593" -%}
@@ -14,13 +17,13 @@
 
 {#- style 속성: always 는 티스토리에도 남는 속성, preview 는 메일/미리보기에서만 쓰는 속성 -#}
 {%- macro sty(always="", preview="") -%}
-{%- set v = always ~ (preview if mode == "preview" else "") -%}
+{%- set v = always ~ (preview if mode in ("preview", "naver") else "") -%}
 {%- if v %} style="{{ v }}"{% endif -%}
 {%- endmacro -%}
 
-{#- 빈 문단. 티스토리 본문은 문단 간격이 0 이라 빈 줄로 간격을 만든다 (미리보기는 margin 으로 대신). -#}
+{#- 빈 문단. 티스토리·네이버 본문은 문단 간격이 0 이라 빈 줄로 간격을 만든다 (미리보기는 margin 으로 대신). -#}
 {%- macro gap(n=1) -%}
-{%- if mode == "tistory" %}{% for _ in range(n) %}
+{%- if mode != "preview" %}{% for _ in range(n) %}
 <p data-ke-size="size16">&nbsp;</p>{% endfor %}{% endif -%}
 {%- endmacro -%}
 
@@ -28,10 +31,17 @@
 <p data-ke-size="{{ size }}"{{ sty(always, "margin:0 0 12px;line-height:1.8;" ~ preview) }}>{{ text }}</p>
 {%- endmacro -%}
 
-{%- macro h2(title) -%}
-{%- set ns.n = ns.n + 1 -%}
+{%- macro h2(title, num=True) -%}
+{%- if num %}{% set ns.n = ns.n + 1 %}{% endif -%}
 {{ gap(2) }}
-<h2 data-ke-size="size26"{{ sty("color:" ~ ACCENT ~ ";", "font-size:22px;margin:40px 0 14px;padding-bottom:8px;border-bottom:2px solid " ~ ACCENT ~ ";") }}>{{ ns.n }}. {{ title }}</h2>
+<h2 data-ke-size="size26"{{ sty("color:" ~ ACCENT ~ ";", "font-size:22px;margin:40px 0 14px;padding-bottom:8px;border-bottom:2px solid " ~ ACCENT ~ ";") }}>{% if num %}{{ ns.n }}. {% endif %}{{ title }}</h2>
+{{ gap() }}
+{%- endmacro -%}
+
+{#- 질문형 소제목 (경제 공부 글의 본문 소제목, '정리하면' 등) -#}
+{%- macro h3(title) -%}
+{{ gap(2) }}
+<h3 data-ke-size="size23"{{ sty("color:" ~ ACCENT ~ ";", "font-size:19px;margin:32px 0 10px;line-height:1.5;") }}>{{ title }}</h3>
 {{ gap() }}
 {%- endmacro -%}
 
@@ -42,10 +52,12 @@
 
 {%- macro chart_block(chart, caption=True) -%}
 <figure{{ sty("text-align:center;", "margin:20px 0;") }}>
-{%- if chart.url %}
+{%- if chart.url and mode != "naver" %}
   <img src="{{ chart.url }}" alt="{{ chart.alt_text }}"{{ sty("", "max-width:100%;height:auto;") }}>
 {%- elif mode == "preview" %}
   <img src="charts/{{ chart.path.name }}" alt="{{ chart.alt_text }}" style="max-width:100%;height:auto;">
+{%- elif mode == "naver" %}
+  <p data-ke-size="size14" style="background-color:#fff4d6;">[사진] {{ chart.path.name }} — 이 줄을 지우고 첨부한 이미지를 올리세요.</p>
 {%- else %}
   <p data-ke-size="size14">[이미지 삽입] {{ chart.path.name }} — 이 줄을 지우고 차트 이미지를 올리세요. (대체 텍스트: {{ chart.alt_text }})</p>
 {%- endif %}
@@ -82,9 +94,39 @@
 {%- endif %}
 {%- endmacro -%}
 
+{#- 간단한 비교표: 첫 줄이 머리줄 (tbody 안) -#}
+{%- macro simple_table(columns, rows) -%}
+{%- set td = "border:1px solid #dddddd;padding:8px;" %}
+<table border="1" data-ke-align="alignLeft" style="border-collapse:collapse;width:100%;{{ 'font-size:15px;' if mode != 'tistory' }}">
+  <tbody>
+    <tr>
+{%- for col in columns %}
+      <td{{ sty("background-color:" ~ SOFT ~ ";color:" ~ ACCENT ~ ";", td) }}><b>{{ col | plain }}</b></td>
+{%- endfor %}
+    </tr>
+{%- for row in rows %}
+    <tr>
+{%- for cell in row %}
+      <td{{ sty("", td) }}>{% if loop.first %}<b>{{ cell | plain }}</b>{% else %}{{ cell | rich }}{% endif %}</td>
+{%- endfor %}
+    </tr>
+{%- endfor %}
+  </tbody>
+</table>
+{{ gap() }}
+{%- endmacro -%}
+
 {%- macro paragraphs(items) -%}
 {% for text in items %}{{ p(text | rich) }}{% if not loop.last %}{{ gap() }}{% endif %}
 {% endfor %}
+{%- endmacro -%}
+
+{#- 네이버 붙여넣기용 머리: 제목·확인 상자 없이 본문만 (제목은 네이버 제목 칸에 따로 넣는다) -#}
+{%- macro naver_open(c) -%}
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ c.title | plain }}</title></head>
+<body style="max-width:760px;margin:0 auto;padding:16px;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;font-size:16px;line-height:1.8;color:#1b1f27;background:#ffffff;">
 {%- endmacro -%}
 
 {#- 메일·미리보기 머리: 발행 전 확인 상자 + 제목 -#}
@@ -106,6 +148,12 @@
     <li>{{ s }}</li>
 {%- endfor %}
   </ol>
+  <strong style="display:block;margin-top:10px;">네이버 블로그 (티스토리에 먼저 올린 뒤)</strong>
+  <ol style="margin:8px 0 0 18px;padding:0;">
+    <li>첨부한 naver.html 을 브라우저로 열고 전체 선택(Ctrl+A)·복사해 스마트에디터 본문에 붙여넣기</li>
+    <li>제목 칸에 위 제목, 태그 칸에 위 태그 넣기</li>
+    <li>[사진] 줄 자리에 첨부한 이미지 올리고, 맨 위 그림을 대표 사진으로 지정하기</li>
+  </ol>
   {%- if draft.warnings %}
   <p style="margin:12px 0 0;color:#d03b3b;"><strong>⚠ 검토 필요 {{ draft.warnings | length }}건</strong></p>
   <ul style="margin:4px 0 0 18px;padding:0;color:#d03b3b;">
@@ -116,27 +164,31 @@
 <h1 style="font-size:26px;line-height:1.4;">{{ c.title | plain }}</h1>
 {%- endmacro -%}
 
-{#- 마무리 상자(티스토리 인용 상자 style2: 왼쪽 세로선) -#}
-{%- macro closing_box(text) -%}
-<blockquote data-ke-style="style2"{{ sty("", "margin:32px 0 20px;padding:2px 0 2px 14px;border-left:4px solid #d0d0d0;") }}>
-{{ p("<b>마무리</b>" | safe, "size14", "color:" ~ ACCENT ~ ";", "font-size:13px;margin-bottom:4px;") }}
-{{ p(text | rich, "size16", "", "margin:0;") }}
-</blockquote>
+{#- 정리하면: 글 전체를 다시 묶는 문단. 시황 글은 번호 붙은 큰 소제목, 경제 공부 글은 질문형 소제목과 같은 크기 -#}
+{%- macro wrap_up(text, level="h2") -%}
+{% if level == "h2" %}{{ h2("정리하면") }}{% else %}{{ h3("정리하면") }}{% endif %}
+{{ p(text | rich) }}
 {{ gap() }}
 {%- endmacro -%}
 
-{#- 글 끝: 함께 보면 좋은 글 자리, 면책 문구, 해시태그 -#}
-{%- macro footer(hashtags, related_hint) -%}
-{{ p(("<b>[함께 보면 좋은 글]</b> " | safe) ~ related_hint, "size16", "background-color:#fff4d6;", "padding:8px 10px;") }}
+{#- 글 끝: 면책 문구 → 최근에 올라온 글 → 키워드 줄.
+    최근 글은 우리 블로그 RSS 에서 가져온다 (없으면 링크 넣을 자리). 네이버판에는 티스토리 글 링크를 넣지 않는다. -#}
+{%- macro footer(keywords, recent, related_hint) -%}
+{{ p("※ 이 글은 공개된 자료와 시장 데이터를 바탕으로 작성한 개인적인 정리이며, 특정 종목이나 자산의 매수·매도를 권유하지 않습니다. 투자 판단과 그 결과의 책임은 투자자 본인에게 있습니다. 차트와 표는 공개 데이터로 직접 작성했습니다.", "size14", "color:" ~ MUTED ~ ";", "font-size:12.5px;line-height:1.7;margin-top:24px;") }}
+{%- if mode != "naver" %}
 {{ gap() }}
-
-{{ p("이 글은 공개된 자료와 시장 데이터를 바탕으로 작성한 개인적인 정리이며, 특정 종목이나 자산의 매수·매도를 권유하지 않습니다. 투자 판단과 그 결과의 책임은 투자자 본인에게 있습니다. 차트와 표는 공개 데이터로 직접 작성했습니다.", "size14", "color:" ~ MUTED ~ ";", "font-size:12.5px;line-height:1.7;margin-top:24px;") }}
-{%- if hashtags %}
-{{ gap() }}
-{{ p(hashtags, "size14", "color:" ~ MUTED ~ ";", "font-size:14px;") }}
+{%- if recent %}
+<p data-ke-size="size16"{{ sty("", "margin:0 0 12px;line-height:1.9;") }}><b>■ 최근에 올라온 글</b>
+{%- for r in recent %}<br>· <a href="{{ r.url }}">{{ r.title }}</a>{% endfor %}</p>
+{%- else %}
+{{ p(("<b>■ 최근에 올라온 글</b> " | safe) ~ related_hint, "size16", "background-color:#fff4d6;", "padding:8px 10px;") }}
 {%- endif %}
-{%- if mode == "preview" %}
+{%- endif %}
+{%- if keywords %}
+{{ gap() }}
+{{ p("키워드: " ~ (keywords | join(", ")), "size14", "color:" ~ MUTED ~ ";", "font-size:14px;") }}
+{%- endif %}
+{%- if mode != "tistory" %}
 </body></html>
 {%- endif %}
 {%- endmacro -%}
-

@@ -56,7 +56,7 @@ def test_copyright_guard_flags_copied_sentence():
 def test_dry_run_end_to_end(settings):
     post = run(settings, run_date=date(2026, 11, 6), offline=True, deliver_methods=["local"])
     out = post.output_dir
-    for name in ("post.html", "preview.html", "meta.json"):
+    for name in ("post.html", "preview.html", "naver.html", "meta.json"):
         assert (out / name).exists()
     html = (out / "post.html").read_text(encoding="utf-8")
     preview = (out / "preview.html").read_text(encoding="utf-8")
@@ -67,8 +67,10 @@ def test_dry_run_end_to_end(settings):
     assert "투자를 권유하지" in html or "권유하지 않습니다" in html
     assert "발행 전 확인" in preview and "발행 전 확인" not in html
     # 데이터로 만든 요약 상자·표와 새 섹션
-    for text in ("오늘 시장 한눈에", "<table", "코스피", "한국 증시 체크포인트", "마무리", "[함께 보면 좋은 글]", "#미국증시"):
+    for text in ("오늘 시장 한눈에", "<table", "코스피", "한국 증시 체크포인트", "정리하면", "■ 최근에 올라온 글",
+                 "키워드: 미국증시"):
         assert text in html, text
+    assert html.index("정리하면") < html.index("※ 이 글은") < html.index("■ 최근에 올라온 글") < html.index("키워드:")
     assert html.index("오늘 시장 한눈에") < html.index("해외 시장") < html.index("국내 시장")
     assert post.draft.content.title.startswith("[템플릿 초안] 미국증시·코스피 시황 | 11월 6일(금)")
 
@@ -76,7 +78,9 @@ def test_dry_run_end_to_end(settings):
     html_body = next(p.get_content() for p in msg.walk() if p.get_content_type() == "text/html" and not p.get_filename())
     assert 'src="cid:index_change"' in html_body
     attachments = {p.get_filename() for p in msg.iter_attachments()}
-    assert {"post.html", "index_change.png"} <= attachments
+    assert {"post.html", "naver.html", "index_change.png"} <= attachments
+    naver = (out / "naver.html").read_text(encoding="utf-8")
+    assert "[사진] index_change.png" in naver and "발행 전 확인" not in naver and "<img" not in naver
     assert any(p.get("Content-ID") == "<index_change>" for p in msg.walk())
 
 

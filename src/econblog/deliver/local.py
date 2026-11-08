@@ -1,4 +1,4 @@
-"""output/<날짜>/ 에 post.html, preview.html, meta.json 을 저장한다 (차트는 charts/ 에 이미 있음)."""
+"""output/<날짜>/ 에 post.html, preview.html, naver.html, meta.json 을 저장한다 (차트는 charts/ 에 이미 있음)."""
 
 from __future__ import annotations
 
@@ -14,6 +14,8 @@ class LocalDeliverer(Deliverer):
         out.mkdir(parents=True, exist_ok=True)
         (out / "post.html").write_text(post.html, encoding="utf-8")
         (out / "preview.html").write_text(post.preview_html, encoding="utf-8")
+        if post.naver_html:
+            (out / "naver.html").write_text(post.naver_html, encoding="utf-8")
         meta = {
             "kind": post.draft.kind,
             "date": post.draft.date.isoformat(),
