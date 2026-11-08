@@ -135,11 +135,19 @@
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{ c.title | plain }}</title></head>
 <body style="max-width:760px;margin:0 auto;padding:16px;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;font-size:16px;line-height:1.8;color:#1b1f27;background:#ffffff;">
+{#- 복사용 칸: 줄을 세 번 클릭하면 그 칸만 선택된다. 태그는 쉼표로 이어 붙여 태그 칸에 한 번에 붙여넣는다. -#}
+{%- set copy_box = "background:#ffffff;border:1px solid #dddddd;border-radius:6px;padding:8px 10px;margin:4px 0 10px;font-size:15px;" %}
+<div style="background:#f4f6fa;border:1px solid #d9dee8;border-radius:8px;padding:14px 18px;margin-bottom:16px;font-size:14px;">
+  <strong>복사해서 붙여넣기</strong> <span style="color:#7d8593;">(칸을 세 번 클릭하면 그 칸만 선택돼요)</span>
+  <div style="margin-top:8px;color:#7d8593;">제목</div>
+  <div style="{{ copy_box }}">{{ c.title | plain }}</div>
+  <div style="color:#7d8593;">태그 (티스토리·네이버 같이)</div>
+  <div style="{{ copy_box }}">{{ c.tags | map("replace", " ", "") | join(", ") }}</div>
+</div>
 <div style="background:#fffaf0;border:1px solid #f0e2c0;border-radius:8px;padding:14px 18px;margin-bottom:28px;font-size:14px;">
   <strong>발행 전 확인</strong>
   <ol style="margin:8px 0 0 18px;padding:0;">
-    <li>제목: {{ c.title | plain }}</li>
-    <li>태그: {{ c.tags | join(", ") }}</li>
+    <li>위 제목과 태그를 제목 칸·태그 칸에 붙여넣기</li>
     <li>티스토리 편집기를 HTML 모드로 바꾸고 첨부한 post.html 내용을 통째로 붙여넣기</li>
 {%- if draft.charts | rejectattr("url") | list %}
     <li>[이미지 삽입] 줄 자리에 첨부한 차트 PNG 올리기</li>
@@ -151,7 +159,7 @@
   <strong style="display:block;margin-top:10px;">네이버 블로그 (티스토리에 먼저 올린 뒤)</strong>
   <ol style="margin:8px 0 0 18px;padding:0;">
     <li>첨부한 naver.html 을 브라우저로 열고 전체 선택(Ctrl+A)·복사해 스마트에디터 본문에 붙여넣기</li>
-    <li>제목 칸에 위 제목, 태그 칸에 위 태그 넣기</li>
+    <li>제목 칸·태그 칸에 위 제목과 태그 붙여넣기</li>
     <li>[사진] 줄 자리에 첨부한 이미지 올리고, 맨 위 그림을 대표 사진으로 지정하기</li>
   </ol>
   {%- if draft.warnings %}

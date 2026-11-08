@@ -66,6 +66,9 @@ def test_dry_run_end_to_end(settings):
     assert not (out / "charts" / "cover.png").exists()  # 고정 썸네일이 있으면 데이터 표지는 그리지 않는다
     assert "투자를 권유하지" in html or "권유하지 않습니다" in html
     assert "발행 전 확인" in preview and "발행 전 확인" not in html
+    # 제목·태그를 따로 복사할 수 있는 칸 (메일·미리보기에만)
+    tags = ", ".join(post.draft.content.tags)
+    assert f">{tags}</div>" in preview and "복사해서 붙여넣기" not in html
     # 데이터로 만든 요약 상자·표와 새 섹션
     for text in ("오늘 시장 한눈에", "<table", "코스피", "한국 증시 체크포인트", "정리하면", "■ 최근에 올라온 글",
                  "키워드: 미국증시"):
