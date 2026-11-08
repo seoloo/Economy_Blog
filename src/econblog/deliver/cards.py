@@ -29,7 +29,7 @@ HASHTAG_LIMIT = 30
 def full_caption(cs: CardSet, photo_used: bool, disclaimer: bool = True) -> str:
     """캡션 본문 + 면책·출처 + 해시태그. 인스타 한도(2,200자, 해시태그 30개)를 넘지 않게 자른다.
 
-    disclaimer=False 면 면책 문구 없이 출처만 붙인다 (계정 소개 게시물).
+    disclaimer=False 면 면책 문구 없이 출처만 붙인다 (settings.yaml instagram.disclaimer).
     """
     if cs.lang == "ko":
         note = ("투자 권유가 아닌 정보 제공용 콘텐츠입니다. " if disclaimer else "") + "자료: Yahoo Finance" \

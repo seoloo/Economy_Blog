@@ -94,7 +94,9 @@ def test_dry_run_makes_cards_for_both_accounts(settings):
         assert (out / "01.html").exists() and (out / "caption.txt").exists()
         assert brand in (out / "01.html").read_text(encoding="utf-8")
     caption = (post.output_dir / "insta" / "en" / "caption.txt").read_text(encoding="utf-8")
-    assert "Not financial advice" in caption and "#stockmarket" in caption
+    assert "Not financial advice" not in caption and "Data: Yahoo Finance" in caption and "#stockmarket" in caption
+    closing = sorted((post.output_dir / "insta" / "kr").glob("*.html"))[-1].read_text(encoding="utf-8")
+    assert "투자 권유" not in closing   # instagram.disclaimer 가 꺼져 있으면 마지막 카드에도 없다
 
 
 def test_blog_prompt_leaves_out_card_only_series(settings):
@@ -110,6 +112,7 @@ def test_caption_fits_instagram_limits(tmp_path):
     caption = card_deliver.full_caption(cs, photo_used=True)
     assert len(caption) <= 2200 and caption.count("#") == 30
     assert "사진: Pixabay" in caption and "투자 권유가 아닌" in caption
+    assert "투자 권유" not in card_deliver.full_caption(cs, photo_used=True, disclaimer=False)
 
 
 class FakeResponse:

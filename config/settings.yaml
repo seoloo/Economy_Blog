@@ -122,6 +122,7 @@ deliver:
 instagram:
   enabled: true
   publish: false
+  disclaimer: false    # true 면 캡션 끝·마지막 카드 아래에 "투자 권유 아님" 문구를 넣는다 (블로그 글에는 항상 들어감)
   graph_version: v23.0
   # 카드에 쓰면 안 되는 모호한 표현. 나오면 [검토] 경고를 붙인다 (도시 이름으로 시장 부르기, 비유, 막연한 예측).
   vague_phrases:
