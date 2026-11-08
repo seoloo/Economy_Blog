@@ -77,7 +77,7 @@ tests/
 - **대표 이미지(썸네일)**는 카테고리별 고정 그림(`assets/brand/thumb_*.jpg`)을 쓴다. 새 카테고리나 그림 교체는 `assets/brand/make_thumbnails.py`로 만들고, 글 종류와의 연결은 `settings.yaml`의 `thumbnails`에 둔다.
 - **새 차트**는 `charts/`에 ChartBuilder를 만들고 `charts/__init__.py`의 레지스트리에 등록한 뒤 `settings.yaml`에서 켠다.
 - **새 발송 방식**(예: 슬랙)은 `deliver/`에 Deliverer를 추가한다. 인스타 카드 전달(메일·게시)은 `deliver/cards.py`.
-- **인스타 카드**: 계정·카드 순서는 `settings.yaml`의 `instagram`, 글은 `prompts/cards*.j2` + `write/cards.py`, 숫자 표시는 `market/moves.py`, 디자인은 `templates/cards/card.html.j2`. 카드 숫자는 데이터로만 만들고 LLM 이 쓰지 않는다.
+- **인스타 카드**: 계정·카드 순서는 `settings.yaml`의 `instagram`, 글은 `prompts/cards*.j2` + `write/cards.py`, 숫자 표시는 `market/moves.py`, 디자인은 `templates/cards/card.html.j2`. 카드 숫자는 데이터로만 만들고 LLM 이 쓰지 않는다. 프로필 고정용 계정 소개 게시물 글은 `config/intro.yaml`(사람이 쓴 글, LLM 미사용).
 - 단계 간 데이터는 반드시 `models.py`의 데이터 클래스로 주고받는다. dict를 그대로 넘기지 않는다.
 - 외부 API 키가 없으면 각 단계는 **오프라인 대체 구현으로 동작**해야 한다. 예: Laya가 없으면 키워드 분류기, 메일 설정이 없으면 로컬 파일 저장. 그래야 테스트와 dry run이 가능하다.
 

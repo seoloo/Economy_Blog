@@ -17,9 +17,9 @@ on:
         type: boolean
         default: false
       mode:
-        description: "run = 시황 글(+인스타 카드), cards = 인스타 카드만 메일로, guide = 경제 공부 글, classify = 수집·분류만 점검, insta-check = 인스타 토큰 점검, insta-edit = source_run 의 카드 문장을 고쳐 다시 찍기, insta-post = source_run 의 카드를 그대로 인스타에 게시"
+        description: "run = 시황 글(+인스타 카드), cards = 인스타 카드만 메일로, guide = 경제 공부 글, classify = 수집·분류만 점검, insta-check = 인스타 토큰 점검, insta-edit = source_run 의 카드 문장을 고쳐 다시 찍기, insta-post = source_run 의 카드를 그대로 인스타에 게시, insta-intro = source_run 의 카드를 예시로 계정 소개 게시물 만들기"
         type: choice
-        options: [run, cards, guide, classify, insta-check, insta-edit, insta-post]
+        options: [run, cards, guide, classify, insta-check, insta-edit, insta-post, insta-intro]
         default: run
       topic:
         description: "guide 일 때 주제 아이디 (config/guides.yaml, 비우면 오늘 차례)"
@@ -64,14 +64,16 @@ jobs:
       - name: 의존성 설치
         run: pip install -e .
 
-      - name: 만들어 둔 카드 받기 (insta-edit, insta-post)
-        if: inputs.mode == 'insta-post' || inputs.mode == 'insta-edit'
+      # insta-intro 는 예시로 쓸 카드를 examples/ 에 받는다. output/ 에 받으면 소개 게시물과 섞여
+      # 나중에 insta-post 가 이미 올린 카드를 다시 올릴 수 있다.
+      - name: 만들어 둔 카드 받기 (insta-edit, insta-post, insta-intro)
+        if: inputs.mode == 'insta-post' || inputs.mode == 'insta-edit' || inputs.mode == 'insta-intro'
         uses: actions/download-artifact@v4
         with:
           name: draft-${{ inputs.source_run }}
           run-id: ${{ inputs.source_run }}
           github-token: ${{ github.token }}
-          path: output/
+          path: ${{ inputs.mode == 'insta-intro' && 'examples/' || 'output/' }}
 
       - name: 초안 생성
         env:
@@ -106,6 +108,10 @@ jobs:
           fi
           if [ "${{ inputs.mode }}" = "insta-post" ]; then
             python -m econblog -v insta-post --account "${{ inputs.account }}"
+            exit $?
+          fi
+          if [ "${{ inputs.mode }}" = "insta-intro" ]; then
+            python -m econblog -v insta-intro --account "${{ inputs.account }}" --examples examples --deliver local,email
             exit $?
           fi
           args=""

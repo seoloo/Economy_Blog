@@ -57,6 +57,8 @@ RSS 수집 → Laya 분류·중복 제거 → 시장 데이터(yfinance·FRED·E
 - 자동 게시: 계정 토큰을 Secrets(`INSTAGRAM_ACCESS_TOKEN`·`INSTAGRAM_USER_ID`, 영어 계정은 `INSTAGRAM_EN_…`)에 넣고 `config/settings.yaml`의 `instagram.publish`를 `true`로 바꾸면 그날부터 게시합니다. 카드는 공개 이미지 레포에 올린 주소로 게시됩니다.
 - 카드만 다시 받아 보려면 **Actions → daily-post → Run workflow**에서 `mode`를 `cards`로 실행합니다 (블로그 초안 메일은 보내지 않음).
 - 계정 이름·카드 순서·숫자판 지표는 `settings.yaml`의 `instagram.accounts`, 디자인은 `templates/cards/card.html.j2`에서 바꿉니다.
+- **확인한 카드 올리기**: `mode`를 `insta-edit`(문장 고치기, `edits`에 `[["찾을 문장","바꿀 문장"]]`) 또는 `insta-post`로 두고 `source_run`에 카드를 만든 실행 번호를 넣습니다.
+- **계정 소개 게시물(프로필 고정용)**: `mode`를 `insta-intro`, `source_run`에 예시로 보여 줄 카드를 만든 실행 번호를 넣으면 7장짜리 소개 게시물을 만들어 메일로 보냅니다. 확인 후 그 실행 번호로 `insta-post`를 돌리고, 앱에서 게시물을 프로필 맨 위에 고정합니다. 글은 `config/intro.yaml`에서 고칩니다.
 
 ## 처음 설정
 

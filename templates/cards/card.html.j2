@@ -130,11 +130,39 @@ b, strong { font-weight:800; }
 .chk .now { font-size:27px; color:var(--accent); font-weight:800; margin-top:8px; font-variant-numeric:tabular-nums; }
 .big-brand { position:absolute; left:64px; bottom:120px; font-size:110px; font-weight:900; letter-spacing:-4px; color:#fff; z-index:4; }
 .big-brand i { font-style:normal; color:var(--dot); }
+
+/* 계정 소개 게시물 (config/intro.yaml) */
+.fan { position:absolute; left:0; right:0; top:130px; height:700px; z-index:2; }
+.fan img { position:absolute; width:384px; height:480px; object-fit:cover; border-radius:18px;
+           box-shadow:0 24px 60px rgba(0,0,0,.5); }
+.fan img:nth-child(1) { left:84px; top:110px; transform:rotate(-9deg); }
+.fan img:nth-child(2) { left:348px; top:40px; z-index:2; }
+.fan img:nth-child(3) { left:612px; top:110px; transform:rotate(9deg); }
+.ihead { position:absolute; left:64px; right:64px; top:150px; }
+.ihead h2 { font-size:72px; line-height:1.2; font-weight:900; letter-spacing:-2.5px; margin-top:12px; }
+.itxt { position:absolute; left:64px; right:64px; top:420px; bottom:130px; font-size:40px; line-height:1.68; overflow:hidden; }
+.itxt p { margin-bottom:36px; }
+.itxt strong { background:linear-gradient(transparent 60%, var(--mark) 60%); }
+.itxt.with-box { bottom:330px; font-size:44px; display:flex; flex-direction:column; justify-content:center; }
+.ibox { font-size:34px; }
+.itxt.below { top:910px; bottom:90px; font-size:36px; line-height:1.6; }
+.itxt.below p { margin-bottom:18px; }
+.shots { position:absolute; left:64px; right:64px; top:290px; display:flex; justify-content:center; gap:32px; }
+.shots img { width:448px; height:560px; object-fit:cover; border-radius:16px; border:2px solid var(--line);
+             box-shadow:0 12px 32px rgba(0,0,0,.14); }
+.shot-note { position:absolute; left:64px; right:64px; top:864px; text-align:center; font-size:22px; color:var(--muted); }
+.iend { position:absolute; left:64px; right:64px; top:130px; bottom:300px; color:#fff; z-index:4;
+        display:flex; flex-direction:column; justify-content:center; }
+.iend .kicker { align-self:flex-start; color:var(--accent); }
+.iend h2 { font-size:68px; font-weight:900; letter-spacing:-2px; margin:18px 0 30px; }
+.iend .it { font-size:38px; line-height:1.6; color:rgba(255,255,255,.92); margin-bottom:26px; }
 </style></head>
 <body>
-{%- set light = s.kind in ("cover", "closing", "story") %}
+{%- set light = s.kind in ("cover", "closing", "story", "intro-cover", "intro-end") %}
 <div class="card {{ 'light' if light }}">
-{% if s.kind == "cover" %}
+{% if s.kind in ("intro-cover", "intro-end") %}
+  <div class="nophoto"></div>
+{% elif s.kind == "cover" %}
   {% if s.photo %}<img class="photo" src="{{ s.photo }}">{% else %}<div class="nophoto"></div>{% endif %}<div class="veil"></div>
 {% elif s.kind == "closing" %}
   {% if s.photo %}<img class="photo" src="{{ s.photo }}"><div class="dark-veil"></div>{% else %}<div class="nophoto"></div>{% endif %}
@@ -209,6 +237,34 @@ b, strong { font-weight:800; }
   </div>
   <div class="big-brand">{{ t.brand }}<i>{{ t.brand_dot }}</i></div>
   <div class="foot"><span>{{ t.disclaimer }}</span><span>{{ s.credit }}</span></div>
+
+{% elif s.kind == "intro-cover" %}
+  <div class="fan">{% for x in s.shots %}<img src="{{ x }}">{% endfor %}</div>
+  <div class="cover-main">
+    <div class="kicker">{{ s.kicker }}</div>
+    {% for line in s.lines %}<div class="hl {{ 'a' if loop.index is odd else 'b' }}"><span>{{ line }}</span></div>{% endfor %}
+  </div>
+  <div class="swipe">{{ t.swipe }}</div>
+
+{% elif s.kind == "intro-text" %}
+  <div class="ihead"><div class="kicker">{{ s.kicker }}</div><h2>{{ s.title }}</h2></div>
+  <div class="itxt {{ 'with-box' if s.why }}">{% for p in s.paras %}<p>{{ p }}</p>{% endfor %}</div>
+  {% if s.why %}<div class="why ibox"><span class="wl">{{ s.label }}</span>{{ s.why }}</div>{% endif %}
+
+{% elif s.kind == "intro-shots" %}
+  <div class="head"><div class="kicker">{{ s.kicker }}</div><h2>{{ s.title }}</h2></div>
+  <div class="shots">{% for x in s.shots %}<img src="{{ x }}">{% endfor %}</div>
+  {% if s.note %}<div class="shot-note">{{ s.note }}</div>{% endif %}
+  <div class="itxt below">{% for p in s.paras %}<p>{{ p }}</p>{% endfor %}</div>
+
+{% elif s.kind == "intro-end" %}
+  <div class="iend">
+    <div class="kicker">{{ s.kicker }}</div>
+    <h2>{{ s.title }}</h2>
+    {% for p in s.paras %}<p class="it">{{ p }}</p>{% endfor %}
+  </div>
+  <div class="big-brand">{{ t.brand }}<i>{{ t.brand_dot }}</i></div>
+  <div class="foot"><span>{{ t.disclaimer }}</span></div>
 {% endif %}
 </div>
 <script>
@@ -238,6 +294,12 @@ b, strong { font-weight:800; }
   }
   var note = q('.note-box'), list = q('.list');
   if (note && list) shrink(note, function () { return note.getBoundingClientRect().top < list.getBoundingClientRect().bottom + 20; }, 22);
+  var itxt = q('.itxt');
+  if (itxt) shrink(itxt, function () { return itxt.scrollHeight > itxt.clientHeight; }, 26);
+  var iend = q('.iend');
+  if (iend) document.querySelectorAll('.iend .it').forEach(function (el) {
+    shrink(el, function () { return iend.scrollHeight > iend.clientHeight; }, 26);
+  });
 })();
 </script>
 </body></html>

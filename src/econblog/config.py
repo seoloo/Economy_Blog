@@ -11,7 +11,7 @@ import yaml
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
-from econblog.models import ChartSpec, GuideTopic, SeriesSpec, Source
+from econblog.models import ChartSpec, GuideTopic, IntroPost, SeriesSpec, Source
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -181,6 +181,14 @@ def load_settings(root: Path | None = None) -> Settings:
     data["guides"] = _read_yaml(guides).get("guides", []) if guides.exists() else []
     data["root"] = root
     return Settings.model_validate(data)
+
+
+def load_intro(settings: Settings, account: str) -> IntroPost:
+    """config/intro.yaml 에서 계정 소개 게시물 글을 읽는다."""
+    data = _read_yaml(settings.root / "config" / "intro.yaml")
+    if account not in data:
+        raise KeyError(f"config/intro.yaml 에 '{account}' 계정 소개 글이 없음")
+    return IntroPost.model_validate(data[account])
 
 
 def env(name: str) -> str | None:

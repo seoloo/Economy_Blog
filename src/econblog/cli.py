@@ -4,6 +4,7 @@
     python -m econblog run --dry-run       # 샘플 데이터로 전체 흐름 확인, 외부 호출 없음
     python -m econblog run --date 2026-11-06 --deliver local
     python -m econblog run --cards-only     # 블로그 초안 메일 없이 인스타 카드만 메일로
+    python -m econblog insta-intro --examples output/2026-11-08   # 그 카드를 예시로 계정 소개 게시물 만들기
     python -m econblog check-sources       # RSS 소스가 살아 있는지 점검
     python -m econblog guide --list        # 경제 공부 글 주제 목록과 오늘 차례
     python -m econblog guide --topic yield_curve --dry-run
@@ -151,6 +152,23 @@ def _cmd_insta_edit(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_insta_intro(args: argparse.Namespace) -> int:
+    """프로필에 고정할 계정 소개 게시물을 만든다 (게시하지 않음). 확인 후 insta-post 로 올린다."""
+    from pathlib import Path
+
+    from econblog.pipeline import run_intro
+
+    settings = load_settings()
+    found = sorted(Path(args.examples).glob(f"**/insta/{args.account}/meta.json"))
+    if not found:
+        print(f"{args.examples} 에서 {args.account} 예시 카드를 찾지 못함")
+        return 1
+    methods = args.deliver.split(",") if args.deliver else None
+    cs = run_intro(settings, args.account, found[-1].parent, methods=methods)
+    print(f"소개 게시물 {len(cs.images)}장: {cs.output_dir}")
+    return 0
+
+
 def _cmd_classify(args: argparse.Namespace) -> int:
     """수집·분류만 실행해 선택 결과를 확인한다. 글 작성·메일 발송은 하지 않는다."""
     from econblog.classify import classify_and_select
@@ -202,6 +220,12 @@ def main(argv: list[str] | None = None) -> int:
     p_ige.add_argument("--dir", help="카드 폴더 (기본: output/ 에서 가장 최근 것)")
     p_ige.add_argument("--edits", help='[["찾을 문장", "바꿀 문장"], ...] JSON (없으면 CARD_EDITS 환경변수)')
     p_ige.set_defaults(func=_cmd_insta_edit)
+
+    p_igi = sub.add_parser("insta-intro", help="프로필에 고정할 계정 소개 게시물 만들기 (게시하지 않음)")
+    p_igi.add_argument("--account", default="kr")
+    p_igi.add_argument("--examples", default="examples", help="예시로 보여 줄, 실제로 올린 카드 묶음이 있는 폴더")
+    p_igi.add_argument("--deliver", help="전달 방식 쉼표 구분 (예: local,email)")
+    p_igi.set_defaults(func=_cmd_insta_intro)
 
     p_chk = sub.add_parser("check-sources", help="RSS 소스 점검")
     p_chk.add_argument("--hours", type=int, default=72)

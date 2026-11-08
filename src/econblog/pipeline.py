@@ -138,6 +138,50 @@ def run_cards(
     return cardsets
 
 
+def run_intro(settings: Settings, account_key: str, examples_dir, run_date: date | None = None,
+              methods: list[str] | None = None) -> CardSet:
+    """프로필에 고정할 계정 소개 게시물. 글은 config/intro.yaml, 예시 그림은 실제로 올린 카드 묶음(examples_dir).
+
+    게시는 하지 않는다. 메일로 받아 확인한 뒤 insta-post 로 올린다.
+    """
+    import shutil
+    from pathlib import Path
+
+    from econblog.config import load_intro
+    from econblog.deliver.cards import load_saved
+    from econblog.models import CardCopy
+    from econblog.render.cards import build_intro_slides
+
+    run_date = run_date or today(settings)
+    account = next(a for a in settings.instagram.accounts if a.key == account_key)
+    intro = load_intro(settings, account_key)
+    example = load_saved(Path(examples_dir))
+    if not example.images:
+        raise ValueError(f"예시 카드 이미지가 없음: {examples_dir}")
+    card_dir = settings.resolve_output_dir() / f"{run_date.isoformat()}-intro" / "insta" / account.key
+    # 예시 그림을 카드 폴더 안에 복사해 둔다. 나중에 insta-edit 로 다시 찍을 때도 그림이 남아 있게.
+    shots_dir = card_dir / "examples"
+    shots_dir.mkdir(parents=True, exist_ok=True)
+    shots = []
+    for p in example.images:
+        dst = shots_dir / p.name
+        shutil.copyfile(p, dst)
+        shots.append(dst)
+    slides = build_intro_slides(intro, shots, example.date, account.lang)
+    images, warnings = render_cards(settings, account, slides, card_dir)
+    md = f"{example.date.month}월 {example.date.day}일" if account.lang == "ko" else f"{example.date:%b} {example.date.day}"
+    text = CardCopy(cover_lines=[], cover_photo_query="", board_note="", stories=[], sector_title="", movers_title="",
+                    asia_note="", events=[], checklist=[], caption=intro.caption.strip().replace("{example_date}", md),
+                    hashtags=intro.hashtags)
+    cs = CardSet(account=account.key, brand=account.brand, lang=account.lang, date=run_date, text=text,
+                 images=images, warnings=warnings, output_dir=card_dir)
+    cs.caption = full_caption(cs, photo_used=True)   # 예시 카드 안에 Pixabay 사진이 들어 있다
+    publish_off = settings.instagram.model_copy(update={"publish": False})
+    for line in deliver_cards(settings.model_copy(update={"instagram": publish_off}), [cs], methods or ["local"]):
+        log.info("전달: %s", line)
+    return cs
+
+
 # ---------------------------------------------------------------- 경제 공부 글
 
 

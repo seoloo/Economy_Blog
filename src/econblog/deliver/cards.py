@@ -132,7 +132,9 @@ def _publish(settings: Settings, account: CardAccount, cs: CardSet) -> str:
         raise GraphError("카드 이미지가 없음")
     if not publish.is_configured(settings):
         raise GraphError("공개 이미지 레포 설정(CHARTS_REPO_TOKEN)이 없어 카드 주소를 만들 수 없음")
-    files = [(p, f"{cs.date.isoformat()}/insta/{cs.account}/{p.name}") for p in cs.images]
+    # 출력 폴더 이름(2026-11-08, 2026-11-08-intro)을 그대로 써서 같은 날 만든 다른 묶음과 주소가 겹치지 않게 한다
+    run_folder = cs.output_dir.parent.parent.name if cs.output_dir.parent.name == "insta" else cs.date.isoformat()
+    files = [(p, f"{run_folder}/insta/{cs.account}/{p.name}") for p in cs.images]
     cs.urls = publish.publish_files(settings, files, f"{cs.date} insta {cs.account}")
     if not publish.wait_until_public(cs.urls):
         raise GraphError("카드 공개 주소가 열리지 않음 (GitHub Pages 반영 지연)")

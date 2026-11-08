@@ -332,3 +332,24 @@ class CardSet(BaseModel):
     media_id: str | None = None      # 인스타에 게시했으면 그 게시물 ID
     warnings: list[str] = Field(default_factory=list)
     output_dir: Path
+
+
+class IntroSlide(BaseModel):
+    """계정 소개 게시물 한 장 (config/intro.yaml). kind: cover, text, shots, end."""
+
+    kind: Literal["cover", "text", "shots", "end"]
+    kicker: str = ""
+    title: str = ""
+    lines: list[str] = Field(default_factory=list)    # 표지 제목 두 줄
+    paras: list[str] = Field(default_factory=list)    # 본문 문단 (**굵게** 가능)
+    shots: list[int] = Field(default_factory=list)    # 예시로 보여 줄 카드 번호 (1부터)
+    box_label: str = ""                               # text 장 아래 짙은 상자 (예: 올라오는 날)
+    box: str = ""
+
+
+class IntroPost(BaseModel):
+    """프로필 맨 위에 고정해 두는 계정 소개 게시물. 사람이 쓴 글을 그대로 쓰고 LLM 을 거치지 않는다."""
+
+    caption: str                     # {example_date} 자리에 예시 카드 날짜가 들어간다
+    hashtags: list[str] = Field(default_factory=list)
+    slides: list[IntroSlide]

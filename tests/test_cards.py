@@ -298,3 +298,68 @@ def test_apply_edits_changes_only_matching_text(tmp_path):
     assert (tmp_path / "caption.txt").read_text(encoding="utf-8") == "이 AI 수요 문제가"
     with pytest.raises(ValueError):
         card_deliver.apply_edits(tmp_path, [["없는 문장", "x"]])
+
+
+def _example_set(tmp_path, n=8):
+    """실제로 올린 카드 묶음처럼 생긴 예시 폴더 (meta.json + 01~08.jpg)."""
+    from PIL import Image
+
+    d = tmp_path / "examples" / "2026-11-08" / "insta" / "kr"
+    d.mkdir(parents=True)
+    for i in range(1, n + 1):
+        Image.new("RGB", (10, 10)).save(d / f"{i:02d}.jpg", "JPEG")
+    card_deliver.save_local(CardSet(account="kr", brand="그냥모아", lang="ko", date=date(2026, 11, 8), text=_copy(),
+                                    caption="원래 캡션", output_dir=d))
+    return d
+
+
+def test_intro_slides_follow_config_and_show_example_cards(settings, tmp_path):
+    from econblog.config import load_intro
+
+    intro = load_intro(settings, "kr")
+    examples = sorted(_example_set(tmp_path).glob("*.jpg"))
+    slides = card_render.build_intro_slides(intro, examples, date(2026, 11, 8))
+    assert [s.kind for s in slides][0] == "intro-cover" and slides[-1].kind == "intro-end"
+    assert slides[0].page == f"1/{len(slides)}"
+    shots = [s for s in slides if s.kind == "intro-shots"]
+    assert shots and all(x.startswith("file:") for s in shots for x in s.shots)
+    assert shots[0].note == "예시 · 11월 8일에 올린 카드"
+    html = card_render.render_html(settings, next(a for a in settings.instagram.accounts if a.key == "kr"), slides)
+    assert '<img src="file:' in html[0] and '<img src="file:' in html[2]
+    with pytest.raises(ValueError):
+        card_render.build_intro_slides(intro, examples[:2], None)   # 예시 카드가 모자라면 멈춘다
+
+
+def test_glue_keeps_short_words_and_dotted_lists_together():
+    out = card_render._glue("칩 세 개는 코스피·나스닥 안 써요")
+    assert "세\u00a0개" in out and "안\u00a0써요" in out and "코스피\u2060·\u2060나스닥" in out
+
+
+def test_intro_is_saved_for_insta_post_and_never_auto_posted(settings, tmp_path, monkeypatch):
+    from econblog.pipeline import run_intro
+
+    settings.instagram.publish = True
+    monkeypatch.setenv("INSTAGRAM_ACCESS_TOKEN", "IGAAtest")
+    monkeypatch.setenv("INSTAGRAM_USER_ID", "1")
+    monkeypatch.setattr(card_deliver, "_publish", lambda *a: pytest.fail("소개 게시물은 자동 게시하면 안 됨"))
+    cs = run_intro(settings, "kr", _example_set(tmp_path), run_date=date(2026, 11, 8))
+    assert cs.output_dir.parent.parent.name == "2026-11-08-intro" and cs.media_id is None
+    loaded = card_deliver.load_saved(cs.output_dir)
+    assert "11월 8일에 올린 카드" in loaded.caption and "{example_date}" not in loaded.caption
+    assert "투자 권유가 아닌" in loaded.caption and "#그냥모아" in loaded.caption
+    assert len(list((cs.output_dir / "examples").glob("*.jpg"))) == 8   # 다시 찍을 때 쓸 예시 그림
+
+
+def test_upload_path_keeps_same_day_sets_apart(settings, tmp_path, monkeypatch):
+    sent = {}
+    monkeypatch.setattr(card_deliver.publish, "is_configured", lambda s: True)
+    monkeypatch.setattr(card_deliver.publish, "publish_files", lambda s, files, msg: sent.setdefault("paths", [p for _, p in files]) or [])
+    monkeypatch.setattr(card_deliver.publish, "wait_until_public", lambda urls: True)
+    monkeypatch.setattr(card_deliver, "publish_instagram", lambda *a: "M1")
+    d = tmp_path / "2026-11-08-intro" / "insta" / "kr"
+    d.mkdir(parents=True)
+    cs = CardSet(account="kr", brand="그냥모아", lang="ko", date=date(2026, 11, 8), text=_copy(),
+                 images=[d / "01.jpg"], output_dir=d)
+    kr = next(a for a in settings.instagram.accounts if a.key == "kr")
+    card_deliver._publish(settings, kr, cs)
+    assert sent["paths"] == ["2026-11-08-intro/insta/kr/01.jpg"]

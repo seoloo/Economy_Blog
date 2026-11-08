@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import os
 import platform
+import re
 import shutil
 import subprocess
 from datetime import date
@@ -20,7 +21,7 @@ from pydantic import BaseModel, Field
 
 from econblog.config import CardAccount, Settings
 from econblog.market import moves
-from econblog.models import CardCopy, CardEvent, MarketSnapshot
+from econblog.models import CardCopy, CardEvent, IntroPost, MarketSnapshot
 from econblog.render.html import rich
 from econblog.render.photos import PhotoPicker
 
@@ -94,6 +95,7 @@ class Slide(BaseModel):
     photo: str | None = None   # file:// 주소
     credit: str = ""
     source: str = ""
+    shots: list[str] = Field(default_factory=list)   # 소개 게시물: 예시 카드 그림 (file:// 주소)
 
 
 # ---------------------------------------------------------------- 카드 구성
@@ -248,6 +250,38 @@ def _checklist(text: CardCopy, snapshot: MarketSnapshot, lang: str) -> list[Card
                 now = f"{EN_WEEKDAYS[s.last_date.weekday()][:3]} close {moves.value_text(s, lang)} {change}"
         out.append(CardEvent(when=now, title=c.title.replace("**", ""), detail=c.detail.replace("**", ""), tag=""))
     return out
+
+
+def _glue(text: str) -> str:
+    """'세 개', '안 써요' 처럼 짧은 앞말이 줄 끝에 홀로 남지 않게 뒷말과 붙인다 (줄바꿈 없는 공백).
+
+    '코스피·나스닥·환율' 처럼 가운뎃점으로 묶은 말도 중간에서 줄이 바뀌지 않게 한다 (단어 결합 문자).
+    """
+    text = re.sub(r"(^|\s)(한|두|세|네|몇|안) (?=\S)", lambda m: f"{m[1]}{m[2]} ", text)
+    return text.replace("·", "⁠·⁠")
+
+
+def build_intro_slides(intro: IntroPost, examples: list[Path], example_date: date | None, lang: str = "ko") -> list[Slide]:
+    """계정 소개 게시물. 글은 config/intro.yaml 그대로, 예시 그림은 실제로 올린 카드(examples)에서 가져온다."""
+
+    def shot(n: int) -> str:
+        if not 1 <= n <= len(examples):
+            raise ValueError(f"예시 카드 {n}번이 없음 (예시 카드 {len(examples)}장)")
+        return examples[n - 1].resolve().as_uri()
+
+    note = ""
+    if example_date:
+        note = (f"예시 · {example_date.month}월 {example_date.day}일에 올린 카드" if lang == "ko"
+                else f"Example · cards from {example_date:%b} {example_date.day}")
+    slides = []
+    for x in intro.slides:
+        slides.append(Slide(kind=f"intro-{x.kind}", kicker=x.kicker, title=x.title, lines=x.lines,
+                            paras=[rich(_glue(p)) for p in x.paras], shots=[shot(n) for n in x.shots],
+                            note=note if x.kind == "shots" else "", label=x.box_label, why=_glue(x.box)))
+    n = len(slides)
+    for i, s in enumerate(slides, 1):
+        s.page = f"{i}/{n}"
+    return slides
 
 
 def theme_source_note(lang: str) -> str:

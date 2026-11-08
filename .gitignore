@@ -1,5 +1,6 @@
 # 수집물·초안·차트는 저작권 및 중복 콘텐츠 문제로 커밋하지 않는다
 output/
+examples/
 data/cache/
 
 .env
