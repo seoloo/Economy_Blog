@@ -19,6 +19,19 @@ log = logging.getLogger(__name__)
 
 API = "https://pixabay.com/api/"
 
+# 검색어가 같아도 엉뚱한 사진이 걸리는 경우가 있다 (semiconductor wafer → 웨이퍼 과자).
+# 음식 사진과 사람 얼굴이 중심인 사진은 태그로 걸러 낸다 (초상권 문제도 피한다).
+BLOCKED_TAGS = {
+    "food", "dessert", "cake", "cookie", "cookies", "biscuit", "waffle", "wafer", "wafers", "ice cream", "candy",
+    "chocolate", "sweet", "sweets", "snack", "fruit", "breakfast", "meal", "pastry", "bakery", "cream",
+    "portrait", "face", "girl", "woman", "man", "boy", "model", "selfie", "child",
+}
+
+
+def _allowed(hit: dict) -> bool:
+    tags = {t.strip().lower() for t in str(hit.get("tags", "")).split(",")}
+    return not (tags & BLOCKED_TAGS)
+
 
 class PhotoPicker:
     """한 번의 실행에서 같은 사진이 두 번 나오지 않게 고른 사진 ID 를 기억한다."""
@@ -50,7 +63,8 @@ class PhotoPicker:
             "safesearch": "true", "per_page": 20, "order": "popular", "min_width": 1080,
         })
         resp.raise_for_status()
-        hits = [h for h in resp.json().get("hits", []) if h.get("id") not in self.used and h.get("largeImageURL")]
+        hits = [h for h in resp.json().get("hits", [])
+                if h.get("id") not in self.used and h.get("largeImageURL") and _allowed(h)]
         if not hits:
             return None
         # 인기 순 상위 몇 장 안에서 날짜마다 다른 사진이 나오게 고른다

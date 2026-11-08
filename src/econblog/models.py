@@ -278,10 +278,12 @@ class RenderedPost(BaseModel):
 class CardStory(BaseModel):
     headline: list[str] = Field(description="카드 제목 두 줄. 한국어는 줄마다 12자 안팎, 영어는 20자 안팎.")
     paragraphs: list[str] = Field(
-        description="본문 두 문단. 한국어는 문단마다 80~120자, 영어는 30~45단어. 가장 중요한 수치나 구절 1~2곳만 **굵게**.")
-    why: str = Field(description="'왜 중요할까' 상자에 들어갈 한두 문장. 한국어 60자 안팎, 영어 25단어 안팎.")
+        description="본문 두 문단. 한국어는 문단마다 70~100자, 영어는 25~35단어. 넘치면 카드에서 글자가 작아진다. "
+                    "가장 중요한 수치나 구절 1~2곳만 **굵게**.")
+    why: str = Field(description="'왜 중요할까' 상자에 들어갈 한 문장. 한국어 50자 안팎, 영어 20단어 안팎.")
     photo_query: str = Field(
-        description="배경 사진 검색어. 영어 2~3단어 (예: semiconductor chip, oil refinery). 사람 얼굴·회사 로고가 나올 검색어는 피한다.")
+        description="배경 사진 검색어. 영어 2~3단어로 사물·장소를 쓴다 (예: circuit board, server room, oil refinery, "
+                    "stock market screen, new york skyline). wafer·chips 처럼 음식으로도 읽히는 단어와 사람이 나올 검색어는 피한다.")
 
 
 class CardEvent(BaseModel):

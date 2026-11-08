@@ -194,7 +194,8 @@ def build_slides(account: CardAccount, text: CardCopy, snapshot: MarketSnapshot,
             st = moves.ranked(snapshot, "us_stock")
             if not st:
                 continue
-            rows = [RankRow(tk=s.spec.id, nm=moves.name(s, lang), p=round(s.change_pct or 0, 2)) for s in st]
+            rows = [RankRow(tk=s.spec.id, nm="" if moves.name(s, lang) == s.spec.id else moves.name(s, lang),
+                            p=round(s.change_pct or 0, 2)) for s in st]
             sub = (f"시가총액 상위 {len(st)}개 종목" if lang == "ko" else f"{len(st)} largest U.S. names")
             slides.append(Slide(kind="movers", kicker="미국 대형주 등락" if lang == "ko" else "MEGA-CAP MOVERS",
                                 title=text.movers_title, sub=sub, rows=rows, source=source))
@@ -213,7 +214,7 @@ def build_slides(account: CardAccount, text: CardCopy, snapshot: MarketSnapshot,
                                 title="다음에 볼 것" if lang == "ko" else "On the calendar", events=text.events[:5],
                                 source=theme_source_note(lang)))
         elif kind == "closing":
-            p = photo(text.cover_photo_query + " night", "vertical") or cover_photo
+            p = cover_photo   # 마지막 장은 표지 사진을 어둡게 깔아 묶음의 처음과 끝을 맞춘다
             slides.append(Slide(kind="closing", kicker="오늘의 한 줄" if lang == "ko" else "THE TAKEAWAY",
                                 lines=[x.strip() for x in text.takeaway.replace("**", "").split("\n") if x.strip()],
                                 photo=p, credit=theme["photo_credit"] if p else ""))

@@ -205,4 +205,30 @@ b, strong { font-weight:800; }
   <div class="foot"><span>{{ t.disclaimer }}</span><span>{{ s.credit }}</span></div>
 {% endif %}
 </div>
+<script>
+(function () {
+  // 글이 칸을 넘치면 글자 크기를 1px 씩 줄인다. LLM 이 길이를 넘겨 써도 카드가 겹치지 않게.
+  function shrink(el, overflow, min) {
+    if (!el) return;
+    var size = parseFloat(getComputedStyle(el).fontSize);
+    while (overflow() && size > min) { size -= 1; el.style.fontSize = size + 'px'; }
+  }
+  function q(s) { return document.querySelector(s); }
+  var txt = q('.story .txt'), why = q('.why');
+  if (txt) {
+    var limit = function () { return (why ? why.getBoundingClientRect().top : 1250) - 24; };
+    shrink(txt, function () { return txt.getBoundingClientRect().bottom > limit(); }, 24);
+    var head = document.querySelectorAll('.story .hl span');
+    head.forEach(function (h) { shrink(h, function () { return txt.getBoundingClientRect().bottom > limit(); }, 54); });
+  }
+  var cover = q('.cover-main');
+  if (cover) document.querySelectorAll('.cover-main .hl span').forEach(function (h) {
+    shrink(h, function () { return cover.getBoundingClientRect().top < 300; }, 60);
+  });
+  var close = q('.close-main h2'), box = q('.close-main');
+  if (close) shrink(close, function () { return close.scrollHeight > box.clientHeight - 80; }, 52);
+  var note = q('.note-box'), list = q('.list');
+  if (note && list) shrink(note, function () { return note.getBoundingClientRect().top < list.getBoundingClientRect().bottom + 20; }, 22);
+})();
+</script>
 </body></html>
