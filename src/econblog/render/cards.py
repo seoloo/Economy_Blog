@@ -210,6 +210,12 @@ def build_slides(account: CardAccount, text: CardCopy, snapshot: MarketSnapshot,
                                 title="아시아 시장" if lang == "ko" else "Asia at a glance",
                                 sub="같은 날 뉴욕 개장 전" if lang == "ko" else "Earlier the same day, before New York opened",
                                 tiles=rows, note=text.asia_note.replace("**", ""), source=source))
+        elif kind == "summary":
+            lines = [x.replace("**", "") for x in text.summary[:3] if x.strip()]
+            if not lines:
+                continue
+            slides.append(Slide(kind="summary", kicker="오늘 세 줄 요약" if lang == "ko" else "THE DAY IN 3 LINES",
+                                title="한 번에 정리" if lang == "ko" else "Quick recap", lines=lines, source=source))
         elif kind == "events":
             if not text.events:
                 continue

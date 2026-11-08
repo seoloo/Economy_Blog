@@ -389,3 +389,13 @@ def test_allegations_about_people_are_flagged(settings):
     warning = find_vague_phrases(text, settings.instagram.sensitive_phrases["en"], label="개인 의혹·소문 표현")
     assert warning and "allegation" in warning[0]
     assert find_vague_phrases(_copy(), settings.instagram.sensitive_phrases["ko"]) == []
+
+
+def test_english_cards_have_a_summary_after_asia_check(settings):
+    snap = build_snapshot(settings, date(2026, 11, 7), offline=True)
+    en = next(a for a in settings.instagram.accounts if a.key == "en")
+    text = _copy("en").model_copy(update={"summary": ["Line one.", "Line two.", "Line three."]})
+    kinds = [s.kind for s in card_render.build_slides(en, text, snap, date(2026, 11, 7))]
+    assert kinds.index("summary") == kinds.index("check") + 1 and len(kinds) <= 10
+    kr = next(a for a in settings.instagram.accounts if a.key == "kr")
+    assert "summary" not in [s.kind for s in card_render.build_slides(kr, _copy(), snap, date(2026, 11, 7))]
