@@ -117,12 +117,17 @@ b, strong { font-weight:800; }
 .crow .e .s { font-size:28px; color:var(--muted); margin-top:4px; }
 .crow .tag { font-size:24px; font-weight:800; padding:8px 16px; border-radius:10px; background:var(--hl2); color:var(--hl2ink); flex:none; }
 
-/* 마무리 */
-.dark-veil { position:absolute; inset:0; background:rgba(0,0,0,.72); }
-.close-main { position:absolute; left:64px; right:64px; top:118px; bottom:300px; color:#fff; z-index:4;
-              display:flex; flex-direction:column; justify-content:center; }
-.close-main .kicker { align-self:flex-start; color:var(--accent); }
-.close-main h2 { font-size:84px; line-height:1.3; font-weight:900; letter-spacing:-2.5px; margin-top:28px; }
+/* 마무리: 다음 거래일 체크리스트 */
+.dark-veil { position:absolute; inset:0; background:rgba(0,0,0,.74); }
+.chk { position:absolute; left:64px; right:64px; top:130px; bottom:300px; color:#fff; z-index:4;
+       display:flex; flex-direction:column; justify-content:center; }
+.chk .kicker { align-self:flex-start; color:var(--accent); }
+.chk h2 { font-size:64px; font-weight:900; letter-spacing:-2px; margin:18px 0 34px; }
+.chk .it { display:flex; gap:26px; align-items:flex-start; padding:26px 0; border-top:2px solid rgba(255,255,255,.18); }
+.chk .box { width:46px; height:46px; border:4px solid var(--accent); border-radius:10px; flex:none; margin-top:6px; }
+.chk .nm { font-size:42px; font-weight:900; line-height:1.3; }
+.chk .ds { font-size:32px; color:rgba(255,255,255,.85); margin-top:6px; line-height:1.4; }
+.chk .now { font-size:27px; color:var(--accent); font-weight:800; margin-top:8px; font-variant-numeric:tabular-nums; }
 .big-brand { position:absolute; left:64px; bottom:120px; font-size:110px; font-weight:900; letter-spacing:-4px; color:#fff; z-index:4; }
 .big-brand i { font-style:normal; color:var(--dot); }
 </style></head>
@@ -197,9 +202,10 @@ b, strong { font-weight:800; }
   <div class="foot"><span>{{ s.source }}</span></div>
 
 {% elif s.kind == "closing" %}
-  <div class="close-main">
+  <div class="chk">
     <div class="kicker">{{ s.kicker }}</div>
-    <h2>{% for line in s.lines %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</h2>
+    <h2>{{ s.title }}</h2>
+    {% for e in s.events %}<div class="it"><div class="box"></div><div><div class="nm">{{ e.title }}</div><div class="ds">{{ e.detail }}</div>{% if e.when %}<div class="now">{{ e.when }}</div>{% endif %}</div></div>{% endfor %}
   </div>
   <div class="big-brand">{{ t.brand }}<i>{{ t.brand_dot }}</i></div>
   <div class="foot"><span>{{ t.disclaimer }}</span><span>{{ s.credit }}</span></div>
@@ -225,8 +231,11 @@ b, strong { font-weight:800; }
   if (cover) document.querySelectorAll('.cover-main .hl span').forEach(function (h) {
     shrink(h, function () { return cover.getBoundingClientRect().top < 300; }, 60);
   });
-  var close = q('.close-main h2'), box = q('.close-main');
-  if (close) shrink(close, function () { return close.scrollHeight > box.clientHeight - 80; }, 52);
+  var chk = q('.chk');
+  if (chk) {
+    var over = function () { return chk.scrollHeight > chk.clientHeight; };
+    document.querySelectorAll('.chk .nm, .chk .ds').forEach(function (el) { shrink(el, over, 24); });
+  }
   var note = q('.note-box'), list = q('.list');
   if (note && list) shrink(note, function () { return note.getBoundingClientRect().top < list.getBoundingClientRect().bottom + 20; }, 22);
 })();

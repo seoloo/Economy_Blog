@@ -4,7 +4,7 @@ import pytest
 
 from econblog.deliver import cards as card_deliver
 from econblog.market import build_snapshot, moves
-from econblog.models import CardCopy, CardEvent, CardSet, CardStory, Series, SeriesSpec
+from econblog.models import CardCheck, CardCopy, CardEvent, CardSet, CardStory, Series, SeriesSpec
 from econblog.pipeline import run
 from econblog.render import cards as card_render
 from econblog.render.photos import PhotoPicker
@@ -41,7 +41,10 @@ def _copy(lang="ko"):
                     board_note="아시아는 급락, 미국은 기술주 강세", stories=[story, story],
                     sector_title="기술주만 웃었다", movers_title="AMD 11% 급등", asia_note="",
                     events=[CardEvent(when="11/12(수)", title="미국 CPI", detail="금리 기대를 바꿀 지표", tag="지표")],
-                    takeaway="같은 반도체,\n정반대의 하루", caption="11월 7일(토) 아침 시황 | 코스피 급락",
+                    checklist=[CardCheck(key="usdkrw", title="원/달러 환율 1,360원", detail="다시 1,360원 위로 올라가는지"),
+                               CardCheck(key="kospi", title="코스피 5,000선", detail="5,000선 아래로 내려가는지"),
+                               CardCheck(key="없는키", title="SK하이닉스", detail="미국 반도체 반등을 따라가는지")],
+                    caption="11월 7일(토) 아침 시황 | 코스피 급락",
                     hashtags=["미국증시", "코스피", "반도체"])
 
 
@@ -53,7 +56,10 @@ def test_slides_follow_account_order_and_use_data_numbers(settings):
     assert slides[0].page == "1/8" and slides[-1].page == "8/8"
     assert len(slides[1].tiles) == 10 and len(slides[4].cells) == 11 and len(slides[5].rows) == 12
     assert slides[0].kicker == "11월 7일(토) 아침 시황"
-    assert slides[-1].lines == ["같은 반도체,", "정반대의 하루"]
+    close = slides[-1]
+    assert close.kicker == "월요일 체크리스트" and close.title == "장 열리면 볼 3가지"
+    assert close.events[0].when.startswith("금요일 ") and "원" in close.events[0].when   # 수치는 데이터에서 붙는다
+    assert close.events[2].when == ""   # 데이터에 없는 key 는 숫자를 붙이지 않는다
 
     pages = card_render.render_html(settings, kr, slides)
     assert "오늘 시장 한눈에" in pages[1] and "<strong>6.02%</strong>" in pages[2]
@@ -201,10 +207,10 @@ def test_check_account_reads_without_posting(settings, monkeypatch):
 def test_vague_phrases_are_flagged(settings):
     from econblog.guard.style import find_vague_phrases
 
-    vague = _copy().model_copy(update={"takeaway": "서울은 6% 빠졌습니다.\n월요일은 그 사이 어디쯤일 겁니다."})
+    vague = _copy().model_copy(update={"board_note": "서울은 6% 빠졌고 월요일은 그 사이 어디쯤일 겁니다."})
     warning = find_vague_phrases(vague, settings.instagram.vague_phrases["ko"])
     assert warning and "서울은" in warning[0] and "어디쯤" in warning[0]
-    clear = _copy().model_copy(update={"takeaway": "코스피가 6.02% 내렸습니다.\n월요일에는 SK하이닉스 반등 여부를 확인합니다.",
+    clear = _copy().model_copy(update={"board_note": "코스피 6.02% 하락, 나스닥 1.09% 상승",
                                        "sector_title": "기술 업종 1.45% 상승"})
     assert find_vague_phrases(clear, settings.instagram.vague_phrases["ko"]) == []
 

@@ -114,7 +114,7 @@ CARD_STRUCTURE = {
         "movers": "미국 대형주 등락 순위 (자동) + 제목(movers_title)",
         "check": "아시아·한국 체크 (자동) + 설명(asia_note)",
         "events": "앞으로 볼 일정 (events, 없으면 이 장은 빠짐)",
-        "closing": "마지막 장: 오늘의 한 줄(takeaway)",
+        "closing": "마지막 장: 다음 거래일 체크리스트 3개(checklist). 각 항목 아래에 금요일·전날 수치가 자동으로 붙음",
     },
     "en": {
         "cover": "Cover: photo, date, two-line headline (cover_lines), three number chips",
@@ -124,14 +124,14 @@ CARD_STRUCTURE = {
         "movers": "Mega-cap movers ranking (auto) + title (movers_title)",
         "check": "Asia & Korea check (auto numbers) + note (asia_note)",
         "events": "What's next (events; card is dropped if empty)",
-        "closing": "Closing card: the takeaway",
+        "closing": "Closing card: next-session checklist of 3 items (checklist); the latest value is added automatically under each",
     },
 }
 
 
 def _fact(s, lang: str) -> str:
     change, _ = moves.change_text(s, lang)
-    return f"{moves.name(s, lang)} ({s.spec.id}): {moves.value_text(s, lang)}, {change} ({s.last_date})"
+    return f"[{s.spec.key}] {moves.name(s, lang)} ({s.spec.id}): {moves.value_text(s, lang)}, {change} ({s.last_date})"
 
 
 def card_date_label(d: date) -> str:

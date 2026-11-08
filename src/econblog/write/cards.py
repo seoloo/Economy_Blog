@@ -7,7 +7,7 @@ import logging
 from econblog import registry
 from econblog.config import Settings
 from econblog.market import moves
-from econblog.models import CardCopy, CardEvent, CardStory
+from econblog.models import CardCheck, CardCopy, CardEvent, CardStory
 from econblog.write.base import CardContext
 from econblog.write.prompting import cards_system_prompt, cards_user_prompt
 
@@ -72,7 +72,8 @@ class TemplateCardWriter:
             return CardCopy(
                 cover_lines=cover, cover_photo_query="stock market", board_note=post.summary_line if post else "",
                 stories=stories, sector_title=f"업종 1위 {top_sector}", movers_title=f"{top_stock}",
-                asia_note="", events=events, takeaway=post.closing if post else "",
+                asia_note="", events=events,
+                checklist=[CardCheck(key=s.spec.key, title=moves.name(s, lang), detail="다음 거래일에도 이어지는지") for s in chips],
                 caption="\n\n".join([post.title, post.summary_line] if post else []),
                 hashtags=post.tags if post else ["미국증시", "코스피"],
             )
@@ -84,7 +85,8 @@ class TemplateCardWriter:
         return CardCopy(
             cover_lines=cover, cover_photo_query="new york stock exchange", board_note="Draft written from data only.",
             stories=stories, sector_title=f"Leader: {top_sector}", movers_title=f"Top: {top_stock}",
-            asia_note="Draft written from data only.", events=[], takeaway="Draft only.\nNo language model.",
+            asia_note="Draft written from data only.", events=[],
+            checklist=[CardCheck(key=s.spec.key, title=moves.name(s, lang), detail="whether the move holds") for s in chips],
             caption="Draft written from data only.", hashtags=["stockmarket", "stocks"],
         )
 

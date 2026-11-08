@@ -216,8 +216,13 @@ def build_slides(account: CardAccount, text: CardCopy, snapshot: MarketSnapshot,
                                 source=theme_source_note(lang)))
         elif kind == "closing":
             p = cover_photo   # 마지막 장은 표지 사진을 어둡게 깔아 묶음의 처음과 끝을 맞춘다
-            slides.append(Slide(kind="closing", kicker="오늘의 한 줄" if lang == "ko" else "THE TAKEAWAY",
-                                lines=[x.strip() for x in text.takeaway.replace("**", "").split("\n") if x.strip()],
+            checks = _checklist(text, snapshot, lang)
+            if lang == "ko":
+                kicker = "월요일 체크리스트" if run_date.weekday() >= 5 else "오늘 장 체크리스트"
+                title = f"장 열리면 볼 {len(checks)}가지"
+            else:
+                kicker, title = "NEXT SESSION CHECKLIST", f"{len(checks)} things to watch"
+            slides.append(Slide(kind="closing", kicker=kicker, title=title, events=checks,
                                 photo=p, credit=theme["photo_credit"] if p else ""))
     if used_photo:
         for s in slides:
@@ -227,6 +232,22 @@ def build_slides(account: CardAccount, text: CardCopy, snapshot: MarketSnapshot,
     for i, s in enumerate(slides, 1):
         s.page = f"{i}/{n}"
     return slides
+
+
+def _checklist(text: CardCopy, snapshot: MarketSnapshot, lang: str) -> list[CardEvent]:
+    """체크리스트 항목마다 마지막 수치를 데이터에서 붙인다 (LLM 이 숫자를 쓰지 않게)."""
+    out = []
+    for c in text.checklist[:3]:
+        s = snapshot.series.get(c.key.strip())
+        now = ""
+        if s is not None and s.last is not None and s.last_date is not None:
+            change, _ = moves.change_text(s, lang)
+            if lang == "ko":
+                now = f"{KO_WEEKDAYS[s.last_date.weekday()]}요일 {moves.value_text(s, lang)} {change}"
+            else:
+                now = f"{EN_WEEKDAYS[s.last_date.weekday()][:3]} close {moves.value_text(s, lang)} {change}"
+        out.append(CardEvent(when=now, title=c.title.replace("**", ""), detail=c.detail.replace("**", ""), tag=""))
+    return out
 
 
 def theme_source_note(lang: str) -> str:

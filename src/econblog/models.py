@@ -293,6 +293,12 @@ class CardEvent(BaseModel):
     tag: str = Field(description="분류 한 단어. 예: 지표, 실적, 금리 / Data, Earnings, Fed")
 
 
+class CardCheck(BaseModel):
+    key: str = Field(description="시장 데이터 표 맨 앞 [대괄호] 안의 key. 예: usdkrw, kospi, st_hynix")
+    title: str = Field(description="항목 이름과 기준. 형식: [이름] [기준 숫자]. 한국어 14자, 영어 24자 안팎.")
+    detail: str = Field(description="그 기준에서 볼 점 한 줄. 한국어 '~하는지'로 끝나는 20자 안팎, 영어 'whether …' 8단어 안팎.")
+
+
 class CardCopy(BaseModel):
     """인스타 카드뉴스 한 묶음의 글. 숫자 카드(숫자판·업종·대형주)는 데이터로 그리고 여기에는 글만 담는다."""
 
@@ -305,7 +311,8 @@ class CardCopy(BaseModel):
     movers_title: str = Field(description="미국 대형주 등락 장 제목. 한국어 12자, 영어 25자 안팎.")
     asia_note: str = Field(description="아시아·한국 체크 장 아래 상자에 들어갈 한두 문장. 그 장이 없는 계정은 빈 문자열.")
     events: list[CardEvent] = Field(description="앞으로 볼 일정 0~5개. 기사나 블로그 글에 나온 일정만. 없으면 빈 목록.")
-    takeaway: str = Field(description="마지막 장. 두 문장: 오늘 가장 중요한 사실(이름+숫자) + 다음 거래일에 확인할 것. 문장 사이에 줄바꿈(\n).")
+    checklist: list[CardCheck] = Field(
+        description="마지막 장 체크리스트 3개. 다음 거래일에 확인할 지수·환율·종목과 기준. 시장 데이터 표에 있는 항목만.")
     caption: str = Field(
         description="게시물 캡션 본문(해시태그 제외). 첫 줄 제목, 번호 붙인 요약 3개, 다음에 볼 것. 한국어 600~900자, 영어 120~180단어.")
     hashtags: list[str] = Field(description="해시태그 8~12개. # 없이 띄어쓰기 없는 단어로.")
