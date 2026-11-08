@@ -33,7 +33,7 @@ def test_guide_dry_run_end_to_end(settings):
     post = run_guide(settings, topic, run_date=date(2026, 11, 6), offline=True, deliver_methods=["local"])
     out = post.output_dir
     assert out.name == "2026-11-06-guide-yield_curve"
-    assert (out / "charts" / "thumbnail.jpg").exists()  # 모든 글에 같은 고정 썸네일
+    assert (out / "charts" / "thumb_study.jpg").exists()  # 경제 공부 고정 썸네일
     assert not (out / "charts" / "yield_curve_cover.png").exists()
     assert (out / "charts" / "yield_curve_spread.png").exists()
 
@@ -41,7 +41,7 @@ def test_guide_dry_run_end_to_end(settings):
     for text in ("이 글의 핵심", "지금 수치로 보기", "최근 5년 범위", "미 국채 10년", "자주 묻는 질문", "마무리",
                  "[함께 보면 좋은 글]", "#장단기금리차"):
         assert text in html, text
-    assert html.index("[이미지 삽입] thumbnail.jpg") < html.index("이 글의 핵심")
+    assert html.index("[이미지 삽입] thumb_study.jpg") < html.index("이 글의 핵심")
     # 티스토리 기본 편집기가 지우는 스타일·태그를 쓰지 않는다
     assert "<th" not in html
     kept = {"color", "background-color", "text-align", "border-collapse", "width", "list-style-type"}
@@ -52,11 +52,11 @@ def test_guide_dry_run_end_to_end(settings):
     msg = build_message(post, "me@example.com", "me@example.com")
     assert msg["Subject"].startswith("[블로그 초안·경제 공부]")
     types = {p.get_filename(): p.get_content_type() for p in msg.iter_attachments()}
-    assert types["thumbnail.jpg"] == "image/jpeg" and types["yield_curve_spread.png"] == "image/png"
+    assert types["thumb_study.jpg"] == "image/jpeg" and types["yield_curve_spread.png"] == "image/png"
 
 
 def test_guide_without_thumbnail_draws_keyword_cover(settings):
-    settings.thumbnail = ""
+    settings.thumbnails = {}
     post = run_guide(settings, find_topic(settings, "vix"), run_date=date(2026, 11, 6), offline=True,
                      deliver_methods=["local"])
     html = (post.output_dir / "post.html").read_text(encoding="utf-8")

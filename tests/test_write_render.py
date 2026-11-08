@@ -61,8 +61,8 @@ def test_dry_run_end_to_end(settings):
     html = (out / "post.html").read_text(encoding="utf-8")
     preview = (out / "preview.html").read_text(encoding="utf-8")
     assert "[이미지 삽입]" in html and "<img" not in html
-    assert '<img src="charts/index_change.png"' in preview and '<img src="charts/thumbnail.jpg"' in preview
-    assert html.index("[이미지 삽입] thumbnail.jpg") < html.index("오늘 시장 한눈에")  # 고정 썸네일이 맨 위
+    assert '<img src="charts/index_change.png"' in preview and '<img src="charts/thumb_market.jpg"' in preview
+    assert html.index("[이미지 삽입] thumb_market.jpg") < html.index("오늘 시장 한눈에")  # 시황 썸네일이 맨 위
     assert not (out / "charts" / "cover.png").exists()  # 고정 썸네일이 있으면 데이터 표지는 그리지 않는다
     assert "투자를 권유하지" in html or "권유하지 않습니다" in html
     assert "발행 전 확인" in preview and "발행 전 확인" not in html
@@ -148,8 +148,9 @@ def test_fixed_thumbnail_uploads_once_to_shared(settings, monkeypatch):
     from econblog.charts import publish
     from econblog.charts.cover import fixed_thumbnail
 
-    thumb = fixed_thumbnail(settings, settings.resolve_output_dir() / "charts")
-    assert thumb is not None and thumb.path.suffix == ".jpg" and thumb.position == "cover"
+    thumb = fixed_thumbnail(settings, "daily", settings.resolve_output_dir() / "charts")
+    assert thumb is not None and thumb.position == "cover"
+    assert thumb.path.read_bytes() == (settings.root / "assets/brand/thumb_market.jpg").read_bytes()  # 다시 압축하지 않는다
     remote = {"sha": None}
     puts = []
 
@@ -180,8 +181,8 @@ def test_fixed_thumbnail_uploads_once_to_shared(settings, monkeypatch):
     settings.publish.base_url = "https://owner.github.io/assets"
 
     assert publish.publish_charts(settings, [thumb], date(2026, 11, 6)) == []
-    assert thumb.url == "https://owner.github.io/assets/shared/thumbnail.jpg"
-    assert puts == ["https://api.github.com/repos/owner/assets/contents/shared/thumbnail.jpg"]
+    assert thumb.url == "https://owner.github.io/assets/shared/thumb_market.jpg"
+    assert puts == ["https://api.github.com/repos/owner/assets/contents/shared/thumb_market.jpg"]
 
     remote["sha"] = publish._blob_sha(thumb.path.read_bytes())  # 다음 날: 같은 파일이 이미 있음
     assert publish.publish_charts(settings, [thumb], date(2026, 11, 7)) == []
@@ -189,11 +190,11 @@ def test_fixed_thumbnail_uploads_once_to_shared(settings, monkeypatch):
 
 
 def test_without_thumbnail_each_post_draws_its_own_cover(settings):
-    settings.thumbnail = ""
+    settings.thumbnails = {}
     post = run(settings, run_date=date(2026, 11, 6), offline=True, deliver_methods=["local"])
     html = (post.output_dir / "post.html").read_text(encoding="utf-8")
     assert html.index("[이미지 삽입] cover.png") < html.index("오늘 시장 한눈에")
-    assert not (post.output_dir / "charts" / "thumbnail.jpg").exists()
+    assert not (post.output_dir / "charts" / "thumb_market.jpg").exists()
 
 
 def test_google_news_reference_shows_real_publisher():

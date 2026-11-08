@@ -54,8 +54,8 @@ def run(
     snapshot = build_snapshot(settings, run_date, offline=offline)
     log.info("시장 데이터 %d개 (실패 %d개)", len(snapshot.series), len(snapshot.errors))
 
-    # 4. 차트 (고정 썸네일이 있으면 데이터 표지 대신 맨 위에 넣는다)
-    thumb = fixed_thumbnail(settings, out_dir / "charts")
+    # 4. 차트 (시황 고정 썸네일이 있으면 데이터 표지 대신 맨 위에 넣는다)
+    thumb = fixed_thumbnail(settings, "daily", out_dir / "charts")
     specs = [s for s in settings.charts if not (thumb and s.position == "cover")]
     charts = ([thumb] if thumb else []) + build_charts(settings, snapshot, out_dir / "charts", specs)
     log.info("차트 %d개", len(charts))
@@ -128,12 +128,12 @@ def run_guide(
                               lookback_days=settings.guide.lookback_days)
     log.info("시장 데이터 %d개 (실패 %d개)", len(snapshot.series), len(snapshot.errors))
 
-    # 2. 차트: 대표 이미지(고정 썸네일, 없으면 키워드 카드) + 주제별 장기 차트
+    # 2. 차트: 대표 이미지(경제 공부 고정 썸네일, 없으면 키워드 카드) + 주제별 장기 차트
     #    (파일 이름이 시황 차트와 겹치지 않게 주제 아이디를 붙인다)
     chart_dir = out_dir / "charts"
     chart_dir.mkdir(parents=True, exist_ok=True)
     specs = [c.model_copy(update={"key": f"{topic.id}_{c.key}"}) for c in topic.charts]
-    cover = fixed_thumbnail(settings, chart_dir) or guide_cover(
+    cover = fixed_thumbnail(settings, "guide", chart_dir) or guide_cover(
         settings, topic.keyword, topic.subtitle, chart_dir / f"{topic.id}_cover.png")
     charts = [cover]
     charts += build_charts(settings, snapshot, chart_dir, specs)

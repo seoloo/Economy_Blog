@@ -90,7 +90,7 @@ class Settings(BaseModel):
     timezone: str = "Asia/Seoul"
     output_dir: Path = Path("output")
     blog_name: str = "그냥모아"
-    thumbnail: str = ""  # 고정 대표 이미지 경로 (레포 기준). 비우면 글마다 표지를 그린다
+    thumbnails: dict[str, str] = Field(default_factory=dict)  # 글 종류(daily·guide)별 고정 대표 이미지 경로
     collect: CollectSettings = Field(default_factory=CollectSettings)
     classify: ClassifySettings = Field(default_factory=ClassifySettings)
     market: MarketSettings = Field(default_factory=MarketSettings)
@@ -119,10 +119,11 @@ class Settings(BaseModel):
     def samples_dir(self) -> Path:
         return self.root / "samples"
 
-    def thumbnail_path(self) -> Path | None:
-        if not self.thumbnail:
+    def thumbnail_path(self, kind: str) -> Path | None:
+        rel = self.thumbnails.get(kind)
+        if not rel:
             return None
-        p = Path(self.thumbnail)
+        p = Path(rel)
         return p if p.is_absolute() else self.root / p
 
     def resolve_output_dir(self) -> Path:

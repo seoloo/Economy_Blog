@@ -34,11 +34,18 @@ RSS 수집 → Laya 분류·중복 제거 → 시장 데이터(yfinance·FRED·E
 
 ## 대표 이미지(썸네일)
 
-모든 글 맨 위에는 같은 그림 `assets/brand/thumbnail.png`가 들어가고, 티스토리 목록 썸네일로도 쓰입니다.
-- 그림을 바꾸려면 이 파일만 새 그림으로 바꿔 푸시합니다. 원본은 PNG 그대로 두면 되고, 글에는 가로 1200px JPEG(약 200KB)로 줄여 들어갑니다.
-- 이미지 레포에는 날짜 폴더가 아니라 `shared/thumbnail.jpg`에 한 번만 올라가고, 그림이 바뀔 때만 다시 올라갑니다.
-- 시황·경제 공부 말고 직접 쓰는 다른 카테고리 글에도 같은 그림을 대표 이미지로 쓰면 블로그 전체가 한 얼굴로 보입니다.
-- 글마다 데이터로 그린 표지(시황: 지수 4개 카드, 경제 공부: 키워드 카드)로 돌아가려면 `config/settings.yaml`의 `thumbnail`을 비웁니다.
+같은 캐릭터 그림(`assets/brand/character.png`)에 카테고리 색과 제목만 바꾼 썸네일을 씁니다. 글 맨 위에 들어가고 티스토리 목록 썸네일로도 쓰입니다.
+
+| 카테고리 | 파일 | 쓰는 곳 |
+|---|---|---|
+| 시황 | `assets/brand/thumb_market.jpg` | 시황 글에 자동으로 들어감 |
+| 경제 공부 | `assets/brand/thumb_study.jpg` | 경제 공부 글에 자동으로 들어감 |
+| 시사 | `assets/brand/thumb_issue.jpg` | 직접 쓰는 글에 대표 이미지로 올림 |
+| 정치 | `assets/brand/thumb_politics.jpg` | 직접 쓰는 글에 대표 이미지로 올림 |
+
+- 썸네일은 `python assets/brand/make_thumbnails.py`로 다시 만듭니다. 캐릭터 그림을 바꾸거나 카테고리를 늘릴 때 이 스크립트만 고칩니다.
+- 이미지 레포에는 날짜 폴더가 아니라 `shared/`에 한 번만 올라가고, 그림이 바뀔 때만 다시 올라갑니다.
+- 글마다 데이터로 그린 표지(시황: 지수 4개 카드, 경제 공부: 키워드 카드)로 돌아가려면 `config/settings.yaml`의 `thumbnails`에서 해당 항목을 지웁니다.
 
 ## 처음 설정
 

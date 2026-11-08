@@ -3,8 +3,11 @@
 timezone: Asia/Seoul
 output_dir: output
 blog_name: 그냥모아
-# 모든 글(시황·경제 공부·그 밖의 글) 맨 위에 넣는 고정 대표 이미지. 비우면 글마다 데이터로 표지를 그린다.
-thumbnail: assets/brand/thumbnail.png
+# 글 맨 위 대표 이미지(카테고리별 고정 썸네일, assets/brand/make_thumbnails.py 로 만든다).
+# 항목을 지우면 그 글은 예전처럼 데이터로 표지를 그린다.
+thumbnails:
+  daily: assets/brand/thumb_market.jpg   # 시황
+  guide: assets/brand/thumb_study.jpg    # 경제 공부
 
 collect:
   lookback_hours: 30        # 이 시간 이내에 발행된 기사만 사용
