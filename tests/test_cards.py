@@ -444,18 +444,29 @@ def test_reel_is_posted_to_the_reels_tab_only(settings, monkeypatch):
     assert calls[1][0].endswith("/media_publish")
 
 
-def test_reel_video_is_built_from_cards(tmp_path):
+def test_reel_has_one_idea_per_scene(settings):
+    from econblog.render.reels import SECONDS, reel_frames, reel_length
+
+    snap = build_snapshot(settings, date(2026, 11, 7), offline=True)
+    kr = next(a for a in settings.instagram.accounts if a.key == "kr")
+    frames = reel_frames("ko", card_render.build_slides(kr, _copy(), snap, date(2026, 11, 7)))
+    assert [f.slide.kind for f in frames] == ["hook", "nums", "story", "story", "next", "end"]
+    assert len(frames[1].slide.tiles) == 4 and frames[1].slide.tiles[0].n == "코스피"   # 표지 숫자부터
+    assert 15 < reel_length([f.seconds for f in frames]) < 25
+
+
+def test_reel_video_is_built_from_scenes(tmp_path):
     from PIL import Image
     from econblog.render.reels import build_command, ffmpeg_path, make_reel, reel_length
 
     imgs = []
     for i in range(3):
-        p = tmp_path / f"0{i + 1}.jpg"
-        Image.new("RGB", (1080, 1350), (i * 80, 40, 90)).save(p, "JPEG")
+        p = tmp_path / f"reel_0{i + 1}.jpg"
+        Image.new("RGB", (1080, 1920), (i * 80, 40, 90)).save(p, "JPEG")
         imgs.append(p)
-    cmd = " ".join(build_command("ffmpeg", imgs, None, tmp_path / "r.mp4", seconds=3.0, fade=0.3))
-    assert cmd.count("xfade") == 2 and "1080:1920" in cmd and f"{reel_length(3, 3.0, 0.3):.3f}" in cmd
+    cmd = " ".join(build_command("ffmpeg", imgs, [2.0, 3.0, 2.0], None, tmp_path / "r.mp4"))
+    assert cmd.count("xfade") == 2 and cmd.count("zoompan") == 3 and f"{reel_length([2.0, 3.0, 2.0]):.3f}" in cmd
     if not ffmpeg_path():
         pytest.skip("ffmpeg 없음")
-    out = make_reel(imgs, None, tmp_path / "r.mp4", seconds=1.0)
+    out = make_reel(imgs, [1.0, 1.0, 1.0], None, tmp_path / "r.mp4")
     assert out.stat().st_size > 1000

@@ -154,8 +154,12 @@ def _cmd_insta_edit(args: argparse.Namespace) -> int:
 
 def _cmd_insta_reel(args: argparse.Namespace) -> int:
     """만들어 둔 카드 묶음으로 릴스 영상을 만들고(없으면), --post 면 릴스만 게시한다."""
+    import json
+    from pathlib import Path
+
     from econblog.deliver.cards import _publish_reel, load_saved, save_local
-    from econblog.render.cards import THEMES
+    from econblog.market import build_snapshot
+    from econblog.render.cards import Slide, build_slides
     from econblog.render.reels import build_reel
 
     settings = load_settings()
@@ -166,7 +170,12 @@ def _cmd_insta_reel(args: argparse.Namespace) -> int:
     cs = load_saved(card_dir)
     account = next(a for a in settings.instagram.accounts if a.key == cs.account)
     if not cs.reel:
-        cs.reel, track = build_reel(settings, account, cs.images, cs.output_dir, cs.date, bg=THEMES[cs.lang]["dark"])
+        saved = Path(card_dir) / "slides.json"
+        if saved.exists():   # 카드를 만들 때 저장해 둔 장면 내용 (사진 포함)
+            slides = [Slide.model_validate(x) for x in json.loads(saved.read_text(encoding="utf-8"))]
+        else:                # 예전 카드: 데이터를 다시 받아 장면을 만든다 (사진 없음)
+            slides = build_slides(account, cs.text, build_snapshot(settings, cs.date), cs.date)
+        cs.reel, track = build_reel(settings, account, slides, cs.output_dir, cs.date)
         cs.reel_music = f"{track.title} – {track.artist}" if track else ""
         save_local(cs)
     print(f"릴스 영상: {cs.reel} (음악: {cs.reel_music or '없음'})")

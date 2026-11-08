@@ -125,12 +125,11 @@ instagram:
   publish_weekdays: [1, 2, 3, 4, 5]   # 화~토(0=월). 정기 실행도 화~토. 월요일에 손으로 돌려도 게시하지 않는다
   disclaimer: false    # true 면 캡션 끝·마지막 카드 아래에 "투자 권유 아님" 문구를 넣는다 (블로그 글에는 항상 들어감)
   graph_version: v23.0
-  # 릴스: 그날 카드를 세로 영상(9:16)으로 이어 붙여 캐러셀과 같이 올린다. 릴스 탭에만 보이고 프로필 격자에는 안 쌓인다.
+  # 릴스: 그날 카드 내용으로 세로(9:16) 장면 6개(훅·숫자·이슈 2·다음에 볼 것·끝)를 그려 캐러셀과 같이 올린다. 릴스 탭에만 보이고 프로필 격자에는 안 쌓인다.
   # 음악은 Pixabay 무료 음원(상업적 사용 가능, 출처 표기 의무 없음) 중 Content ID 에 등록되지 않은 곡만 날짜별로 돌려 쓴다.
   # 음원 파일은 레포에 올리지 않고 실행할 때 내려받는다 (Pixabay 라이선스는 음원 파일 자체의 재배포를 막는다).
   reels:
     enabled: true
-    seconds: 3.0
     share_to_feed: false
     music:
       - {title: "Financial News", artist: "Kulakovka", page: "https://pixabay.com/music/adventure-financial-news-614884/", url: "https://cdn.pixabay.com/download/audio/2026/10/04/audio_731a75b21c.mp3?filename=kulakovka-financial-news-614884.mp3"}

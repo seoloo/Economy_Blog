@@ -111,7 +111,6 @@ class ReelSettings(BaseModel):
     """카드를 이어 붙인 세로 영상(릴스). 캐러셀과 같은 날 같이 올린다."""
 
     enabled: bool = True
-    seconds: float = 3.0           # 카드 한 장을 보여 주는 시간
     share_to_feed: bool = False    # false 면 릴스 탭·추천에만 나오고 프로필 격자와 피드에는 안 나온다
     music: list[MusicTrack] = Field(default_factory=list)   # 날짜마다 돌아가며 쓴다
 

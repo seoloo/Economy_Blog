@@ -329,10 +329,11 @@ def render_html(settings: Settings, account: CardAccount, slides: list[Slide]) -
     return [tpl.render(t=theme, s=s) for s in slides]
 
 
-def screenshot(chrome: str, html: Path, out: Path) -> None:
+def screenshot(chrome: str, html: Path, out: Path, size: tuple[int, int] = (W, H)) -> None:
     png = out.with_suffix(".png")
     args = [chrome, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=1",
-            "--allow-file-access-from-files", f"--window-size={W},{H}", f"--screenshot={png}", html.resolve().as_uri()]
+            "--allow-file-access-from-files", f"--window-size={size[0]},{size[1]}", f"--screenshot={png}",
+            html.resolve().as_uri()]
     if platform.system() == "Linux":
         args.insert(1, "--no-sandbox")
     subprocess.run(args, capture_output=True, timeout=90, check=False)

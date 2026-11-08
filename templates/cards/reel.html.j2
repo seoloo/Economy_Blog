@@ -1,0 +1,143 @@
+{#- 릴스 장면 한 장 (1080x1920). render/reels.py 가 장면마다 채워 Chrome 으로 찍는다.
+    카드를 줄여 넣지 않고, 한 장면에 한 가지만 크게 보여 준다 (1~2초 안에 읽히게). 숫자는 모두 데이터에서 온다. -#}
+<!doctype html>
+<html lang="{{ t.lang }}"><head><meta charset="utf-8">
+<style>
+:root { --bg:{{ t.bg }}; --ink:{{ t.ink }}; --dark:{{ t.dark }}; --accent:{{ t.accent }}; --kick:{{ t.kick }};
+        --hl1:{{ t.hl1 }}; --hl1ink:{{ t.hl1ink }}; --hl2:{{ t.hl2 }}; --hl2ink:{{ t.hl2ink }}; --dot:{{ t.dot }}; }
+* { box-sizing:border-box; margin:0; padding:0; }
+html, body { width:1080px; height:1920px; overflow:hidden; }
+body { font-family:'Noto Sans KR','Noto Sans CJK KR','Malgun Gothic',sans-serif; word-break:keep-all; color:#fff;
+       -webkit-font-smoothing:antialiased; }
+.f { position:relative; width:1080px; height:1920px; background:var(--dark); overflow:hidden; }
+.photo { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.veil { position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.55) 0, rgba(0,0,0,.25) 30%, rgba(0,0,0,.85) 62%, rgba(0,0,0,.95) 100%); }
+.glow { position:absolute; inset:0; background:radial-gradient(circle at 80% 15%, rgba(255,255,255,.10) 0, rgba(255,255,255,0) 55%); }
+.brand { position:absolute; left:80px; top:150px; font-size:44px; font-weight:900; letter-spacing:-.5px; z-index:5; }
+.brand i { font-style:normal; color:var(--dot); }
+.kick { display:inline-block; font-size:40px; font-weight:900; letter-spacing:1.5px; color:var(--accent); }
+.hl { display:block; margin-bottom:16px; }
+.hl span { display:inline; padding:6px 26px 12px; line-height:1.38; font-weight:900; letter-spacing:-3px;
+           -webkit-box-decoration-break:clone; box-decoration-break:clone; }
+.hl.a span { background:var(--hl1); color:var(--hl1ink); }
+.hl.b span { background:var(--hl2); color:var(--hl2ink); }
+.up { color:{{ t.up_on_dark }}; } .down { color:{{ t.down_on_dark }}; } .flat { color:#c7cbd1; }
+.box { position:absolute; left:80px; right:80px; z-index:4; }
+
+/* 1. 훅: 그날 가장 큰 움직임 */
+.hook { bottom:360px; }
+.hook .kick { margin-bottom:34px; }
+.hook .hl span { font-size:132px; }
+.chips { display:flex; flex-direction:column; gap:18px; margin-top:46px; }
+.chip { display:flex; justify-content:space-between; align-items:baseline; background:rgba(255,255,255,.95); color:#111;
+        border-radius:22px; padding:22px 34px; font-size:48px; font-weight:800; }
+.chip b { font-weight:900; font-variant-numeric:tabular-nums; }
+
+/* 2. 숫자 */
+.nums { top:330px; }
+.nums h2, .next h2, .story h2 { font-size:92px; font-weight:900; letter-spacing:-3px; line-height:1.15; margin-top:14px; }
+.rows { margin-top:70px; }
+.row { display:flex; justify-content:space-between; align-items:baseline; padding:38px 0; border-top:3px solid rgba(255,255,255,.14); }
+.row .n { font-size:50px; font-weight:800; color:#e6e8eb; }
+.row .v { font-size:66px; font-weight:900; font-variant-numeric:tabular-nums; text-align:right; }
+.row .c { display:block; font-size:44px; font-weight:900; margin-top:4px; }
+
+/* 3. 이슈 */
+.story-photo { position:absolute; left:0; right:0; top:0; height:980px; width:100%; object-fit:cover; }
+.story-fade { position:absolute; left:0; right:0; top:0; height:980px;
+              background:linear-gradient(180deg, rgba(0,0,0,.35) 0, rgba(0,0,0,0) 35%, var(--dark) 100%); }
+.story { top:700px; }
+.story .label { display:inline-block; background:var(--accent); color:var(--hl2ink); font-size:38px; font-weight:900;
+                padding:10px 26px; border-radius:12px; letter-spacing:1px; margin-bottom:26px; }
+.story .hl span { font-size:104px; }
+.why { margin-top:48px; font-size:50px; line-height:1.5; font-weight:700; color:#eef0f2; }
+
+/* 4. 다음에 볼 것 */
+.next { top:330px; }
+.next .it { padding:40px 0; border-top:3px solid rgba(255,255,255,.14); }
+.next .nm { font-size:66px; font-weight:900; line-height:1.25; }
+.next .ds { font-size:44px; color:rgba(255,255,255,.82); margin-top:12px; line-height:1.4; }
+.next .now { font-size:40px; color:var(--accent); font-weight:800; margin-top:12px; font-variant-numeric:tabular-nums; }
+
+/* 5. 끝 */
+.end { top:0; bottom:0; display:flex; flex-direction:column; justify-content:center; }
+.end .big { font-size:170px; font-weight:900; letter-spacing:-6px; line-height:1.05; }
+.end .big i { font-style:normal; color:var(--dot); }
+.end .tag { font-size:54px; font-weight:700; color:rgba(255,255,255,.85); margin-top:36px; line-height:1.4; }
+.foot { position:absolute; left:80px; right:80px; bottom:110px; font-size:30px; color:rgba(255,255,255,.55); z-index:5; }
+</style></head>
+<body>
+<div class="f">
+{% if s.kind == "hook" %}
+  {% if s.photo %}<img class="photo" src="{{ s.photo }}">{% endif %}<div class="veil"></div>
+{% elif s.kind == "story" %}
+  {% if s.photo %}<img class="story-photo" src="{{ s.photo }}"><div class="story-fade"></div>{% endif %}
+{% else %}
+  <div class="glow"></div>
+{% endif %}
+{% if s.kind != "end" %}<div class="brand">{{ t.brand }}<i>{{ t.brand_dot }}</i></div>{% endif %}
+
+{% if s.kind == "hook" %}
+  <div class="box hook">
+    <div class="kick">{{ s.kicker }}</div>
+    {% for line in s.lines %}<div class="hl {{ 'a' if loop.index is odd else 'b' }}"><span>{{ line }}</span></div>{% endfor %}
+    <div class="chips">{% for c in s.chips %}<div class="chip">{{ c.n }}<b class="{{ c.d }}">{{ c.v }}</b></div>{% endfor %}</div>
+  </div>
+
+{% elif s.kind == "nums" %}
+  <div class="box nums">
+    <div class="kick">{{ s.kicker }}</div><h2>{{ s.title }}</h2>
+    <div class="rows">{% for x in s.tiles %}
+      <div class="row"><span class="n">{{ x.n }}</span><span class="v">{{ x.v }}<span class="c {{ x.d }}">{{ x.c }}</span></span></div>{% endfor %}
+    </div>
+  </div>
+
+{% elif s.kind == "story" %}
+  <div class="box story">
+    <div class="label">{{ s.label }}</div>
+    {% for line in s.lines %}<div class="hl {{ 'a' if loop.index is odd else 'b' }}"><span>{{ line }}</span></div>{% endfor %}
+    {% if s.why %}<div class="why">{{ s.why }}</div>{% endif %}
+  </div>
+
+{% elif s.kind == "next" %}
+  <div class="box next">
+    <div class="kick">{{ s.kicker }}</div><h2>{{ s.title }}</h2>
+    <div class="rows">{% for e in s.events %}
+      <div class="it"><div class="nm">{{ e.title }}</div><div class="ds">{{ e.detail }}</div>{% if e.when %}<div class="now">{{ e.when }}</div>{% endif %}</div>{% endfor %}
+    </div>
+  </div>
+
+{% elif s.kind == "end" %}
+  <div class="box end">
+    <div class="big">{{ t.brand }}<i>{{ t.brand_dot }}</i></div>
+    <div class="tag">{{ s.title }}</div>
+  </div>
+{% endif %}
+{% if s.source %}<div class="foot">{{ s.source }}</div>{% endif %}
+</div>
+<script>
+(function () {
+  // 글이 넘치면 줄인다 (이슈 제목·이유, 다음에 볼 것)
+  function shrink(el, over, min) { var z = parseFloat(getComputedStyle(el).fontSize); while (over() && z > min) { z -= 2; el.style.fontSize = z + 'px'; } }
+  // 제목 띠는 한 줄에 들어갈 때까지 줄인다 (두 줄로 끊기면 '날', '4%'처럼 한 글자만 남는다)
+  document.querySelectorAll('.hl span').forEach(function (el) {
+    shrink(el, function () { return el.getClientRects().length > 1; }, 60);
+  });
+  var story = document.querySelector('.story');
+  if (story) {
+    var limit = 1700;
+    document.querySelectorAll('.story .hl span, .why').forEach(function (el) {
+      shrink(el, function () { return story.getBoundingClientRect().bottom > limit; }, 40);
+    });
+  }
+  var next = document.querySelector('.next');
+  if (next) document.querySelectorAll('.next .nm, .next .ds').forEach(function (el) {
+    shrink(el, function () { return next.getBoundingClientRect().bottom > 1760; }, 30);
+  });
+  var hook = document.querySelector('.hook');
+  if (hook) document.querySelectorAll('.hook .hl span').forEach(function (el) {
+    shrink(el, function () { return hook.getBoundingClientRect().top < 320; }, 80);
+  });
+})();
+</script>
+</body></html>

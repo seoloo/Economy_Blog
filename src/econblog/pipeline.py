@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -19,7 +20,7 @@ from econblog.guard.numbers import find_unverified_numbers
 from econblog.guard.style import find_ai_phrases, find_vague_phrases
 from econblog.market import build_snapshot
 from econblog.models import CardSet, ClassifiedArticle, Draft, GuideDraft, GuideTopic, MarketSnapshot, PostContent, RenderedPost
-from econblog.render.cards import THEMES, build_slides, render_cards
+from econblog.render.cards import build_slides, render_cards
 from econblog.render.reels import build_reel
 from econblog.render.photos import PhotoPicker
 from econblog.render.html import render_guide, render_post
@@ -134,10 +135,12 @@ def run_cards(
         cs = CardSet(account=account.key, brand=account.brand, lang=account.lang, date=run_date, text=text,
                      images=images, warnings=warnings + render_warnings, output_dir=card_dir)
         cs.caption = full_caption(cs, photo_used=any(s.credit for s in slides), disclaimer=settings.instagram.disclaimer)
+        # 장면 내용은 나중에 insta-reel 로 릴스만 다시 만들 때 쓴다
+        (card_dir / "slides.json").write_text(json.dumps([s.model_dump(mode="json") for s in slides], ensure_ascii=False),
+                                              encoding="utf-8")
         if settings.instagram.reels.enabled and images:
             try:   # 릴스는 덤: 실패해도 캐러셀은 그대로 간다 (경고로 남기지 않아 게시를 막지 않는다)
-                cs.reel, track = build_reel(settings, account, images, card_dir, run_date,
-                                            bg=THEMES[account.lang]["dark"], offline=offline)
+                cs.reel, track = build_reel(settings, account, slides, card_dir, run_date, offline=offline)
                 cs.reel_music = f"{track.title} – {track.artist}" if track else ""
             except Exception as e:  # noqa: BLE001
                 log.warning("릴스 만들기 실패 %s: %s", account.key, e)
