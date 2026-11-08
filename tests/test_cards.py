@@ -391,11 +391,14 @@ def test_allegations_about_people_are_flagged(settings):
     assert find_vague_phrases(_copy(), settings.instagram.sensitive_phrases["ko"]) == []
 
 
-def test_english_cards_have_a_summary_after_asia_check(settings):
+def test_english_cards_have_a_korea_story_after_asia_check(settings):
     snap = build_snapshot(settings, date(2026, 11, 7), offline=True)
     en = next(a for a in settings.instagram.accounts if a.key == "en")
-    text = _copy("en").model_copy(update={"summary": ["Line one.", "Line two.", "Line three."]})
-    kinds = [s.kind for s in card_render.build_slides(en, text, snap, date(2026, 11, 7))]
-    assert kinds.index("summary") == kinds.index("check") + 1 and len(kinds) <= 10
+    korea = CardStory(headline=["KOSPI sinks 6%", "on chip selloff"], paragraphs=["The KOSPI fell **6.02%**.", "The won weakened."],
+                      why="Chips are the KOSPI's biggest weight.", photo_query="seoul skyline night")
+    slides = card_render.build_slides(en, _copy("en").model_copy(update={"korea_story": korea}), snap, date(2026, 11, 7))
+    labels = [s.label for s in slides]
+    assert labels.index("KOREA") == [s.kind for s in slides].index("check") + 1 and len(slides) <= 10
+    assert slides[labels.index("KOREA")].kind == "story"
     kr = next(a for a in settings.instagram.accounts if a.key == "kr")
-    assert "summary" not in [s.kind for s in card_render.build_slides(kr, _copy(), snap, date(2026, 11, 7))]
+    assert "KOREA" not in [s.label for s in card_render.build_slides(kr, _copy(), snap, date(2026, 11, 7))]

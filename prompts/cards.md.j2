@@ -65,7 +65,7 @@ Write today's carousel for the U.S. session on {{ session_label }}. All data bel
 - stories: 이슈 카드 두 장. 오늘 시장을 가장 크게 움직인 재료 두 가지. 제목 두 줄(줄마다 12자 안팎), 본문 두 문단(문단마다 70~100자를 넘기지 않음), 왜 중요한지 한 문장(50자 안팎). 카드 한 장에 들어가야 하므로 길이를 꼭 지킵니다.
 - sector_title, movers_title: 히트맵·대형주 장 제목 (12자 안팎). 그날 데이터에서 가장 눈에 띄는 점을 이름과 숫자로 씁니다. 형식: 「[업종·종목] [숫자] [상승/하락]」
 - asia_note: 빈 문자열로 둡니다.
-- summary: 빈 목록으로 둡니다.
+- korea_story: null 로 둡니다.
 - events: 앞으로 볼 일정 0~5개 (기사·블로그 글에 나온 것만).
 - checklist: 마지막 장 체크리스트 3개. 다음 거래일에 확인할 지수·환율·종목을 시장 데이터·종목 표에서 골라 key 칸에 [대괄호] 안의 key를 그대로 적습니다. title은 「[이름] [기준 숫자]」(예 형식: 「원/달러 환율 1,400원」, 「코스피 3,000선」), detail은 그 기준에서 볼 점을 「~하는지」로 끝나는 한 줄로 씁니다. events(정해진 일정)와 겹치지 않게 시장 수준·종목 위주로 고릅니다.
 - caption: 600~900자. 해시태그는 넣지 않습니다.
@@ -77,7 +77,7 @@ Write today's carousel for the U.S. session on {{ session_label }}. All data bel
 - stories: two story cards on the two biggest drivers of the U.S. session. Two-line headline (about 20 characters per line), two paragraphs of 25-35 words each (hard limit: the card has no room for more), and a one-sentence "why it matters" of about 20 words.
 - sector_title, movers_title: short titles (about 25 characters) naming the most striking move with a name and a number, e.g. "Tech up 1.45%, staples lag".
 - asia_note: one or two sentences for the Asia & Korea check card, using the Korea & Asia numbers above.
-- summary: exactly three lines for the "Korea market recap" card that follows the Asia card. Write only about the Korean market (KOSPI, KOSDAQ, Korean stocks, the won), not the U.S. session. 12-18 words each, plain statements a newcomer understands at a glance. Line 1: how the KOSPI and KOSDAQ closed. Line 2: what drove Korea that day, only if a Korean article supports it (otherwise the biggest Korean stock moves). Line 3: the won (USD/KRW) and, if relevant, how Japan's Nikkei 225 compared. Numbers only from the tables; no metaphors.
+- korea_story: one story card on the Korean market only, placed right after the Asia card. Same format and length limits as stories (two-line headline, two paragraphs of 25-35 words, one "why it matters" sentence). Paragraph 1: how the KOSPI and KOSDAQ closed and the biggest Korean stock moves (SK hynix, Samsung Electronics). Paragraph 2: why Korea moved, only if a Korean article supports it, plus the won (USD/KRW). Do not repeat the U.S. stories. photo_query: a Korea-related object or place (e.g. "seoul skyline night", "semiconductor wafer fab"), different from the other queries.
 - events: 0-5 upcoming events, only from the articles or the blog summary.
 - checklist: three things to check next session, picked from the market data and stock tables. Put the bracketed key (e.g. sp500, st_nvda) in key. title is "[name] [level]" (format example: "S&P 500 at 7,000"), detail is one line starting with "whether". Focus on levels and stocks, not the scheduled events.
 - caption: 120-180 words, no hashtags.

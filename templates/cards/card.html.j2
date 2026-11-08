@@ -131,15 +131,6 @@ b, strong { font-weight:800; }
 .big-brand { position:absolute; left:64px; bottom:120px; font-size:110px; font-weight:900; letter-spacing:-4px; color:#fff; z-index:4; }
 .big-brand i { font-style:normal; color:var(--dot); }
 
-/* 세 줄 요약 */
-.sum { position:absolute; left:64px; right:64px; top:380px; bottom:130px; overflow:hidden;
-       display:flex; flex-direction:column; justify-content:center; }
-.sum .row { display:flex; gap:30px; align-items:flex-start; padding:34px 0; border-top:2px solid var(--line); }
-.sum .row:first-child { border-top:none; }
-.sum .num { width:68px; height:68px; border-radius:50%; background:var(--hl2); color:var(--hl2ink); flex:none;
-            display:flex; align-items:center; justify-content:center; font-size:36px; font-weight:900; }
-.sum .tx { font-size:42px; line-height:1.45; font-weight:700; letter-spacing:-0.5px; }
-
 /* 계정 소개 게시물 (config/intro.yaml) */
 .fan { position:absolute; left:0; right:0; top:130px; height:700px; z-index:2; }
 .fan img { position:absolute; width:384px; height:480px; object-fit:cover; border-radius:18px;
@@ -230,11 +221,6 @@ b, strong { font-weight:800; }
   {% if s.note %}<div class="note-box">{{ s.note }}</div>{% endif %}
   <div class="foot"><span>{{ s.source }}</span></div>
 
-{% elif s.kind == "summary" %}
-  <div class="head"><div class="kicker">{{ s.kicker }}</div><h2>{{ s.title }}</h2></div>
-  <div class="sum">{% for x in s.lines %}<div class="row"><span class="num">{{ loop.index }}</span><div class="tx">{{ x }}</div></div>{% endfor %}</div>
-  <div class="foot"><span>{{ s.source }}</span></div>
-
 {% elif s.kind == "events" %}
   <div class="head"><div class="kicker">{{ s.kicker }}</div><h2>{{ s.title }}</h2></div>
   <div class="cal">{% for e in s.events %}
@@ -308,10 +294,6 @@ b, strong { font-weight:800; }
   }
   var note = q('.note-box'), list = q('.list');
   if (note && list) shrink(note, function () { return note.getBoundingClientRect().top < list.getBoundingClientRect().bottom + 20; }, 22);
-  var sum = q('.sum');
-  if (sum) document.querySelectorAll('.sum .tx').forEach(function (el) {
-    shrink(el, function () { return sum.scrollHeight > sum.clientHeight; }, 28);
-  });
   var itxt = q('.itxt');
   if (itxt) shrink(itxt, function () { return itxt.scrollHeight > itxt.clientHeight; }, 26);
   var iend = q('.iend');

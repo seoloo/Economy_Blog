@@ -210,14 +210,16 @@ def build_slides(account: CardAccount, text: CardCopy, snapshot: MarketSnapshot,
                                 title="아시아 시장" if lang == "ko" else "Asia at a glance",
                                 sub="같은 날 뉴욕 개장 전" if lang == "ko" else "Earlier the same day, before New York opened",
                                 tiles=rows, note=text.asia_note.replace("**", ""), source=source))
-        elif kind == "summary":
-            lines = [x.replace("**", "") for x in text.summary[:3] if x.strip()]
-            if not lines:
+        elif kind == "korea":
+            # 아시아 체크 다음 장: 이슈 카드와 같은 모양으로 한국 증시만 다룬다 (영어 계정)
+            st = text.korea_story
+            if st is None or not st.paragraphs:
                 continue
-            # 아시아 체크 다음 장: 한국 증시만 세 줄로 정리한다 (영어 계정)
-            slides.append(Slide(kind="summary", kicker="한국 증시 요약" if lang == "ko" else "KOREA MARKET RECAP",
-                                title="국장 세 줄 정리" if lang == "ko" else "Korea in 3 lines", lines=lines,
-                                source=source))
+            p = photo(st.photo_query, "horizontal")
+            slides.append(Slide(kind="story", label="국장" if lang == "ko" else "KOREA",
+                                lines=[x for x in st.headline[:2] if x], paras=[rich(x) for x in st.paragraphs[:2]],
+                                why=st.why.replace("**", ""), photo=p, source=source,
+                                credit=theme["photo_credit"] if p else ""))
         elif kind == "events":
             if not text.events:
                 continue

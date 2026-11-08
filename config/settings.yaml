@@ -148,7 +148,7 @@ instagram:
       brand: 4PM RECAP
       token_env: INSTAGRAM_EN_ACCESS_TOKEN
       user_env: INSTAGRAM_EN_USER_ID
-      slides: [cover, board, sectors, movers, story, story, check, summary, events, closing]   # 인스타 캐러셀 최대 10장
+      slides: [cover, board, sectors, movers, story, story, check, korea, events, closing]   # 인스타 캐러셀 최대 10장
       chips: [sp500, nasdaq, dow]
       board: [sp500, nasdaq, dow, rut, sox, vix, us10y, dxy, wti, btc]
       check: [kospi, nikkei, st_hynix, st_samsung, usdkrw]

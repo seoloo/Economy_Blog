@@ -22,12 +22,12 @@ def post_texts(content: PostContent | GuidePost | CardCopy) -> list[str]:
     """글에 들어가는 모든 문장 덩어리 (제목·문단·목록·이슈)."""
     if isinstance(content, CardCopy):
         texts = [*content.cover_lines, content.board_note, content.sector_title, content.movers_title,
-                 content.asia_note, *content.summary, content.caption]
+                 content.asia_note, content.caption]
         for c in content.checklist:
             texts += [c.title, c.detail]
         for e in content.events:   # 일정 칸도 검사한다 (근거 없는 숫자·의혹이 일정에 끼어들 수 있다)
             texts += [e.title, e.detail]
-        for st in content.stories:
+        for st in [*content.stories, *([content.korea_story] if content.korea_story else [])]:
             texts += [*st.headline, *st.paragraphs, st.why]
         return [t for t in texts if t]
     if isinstance(content, GuidePost):
