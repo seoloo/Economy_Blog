@@ -230,3 +230,30 @@ def test_saved_cards_can_be_published_as_is(settings, tmp_path, monkeypatch):
     monkeypatch.setattr(card_deliver, "_publish", lambda s, a, c: sent.update(caption=c.caption, n=len(c.images)) or "M1")
     assert card_deliver.publish_saved(settings, tmp_path).media_id == "M1"
     assert sent == {"caption": "확인한 캡션", "n": 2}
+
+
+def test_numbers_not_in_data_are_flagged(settings):
+    from econblog.guard.numbers import find_unverified_numbers
+
+    snap = build_snapshot(settings, date(2026, 11, 7), offline=True)
+    kospi = snap.series["kospi"]
+    ok_text = f"코스피 {abs(kospi.change_pct):.2f}% 하락, {kospi.last:,.2f}로 마감했습니다."
+    plain = CardStory(headline=["반도체가", "흔들렸다"], paragraphs=[ok_text, "닛케이도 빠졌습니다."], why="지수 방향을 정합니다.",
+                      photo_query="server room")
+    good = _copy().model_copy(update={"board_note": ok_text, "stories": [plain, plain],
+                                      "caption": "코스피 5,000선을 지키는지 봅니다. 11월 13일 발표."})
+    assert find_unverified_numbers(good, snap) == []
+    bad = _copy().model_copy(update={"board_note": "기름값이 14.8% 뛰었고 환율은 1,320원대에서 올랐습니다."})
+    warning = find_unverified_numbers(bad, snap)
+    assert warning and "14.8" in warning[0] and "1,320" in warning[0]
+
+
+def test_cards_with_warnings_are_not_auto_posted(settings, tmp_path, monkeypatch):
+    settings.instagram.publish = True
+    monkeypatch.setenv("INSTAGRAM_ACCESS_TOKEN", "IGAAtest")
+    monkeypatch.setenv("INSTAGRAM_USER_ID", "1")
+    monkeypatch.setattr(card_deliver, "_publish", lambda *a: pytest.fail("경고가 있으면 게시하면 안 됨"))
+    cs = CardSet(account="kr", brand="그냥모아", lang="ko", date=date(2026, 11, 7), text=_copy(),
+                 warnings=["데이터에 없는 숫자: 14.8"], output_dir=tmp_path)
+    card_deliver.deliver_cards(settings, [cs], ["local"])
+    assert cs.media_id is None and "자동 게시하지 않았습니다" in cs.warnings[-1]
