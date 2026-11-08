@@ -284,3 +284,17 @@ def test_claude_card_writer_runs_a_review_pass(settings, monkeypatch):
     out = card_write.ClaudeCardWriter(settings).write(CardContext(date=date(2026, 11, 7), account=kr, articles=[], snapshot=snap))
     assert out.board_note == "교열본" and len(calls) == 2
     assert "교열 담당" in calls[1][0] and "검토할 초안" in calls[1][1]
+
+
+def test_apply_edits_changes_only_matching_text(tmp_path):
+    (tmp_path / "03.html").write_text("<p>반도체 레버리지 상품 손실이 커지면서</p>", encoding="utf-8")
+    (tmp_path / "04.html").write_text("<p>그대로</p>", encoding="utf-8")
+    (tmp_path / "caption.txt").write_text("자동차 관세보다 이 AI 수요 문제가", encoding="utf-8")
+    (tmp_path / "meta.json").write_text("{}", encoding="utf-8")
+    changed = card_deliver.apply_edits(tmp_path, [["반도체 레버리지 상품 손실이 커지면서", "AI 서버 수요가 흔들리면"],
+                                                  ["자동차 관세보다 ", ""]])
+    assert [p.name for p in changed] == ["03.html"]
+    assert "AI 서버 수요가 흔들리면" in (tmp_path / "03.html").read_text(encoding="utf-8")
+    assert (tmp_path / "caption.txt").read_text(encoding="utf-8") == "이 AI 수요 문제가"
+    with pytest.raises(ValueError):
+        card_deliver.apply_edits(tmp_path, [["없는 문장", "x"]])

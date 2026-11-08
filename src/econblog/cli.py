@@ -121,6 +121,36 @@ def _cmd_insta_post(args: argparse.Namespace) -> int:
     return 0
 
 
+def _latest_card_dir(settings, account: str):
+    found = sorted(settings.resolve_output_dir().glob(f"*/insta/{account}/meta.json"))
+    return found[-1].parent if found else None
+
+
+def _cmd_insta_edit(args: argparse.Namespace) -> int:
+    """만들어 둔 카드 묶음에서 문장만 고쳐 그 장을 다시 찍는다. 고친 카드는 insta-post 로 올린다.
+
+    --edits 또는 CARD_EDITS 환경변수: [["찾을 문장", "바꿀 문장"], ...] 형식의 JSON
+    """
+    import json
+    import os
+
+    from econblog.deliver.cards import apply_edits
+    from econblog.render.cards import chrome_path, screenshot
+
+    settings = load_settings()
+    card_dir = args.dir or _latest_card_dir(settings, args.account)
+    if card_dir is None:
+        print(f"output/ 에서 {args.account} 카드를 찾지 못함")
+        return 1
+    edits = json.loads(args.edits or os.environ.get("CARD_EDITS") or "[]")
+    changed = apply_edits(card_dir, edits)
+    chrome = chrome_path()
+    for html in changed:
+        screenshot(chrome, html, html.with_suffix(".jpg"))
+    print(f"고친 문장 {len(edits)}개, 다시 찍은 카드 {[h.stem for h in changed]}")
+    return 0
+
+
 def _cmd_classify(args: argparse.Namespace) -> int:
     """수집·분류만 실행해 선택 결과를 확인한다. 글 작성·메일 발송은 하지 않는다."""
     from econblog.classify import classify_and_select
@@ -166,6 +196,12 @@ def main(argv: list[str] | None = None) -> int:
     p_igp.add_argument("--account", default="kr", help="settings.yaml instagram.accounts 의 key")
     p_igp.add_argument("--dir", help="카드 폴더 (기본: output/ 에서 가장 최근 것)")
     p_igp.set_defaults(func=_cmd_insta_post)
+
+    p_ige = sub.add_parser("insta-edit", help="만들어 둔 카드 묶음의 문장을 고쳐 다시 찍기")
+    p_ige.add_argument("--account", default="kr")
+    p_ige.add_argument("--dir", help="카드 폴더 (기본: output/ 에서 가장 최근 것)")
+    p_ige.add_argument("--edits", help='[["찾을 문장", "바꿀 문장"], ...] JSON (없으면 CARD_EDITS 환경변수)')
+    p_ige.set_defaults(func=_cmd_insta_edit)
 
     p_chk = sub.add_parser("check-sources", help="RSS 소스 점검")
     p_chk.add_argument("--hours", type=int, default=72)

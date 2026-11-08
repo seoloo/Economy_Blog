@@ -17,9 +17,9 @@ on:
         type: boolean
         default: false
       mode:
-        description: "run = 시황 글(+인스타 카드), cards = 인스타 카드만 메일로, guide = 경제 공부 글, classify = 수집·분류만 점검, insta-check = 인스타 토큰 점검, insta-post = source_run 의 카드를 그대로 인스타에 게시"
+        description: "run = 시황 글(+인스타 카드), cards = 인스타 카드만 메일로, guide = 경제 공부 글, classify = 수집·분류만 점검, insta-check = 인스타 토큰 점검, insta-edit = source_run 의 카드 문장을 고쳐 다시 찍기, insta-post = source_run 의 카드를 그대로 인스타에 게시"
         type: choice
-        options: [run, cards, guide, classify, insta-check, insta-post]
+        options: [run, cards, guide, classify, insta-check, insta-edit, insta-post]
         default: run
       topic:
         description: "guide 일 때 주제 아이디 (config/guides.yaml, 비우면 오늘 차례)"
@@ -28,9 +28,12 @@ on:
         description: "insta-post 일 때 게시할 카드를 만든 실행 번호 (Actions 실행 주소 끝의 숫자)"
         required: false
       account:
-        description: "insta-post 일 때 게시할 계정 (kr, en)"
+        description: "insta-edit·insta-post 일 때 계정 (kr, en)"
         required: false
         default: kr
+      edits:
+        description: 'insta-edit 일 때 고칠 문장 JSON: [["찾을 문장", "바꿀 문장"], ...]'
+        required: false
 
 permissions:
   contents: read
@@ -61,8 +64,8 @@ jobs:
       - name: 의존성 설치
         run: pip install -e .
 
-      - name: 게시할 카드 받기 (insta-post)
-        if: inputs.mode == 'insta-post'
+      - name: 만들어 둔 카드 받기 (insta-edit, insta-post)
+        if: inputs.mode == 'insta-post' || inputs.mode == 'insta-edit'
         uses: actions/download-artifact@v4
         with:
           name: draft-${{ inputs.source_run }}
@@ -87,6 +90,7 @@ jobs:
           INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}
           INSTAGRAM_EN_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_EN_ACCESS_TOKEN }}
           INSTAGRAM_EN_USER_ID: ${{ secrets.INSTAGRAM_EN_USER_ID }}
+          CARD_EDITS: ${{ inputs.edits }}
         run: |
           if [ "${{ inputs.mode }}" = "classify" ]; then
             python -m econblog -v classify
@@ -94,6 +98,10 @@ jobs:
           fi
           if [ "${{ inputs.mode }}" = "insta-check" ]; then
             python -m econblog insta-check
+            exit $?
+          fi
+          if [ "${{ inputs.mode }}" = "insta-edit" ]; then
+            python -m econblog -v insta-edit --account "${{ inputs.account }}"
             exit $?
           fi
           if [ "${{ inputs.mode }}" = "insta-post" ]; then

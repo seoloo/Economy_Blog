@@ -154,6 +154,34 @@ def load_saved(card_dir) -> CardSet:
                    caption=(card_dir / "caption.txt").read_text(encoding="utf-8"), output_dir=card_dir)
 
 
+def apply_edits(card_dir, edits: list[list[str]]) -> list:
+    """확인한 카드 묶음에서 문장만 고친다 (카드 HTML·caption.txt·meta.json 에 찾아 바꾸기).
+
+    고친 HTML 은 다시 찍어야 하므로 그 목록을 돌려준다. 어느 파일에도 없는 문장이 있으면 멈춘다.
+    """
+    from html import escape as _esc
+    from pathlib import Path as _Path
+
+    card_dir = _Path(card_dir)
+    files = sorted(card_dir.glob("[0-9][0-9].html")) + [card_dir / "caption.txt", card_dir / "meta.json"]
+    texts = {f: f.read_text(encoding="utf-8") for f in files if f.exists()}
+    for old, _ in edits:
+        if not any(old in t or _esc(old, quote=False) in t for t in texts.values()):
+            raise ValueError(f"카드에서 찾지 못한 문장: {old}")
+    changed = []
+    for f, t in texts.items():
+        new = t
+        for old, rep in edits:
+            new = new.replace(old, rep)
+            if f.suffix == ".html":
+                new = new.replace(_esc(old, quote=False), _esc(rep, quote=False))
+        if new != t:
+            f.write_text(new, encoding="utf-8")
+            if f.suffix == ".html":
+                changed.append(f)
+    return changed
+
+
 def publish_saved(settings: Settings, card_dir) -> CardSet:
     """저장된 카드 묶음을 그 내용 그대로 인스타에 올린다 (publish 설정과 상관없이, 사람이 직접 실행할 때만)."""
     cs = load_saved(card_dir)
