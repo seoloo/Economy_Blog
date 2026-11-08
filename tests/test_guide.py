@@ -80,11 +80,12 @@ def test_recent_posts_from_blog_rss_skip_current_title():
     <item><title>오늘 글</title><link>https://seolu.tistory.com/30</link></item>
     <item><title>어제 글</title><link>https://seolu.tistory.com/29</link></item>
     <item><title>그제 글</title><link>https://seolu.tistory.com/28</link></item>
-    <item><title>사흘 전 글</title><link>https://seolu.tistory.com/27</link></item>
+    <item><title>미국증시&amp;middot;코스피 시황</title><link>https://seolu.tistory.com/27</link></item>
     </channel></rss>""".encode()
     recent = parse_recent(rss, 2, exclude_title="오늘 글")
     assert [(r.title, r.url) for r in recent] == [("어제 글", "https://seolu.tistory.com/29"),
                                                   ("그제 글", "https://seolu.tistory.com/28")]
+    assert parse_recent(rss, 4)[-1].title == "미국증시·코스피 시황"
 
 
 def test_recent_posts_are_linked_at_the_end(settings, tmp_path):

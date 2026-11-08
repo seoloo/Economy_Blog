@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import html
 import logging
 
 import feedparser
@@ -20,7 +21,8 @@ def parse_recent(raw: bytes, limit: int, exclude_title: str = "") -> list[Recent
     feed = feedparser.parse(raw)
     out: list[RecentPost] = []
     for e in feed.entries:
-        title, url = (e.get("title") or "").strip(), (e.get("link") or "").strip()
+        # 티스토리 RSS 는 제목의 특수문자를 한 번 더 감싸 보낸다 (&amp;middot; → &middot; → ·)
+        title, url = html.unescape(e.get("title") or "").strip(), (e.get("link") or "").strip()
         if not title or not url or title == exclude_title.strip():
             continue
         out.append(RecentPost(title=title, url=url))
