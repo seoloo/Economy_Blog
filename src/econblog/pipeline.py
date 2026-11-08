@@ -7,7 +7,7 @@ from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from econblog.charts import build_charts
-from econblog.charts.cover import guide_cover
+from econblog.charts.cover import fixed_thumbnail, guide_cover
 from econblog.charts.publish import publish_charts
 from econblog.classify import classify_and_select
 from econblog.collect import collect_all
@@ -54,13 +54,16 @@ def run(
     snapshot = build_snapshot(settings, run_date, offline=offline)
     log.info("시장 데이터 %d개 (실패 %d개)", len(snapshot.series), len(snapshot.errors))
 
-    # 4. 차트
-    charts = build_charts(settings, snapshot, out_dir / "charts")
+    # 4. 차트 (고정 썸네일이 있으면 데이터 표지 대신 맨 위에 넣는다)
+    thumb = fixed_thumbnail(settings, out_dir / "charts")
+    specs = [s for s in settings.charts if not (thumb and s.position == "cover")]
+    charts = ([thumb] if thumb else []) + build_charts(settings, snapshot, out_dir / "charts", specs)
     log.info("차트 %d개", len(charts))
     publish_warnings = publish_charts(settings, charts, run_date, offline=offline)
 
     # 5. 초안
-    ctx = WriteContext(date=run_date, articles=selected, snapshot=snapshot, charts=charts)
+    body_charts = [c for c in charts if c.position != "cover"]
+    ctx = WriteContext(date=run_date, articles=selected, snapshot=snapshot, charts=body_charts)
     content, warnings = write_post(settings, ctx, offline=offline)
 
     # 6. 저작권 검사
@@ -125,11 +128,14 @@ def run_guide(
                               lookback_days=settings.guide.lookback_days)
     log.info("시장 데이터 %d개 (실패 %d개)", len(snapshot.series), len(snapshot.errors))
 
-    # 2. 차트: 대표 이미지 + 주제별 장기 차트 (파일 이름이 시황 차트와 겹치지 않게 주제 아이디를 붙인다)
+    # 2. 차트: 대표 이미지(고정 썸네일, 없으면 키워드 카드) + 주제별 장기 차트
+    #    (파일 이름이 시황 차트와 겹치지 않게 주제 아이디를 붙인다)
     chart_dir = out_dir / "charts"
     chart_dir.mkdir(parents=True, exist_ok=True)
     specs = [c.model_copy(update={"key": f"{topic.id}_{c.key}"}) for c in topic.charts]
-    charts = [guide_cover(settings, topic.keyword, topic.subtitle, chart_dir / f"{topic.id}_cover.png")]
+    cover = fixed_thumbnail(settings, chart_dir) or guide_cover(
+        settings, topic.keyword, topic.subtitle, chart_dir / f"{topic.id}_cover.png")
+    charts = [cover]
     charts += build_charts(settings, snapshot, chart_dir, specs)
     log.info("차트 %d개", len(charts))
     warnings = publish_charts(settings, charts, run_date, offline=offline)

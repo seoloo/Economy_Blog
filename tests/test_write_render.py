@@ -61,8 +61,9 @@ def test_dry_run_end_to_end(settings):
     html = (out / "post.html").read_text(encoding="utf-8")
     preview = (out / "preview.html").read_text(encoding="utf-8")
     assert "[이미지 삽입]" in html and "<img" not in html
-    assert '<img src="charts/index_change.png"' in preview and '<img src="charts/cover.png"' in preview
-    assert html.index("[이미지 삽입] cover.png") < html.index("오늘 시장 한눈에")  # 대표 이미지는 맨 위
+    assert '<img src="charts/index_change.png"' in preview and '<img src="charts/thumbnail.jpg"' in preview
+    assert html.index("[이미지 삽입] thumbnail.jpg") < html.index("오늘 시장 한눈에")  # 고정 썸네일이 맨 위
+    assert not (out / "charts" / "cover.png").exists()  # 고정 썸네일이 있으면 데이터 표지는 그리지 않는다
     assert "투자를 권유하지" in html or "권유하지 않습니다" in html
     assert "발행 전 확인" in preview and "발행 전 확인" not in html
     # 데이터로 만든 요약 상자·표와 새 섹션
@@ -140,6 +141,59 @@ def test_published_charts_use_public_url(settings, monkeypatch):
 
     # 오프라인(dry run)에서는 올리지 않는다
     assert publish.publish_charts(settings, charts, date(2026, 11, 6), offline=True) == []
+
+
+def test_fixed_thumbnail_uploads_once_to_shared(settings, monkeypatch):
+    """고정 썸네일은 날짜 폴더가 아니라 shared/ 에 올리고, 같은 파일이 이미 있으면 다시 올리지 않는다."""
+    from econblog.charts import publish
+    from econblog.charts.cover import fixed_thumbnail
+
+    thumb = fixed_thumbnail(settings, settings.resolve_output_dir() / "charts")
+    assert thumb is not None and thumb.path.suffix == ".jpg" and thumb.position == "cover"
+    remote = {"sha": None}
+    puts = []
+
+    class FakeResponse:
+        def __init__(self, status):
+            self.status_code = status
+
+        def json(self):
+            return {"sha": remote["sha"]}
+
+        def raise_for_status(self):
+            pass
+
+    class FakeSession:
+        def __init__(self):
+            self.headers = {}
+
+        def get(self, url, **kw):
+            return FakeResponse(200 if remote["sha"] else 404)
+
+        def put(self, url, json, **kw):
+            puts.append(url)
+            return FakeResponse(201)
+
+    monkeypatch.setenv("CHARTS_REPO_TOKEN", "test-token")
+    monkeypatch.setattr(publish.requests, "Session", FakeSession)
+    settings.publish.repo = "owner/assets"
+    settings.publish.base_url = "https://owner.github.io/assets"
+
+    assert publish.publish_charts(settings, [thumb], date(2026, 11, 6)) == []
+    assert thumb.url == "https://owner.github.io/assets/shared/thumbnail.jpg"
+    assert puts == ["https://api.github.com/repos/owner/assets/contents/shared/thumbnail.jpg"]
+
+    remote["sha"] = publish._blob_sha(thumb.path.read_bytes())  # 다음 날: 같은 파일이 이미 있음
+    assert publish.publish_charts(settings, [thumb], date(2026, 11, 7)) == []
+    assert len(puts) == 1
+
+
+def test_without_thumbnail_each_post_draws_its_own_cover(settings):
+    settings.thumbnail = ""
+    post = run(settings, run_date=date(2026, 11, 6), offline=True, deliver_methods=["local"])
+    html = (post.output_dir / "post.html").read_text(encoding="utf-8")
+    assert html.index("[이미지 삽입] cover.png") < html.index("오늘 시장 한눈에")
+    assert not (post.output_dir / "charts" / "thumbnail.jpg").exists()
 
 
 def test_google_news_reference_shows_real_publisher():

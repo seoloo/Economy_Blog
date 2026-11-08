@@ -74,6 +74,7 @@ tests/
 - **새 데이터 시리즈**는 `config/series.yaml`에 추가한다. 새 데이터 출처가 필요할 때만 `market/`에 Provider를 만든다.
 - **새 경제 공부 주제**는 `config/guides.yaml` 맨 아래에 추가한다. 기존 항목 순서를 바꾸면 자동 실행 순서가 바뀐다.
 - **티스토리 HTML**은 `templates/_tistory.html.j2`의 공통 부품만 쓴다. 티스토리 편집기가 지우는 스타일(margin·padding·border·font-size 등)과 `thead/th`는 쓰지 않는다.
+- **대표 이미지(썸네일)**는 `assets/brand/thumbnail.png` 한 장을 모든 글에 쓴다. 그림 교체는 파일만 바꾸고, 경로는 `settings.yaml`의 `thumbnail`에 있다.
 - **새 차트**는 `charts/`에 ChartBuilder를 만들고 `charts/__init__.py`의 레지스트리에 등록한 뒤 `settings.yaml`에서 켠다.
 - **새 발송 방식**(예: 슬랙)은 `deliver/`에 Deliverer를 추가한다.
 - 단계 간 데이터는 반드시 `models.py`의 데이터 클래스로 주고받는다. dict를 그대로 넘기지 않는다.

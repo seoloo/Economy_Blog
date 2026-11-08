@@ -166,6 +166,7 @@ class Chart(BaseModel):
     source_note: str
     position: Literal["cover", "lead", "body"] = "body"
     url: str | None = None  # 공개 주소에 올렸으면 그 주소 (없으면 본문에 업로드 안내 상자)
+    shared: bool = False  # 날짜와 상관없이 매번 같은 이미지(고정 썸네일). 공개 레포 shared/ 에 한 번만 올린다
 
 
 # ---------------------------------------------------------------- 초안 (LLM 출력 스키마)

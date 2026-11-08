@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import logging
 from datetime import date
 
@@ -27,13 +28,21 @@ def is_configured(settings: Settings) -> bool:
     return bool(settings.publish.repo and settings.publish.base_url and env("CHARTS_REPO_TOKEN"))
 
 
+def _blob_sha(data: bytes) -> str:
+    """GitHub 가 파일마다 주는 sha 와 같은 방식으로 계산한다 (같은 파일인지 비교용)."""
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
 def _upload(session: requests.Session, settings: Settings, path: str, data: bytes, message: str) -> None:
     cfg = settings.publish
     url = f"{API}/repos/{cfg.repo}/contents/{path}"
     current = session.get(url, params={"ref": cfg.branch}, timeout=30)
     body = {"message": message, "content": base64.b64encode(data).decode(), "branch": cfg.branch}
     if current.status_code == 200:
-        body["sha"] = current.json()["sha"]  # 같은 날 다시 실행하면 덮어쓴다
+        sha = current.json()["sha"]
+        if sha == _blob_sha(data):
+            return  # 이미 같은 파일이 있다 (고정 썸네일, 같은 날 재실행)
+        body["sha"] = sha  # 내용이 바뀌었으면 덮어쓴다
     resp = session.put(url, json=body, timeout=60)
     resp.raise_for_status()
 
@@ -51,7 +60,8 @@ def publish_charts(settings: Settings, charts: list[Chart], run_date: date, offl
     base = settings.publish.base_url.rstrip("/")
     failed: list[str] = []
     for chart in charts:
-        path = f"{run_date.isoformat()}/{chart.path.name}"
+        folder = "shared" if chart.shared else run_date.isoformat()
+        path = f"{folder}/{chart.path.name}"
         try:
             _upload(session, settings, path, chart.path.read_bytes(), f"{run_date} {chart.path.name}")
             chart.url = f"{base}/{path}"

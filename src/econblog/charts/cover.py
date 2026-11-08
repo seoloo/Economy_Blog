@@ -1,19 +1,25 @@
 """글 맨 위 대표 이미지(썸네일). 티스토리 목록·검색 결과·공유 미리보기에 이 이미지가 쓰인다.
 
+settings.thumbnail 이 있으면 모든 글에 그 그림을 쓰고(fixed_thumbnail), 없으면 글마다 아래 표지를 그린다.
+
 데이터만으로 그린다: 연재 제목, 날짜, 주요 지표 4개(값과 등락).
 목록에서 정사각형으로 잘려도 내용이 보이도록 가운데 900px 안에 배치한다.
 """
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+from PIL import Image
 from matplotlib.patches import Ellipse, FancyBboxPatch
 
 from econblog.charts import style
 from econblog.charts.base import ChartBuilder
 from econblog.models import Chart, ChartSpec, MarketSnapshot, Series
+
+log = logging.getLogger(__name__)
 
 WEEKDAYS = "월화수목금토일"
 BG = "#13294b"
@@ -142,3 +148,30 @@ def guide_cover(settings, keyword: str, subtitle: str, out_path: Path) -> Chart:
     plt.close(fig)
     title = f"{keyword} - {subtitle}"
     return Chart(key=out_path.stem, title=title, path=out_path, alt_text=title, source_note="", position="cover")
+
+
+THUMB_WIDTH = 1200
+
+
+def fixed_thumbnail(settings, out_dir: Path) -> Chart | None:
+    """모든 글에 같은 대표 이미지(settings.thumbnail)를 쓴다. 설정이 없거나 파일이 없으면 None.
+
+    원본 PNG 는 수 MB 라 가로 1200px JPEG(약 200KB)로 줄인다.
+    공개 레포에는 날짜 폴더가 아니라 shared/ 에 한 번만 올라간다 (Chart.shared).
+    """
+    src = settings.thumbnail_path()
+    if src is None:
+        return None
+    if not src.exists():
+        log.warning("고정 썸네일 파일이 없어 표지를 그립니다: %s", settings.thumbnail)
+        return None
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / "thumbnail.jpg"
+    with Image.open(src) as im:
+        im = im.convert("RGB")
+        if im.width > THUMB_WIDTH:
+            im = im.resize((THUMB_WIDTH, round(im.height * THUMB_WIDTH / im.width)), Image.LANCZOS)
+        im.save(out_path, "JPEG", quality=88, optimize=True, progressive=True)
+    alt = f"{settings.blog_name} 대표 이미지"
+    return Chart(key="thumbnail", title=alt, path=out_path, alt_text=alt, source_note="",
+                 position="cover", shared=True)

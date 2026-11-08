@@ -8,12 +8,17 @@ from __future__ import annotations
 
 import smtplib
 from email.message import EmailMessage
+from pathlib import Path
 
 from econblog.config import env
 from econblog.deliver.base import Deliverer
 from econblog.models import RenderedPost
 
 REQUIRED = ("SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "MAIL_TO")
+
+
+def _subtype(path: Path) -> str:
+    return "jpeg" if path.suffix.lower() in (".jpg", ".jpeg") else "png"
 
 
 def build_message(post: RenderedPost, sender: str, recipients: str) -> EmailMessage:
@@ -36,11 +41,12 @@ def build_message(post: RenderedPost, sender: str, recipients: str) -> EmailMess
 
     html_part = msg.get_payload()[1]
     for chart in local:
-        html_part.add_related(chart.path.read_bytes(), "image", "png", cid=f"<{chart.key}>")
+        html_part.add_related(chart.path.read_bytes(), "image", _subtype(chart.path), cid=f"<{chart.key}>")
 
     msg.add_attachment(post.html.encode("utf-8"), maintype="text", subtype="html", filename="post.html")
     for chart in draft.charts:
-        msg.add_attachment(chart.path.read_bytes(), maintype="image", subtype="png", filename=chart.path.name)
+        msg.add_attachment(chart.path.read_bytes(), maintype="image", subtype=_subtype(chart.path),
+                           filename=chart.path.name)
     return msg
 
 
