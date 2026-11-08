@@ -449,7 +449,7 @@ def test_reel_shows_wordy_cards_longer():
 
     d = card_durations(["cover", "board", "story", "story", "sectors", "movers", "events", "closing"])
     assert d[2] > d[1] > d[4] and d[0] < d[2]
-    assert 15 < reel_length(d) < 30
+    assert 30 < reel_length(d) < 50
 
 
 def test_reel_video_is_built_from_cards(tmp_path):

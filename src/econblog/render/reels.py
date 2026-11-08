@@ -26,9 +26,10 @@ W, H = 1080, 1920
 CARD_H = 1350
 FADE = 0.35
 # 카드 종류별로 보여 주는 시간(초). 글이 많은 카드는 읽을 수 있게 길게.
-SECONDS = {"cover": 2.5, "board": 3.5, "sectors": 2.5, "movers": 2.5, "story": 4.5, "korea": 4.5, "check": 3.0,
-           "events": 3.0, "closing": 3.0}
-DEFAULT_SECONDS = 3.0
+# 처음 시안(전체 약 23초)은 읽기도 전에 넘어가서 늘렸다 (전체 약 38초).
+SECONDS = {"cover": 3.0, "board": 6.0, "sectors": 4.5, "movers": 4.5, "story": 7.0, "korea": 7.0, "check": 5.0,
+           "events": 5.0, "closing": 4.0}
+DEFAULT_SECONDS = 5.0
 
 
 def ffmpeg_path() -> str | None:
