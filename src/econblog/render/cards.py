@@ -196,7 +196,8 @@ def build_slides(account: CardAccount, text: CardCopy, snapshot: MarketSnapshot,
                 continue
             rows = [RankRow(tk=s.spec.id, nm="" if moves.name(s, lang) == s.spec.id else moves.name(s, lang),
                             p=round(s.change_pct or 0, 2)) for s in st]
-            sub = (f"시가총액 상위 {len(st)}개 종목" if lang == "ko" else f"{len(st)} largest U.S. names")
+            # 시가총액 순위가 아니라 설정한 대형주 목록이므로 '상위 N개'라고 쓰지 않는다
+            sub = (f"미국 주요 대형주 {len(st)}개, 오른 순서" if lang == "ko" else f"{len(st)} big U.S. names, best to worst")
             slides.append(Slide(kind="movers", kicker="미국 대형주 등락" if lang == "ko" else "MEGA-CAP MOVERS",
                                 title=text.movers_title, sub=sub, rows=rows, source=source))
         elif kind == "check":
