@@ -103,6 +103,24 @@ def _cmd_insta_check(args: argparse.Namespace) -> int:
     return 1 if failed else 0
 
 
+def _cmd_insta_post(args: argparse.Namespace) -> int:
+    """이미 만든 카드 묶음(output/<날짜>/insta/<계정>)을 그대로 인스타에 올린다."""
+    from econblog.deliver.cards import publish_saved
+
+    settings = load_settings()
+    if args.dir:
+        card_dir = args.dir
+    else:
+        found = sorted(settings.resolve_output_dir().glob(f"*/insta/{args.account}/meta.json"))
+        if not found:
+            print(f"output/ 에서 {args.account} 카드를 찾지 못함")
+            return 1
+        card_dir = found[-1].parent
+    cs = publish_saved(settings, card_dir)
+    print(f"게시 완료: {cs.account} {len(cs.images)}장, 게시물 ID {cs.media_id}")
+    return 0
+
+
 def _cmd_classify(args: argparse.Namespace) -> int:
     """수집·분류만 실행해 선택 결과를 확인한다. 글 작성·메일 발송은 하지 않는다."""
     from econblog.classify import classify_and_select
@@ -143,6 +161,11 @@ def main(argv: list[str] | None = None) -> int:
 
     p_ig = sub.add_parser("insta-check", help="인스타 계정 토큰 점검 (게시하지 않음)")
     p_ig.set_defaults(func=_cmd_insta_check)
+
+    p_igp = sub.add_parser("insta-post", help="이미 만든 카드 묶음을 그대로 인스타에 게시")
+    p_igp.add_argument("--account", default="kr", help="settings.yaml instagram.accounts 의 key")
+    p_igp.add_argument("--dir", help="카드 폴더 (기본: output/ 에서 가장 최근 것)")
+    p_igp.set_defaults(func=_cmd_insta_post)
 
     p_chk = sub.add_parser("check-sources", help="RSS 소스 점검")
     p_chk.add_argument("--hours", type=int, default=72)

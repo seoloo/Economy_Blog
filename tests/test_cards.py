@@ -207,3 +207,20 @@ def test_vague_phrases_are_flagged(settings):
     clear = _copy().model_copy(update={"takeaway": "코스피가 6.02% 내렸습니다.\n월요일에는 SK하이닉스 반등 여부를 확인합니다.",
                                        "sector_title": "기술 업종 1.45% 상승"})
     assert find_vague_phrases(clear, settings.instagram.vague_phrases["ko"]) == []
+
+
+def test_saved_cards_can_be_published_as_is(settings, tmp_path, monkeypatch):
+    from PIL import Image
+
+    cs = CardSet(account="kr", brand="그냥모아", lang="ko", date=date(2026, 11, 7), text=_copy(),
+                 caption="확인한 캡션", output_dir=tmp_path)
+    for i in (1, 2):
+        Image.new("RGB", (10, 10)).save(tmp_path / f"0{i}.jpg", "JPEG")
+    card_deliver.save_local(cs)
+    loaded = card_deliver.load_saved(tmp_path)
+    assert [p.name for p in loaded.images] == ["01.jpg", "02.jpg"] and loaded.caption == "확인한 캡션"
+
+    sent = {}
+    monkeypatch.setattr(card_deliver, "_publish", lambda s, a, c: sent.update(caption=c.caption, n=len(c.images)) or "M1")
+    assert card_deliver.publish_saved(settings, tmp_path).media_id == "M1"
+    assert sent == {"caption": "확인한 캡션", "n": 2}

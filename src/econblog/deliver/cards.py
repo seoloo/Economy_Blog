@@ -44,7 +44,8 @@ def full_caption(cs: CardSet, photo_used: bool) -> str:
 def save_local(cs: CardSet) -> None:
     cs.output_dir.mkdir(parents=True, exist_ok=True)
     (cs.output_dir / "caption.txt").write_text(cs.caption, encoding="utf-8")
-    meta = {"account": cs.account, "date": cs.date.isoformat(), "images": [p.name for p in cs.images],
+    meta = {"account": cs.account, "brand": cs.brand, "lang": cs.lang, "date": cs.date.isoformat(),
+            "images": [p.name for p in cs.images],
             "urls": cs.urls, "media_id": cs.media_id, "warnings": cs.warnings,
             "text": cs.text.model_dump()}
     (cs.output_dir / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -136,6 +137,30 @@ def _publish(settings: Settings, account: CardAccount, cs: CardSet) -> str:
     if not publish.wait_until_public(cs.urls):
         raise GraphError("카드 공개 주소가 열리지 않음 (GitHub Pages 반영 지연)")
     return publish_instagram(settings, account, cs.urls, cs.caption)
+
+
+def load_saved(card_dir) -> CardSet:
+    """이미 만든 카드 폴더(01.jpg…, caption.txt, meta.json)를 다시 읽는다. 확인한 카드를 그대로 게시할 때 쓴다."""
+    from datetime import date as _date
+    from pathlib import Path as _Path
+
+    from econblog.models import CardCopy
+
+    card_dir = _Path(card_dir)
+    meta = json.loads((card_dir / "meta.json").read_text(encoding="utf-8"))
+    return CardSet(account=meta["account"], brand=meta.get("brand", meta["account"]), lang=meta.get("lang", "ko"),
+                   date=_date.fromisoformat(meta["date"]), text=CardCopy.model_validate(meta["text"]),
+                   images=sorted(card_dir.glob("[0-9][0-9].jpg")),
+                   caption=(card_dir / "caption.txt").read_text(encoding="utf-8"), output_dir=card_dir)
+
+
+def publish_saved(settings: Settings, card_dir) -> CardSet:
+    """저장된 카드 묶음을 그 내용 그대로 인스타에 올린다 (publish 설정과 상관없이, 사람이 직접 실행할 때만)."""
+    cs = load_saved(card_dir)
+    account = next(a for a in settings.instagram.accounts if a.key == cs.account)
+    cs.media_id = _publish(settings, account, cs)
+    save_local(cs)
+    return cs
 
 
 # ---------------------------------------------------------------- 메일
