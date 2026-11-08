@@ -214,8 +214,10 @@ def build_slides(account: CardAccount, text: CardCopy, snapshot: MarketSnapshot,
             lines = [x.replace("**", "") for x in text.summary[:3] if x.strip()]
             if not lines:
                 continue
-            slides.append(Slide(kind="summary", kicker="오늘 세 줄 요약" if lang == "ko" else "THE DAY IN 3 LINES",
-                                title="한 번에 정리" if lang == "ko" else "Quick recap", lines=lines, source=source))
+            # 아시아 체크 다음 장: 한국 증시만 세 줄로 정리한다 (영어 계정)
+            slides.append(Slide(kind="summary", kicker="한국 증시 요약" if lang == "ko" else "KOREA MARKET RECAP",
+                                title="국장 세 줄 정리" if lang == "ko" else "Korea in 3 lines", lines=lines,
+                                source=source))
         elif kind == "events":
             if not text.events:
                 continue

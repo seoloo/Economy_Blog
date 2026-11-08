@@ -312,7 +312,8 @@ class CardCopy(BaseModel):
     asia_note: str = Field(description="아시아·한국 체크 장 아래 상자에 들어갈 한두 문장. 그 장이 없는 계정은 빈 문자열.")
     summary: list[str] = Field(
         default_factory=list,
-        description="요약 장(summary)에 들어갈 그날 요약 세 줄. 그 장이 없는 계정은 빈 목록. 영어는 줄마다 12~18단어.")
+        description="한국 증시 요약 장(summary)에 들어갈 세 줄 (코스피·코스닥, 움직인 이유, 원화). 그 장이 없는 계정은 빈 목록. "
+                    "영어는 줄마다 12~18단어.")
     events: list[CardEvent] = Field(description="앞으로 볼 일정 0~5개. 기사나 블로그 글에 나온 일정만. 없으면 빈 목록.")
     checklist: list[CardCheck] = Field(
         description="마지막 장 체크리스트 3개. 다음 거래일에 확인할 지수·환율·종목과 기준. 시장 데이터 표에 있는 항목만.")

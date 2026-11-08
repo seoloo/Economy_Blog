@@ -100,7 +100,8 @@ class TemplateCardWriter:
             cover_lines=cover, cover_photo_query="new york stock exchange", board_note="Draft written from data only.",
             stories=stories, sector_title=f"Leader: {top_sector}", movers_title=f"Top: {top_stock}",
             asia_note="Draft written from data only.", events=[],
-            summary=[f"{moves.name(s, lang)} {moves.signed_pct(s)} at the close." for s in chips],
+            summary=[f"{moves.name(s, lang)} {moves.signed_pct(s)} at the close."
+                     for s in moves.by_keys(ctx.snapshot, ["kospi", "kosdaq", "usdkrw"])],
             checklist=[CardCheck(key=s.spec.key, title=moves.name(s, lang), detail="whether the move holds") for s in chips],
             caption="Draft written from data only.", hashtags=["stockmarket", "stocks"],
         )
