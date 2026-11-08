@@ -164,3 +164,14 @@ def cards_user_prompt(settings: Settings, ctx: CardContext) -> str:
         structure=[CARD_STRUCTURE[lang][k] for k in dict.fromkeys(ctx.account.slides)],
     )
 
+
+
+def cards_review_system_prompt(settings: Settings, ctx: CardContext) -> str:
+    return _env(settings).get_template("cards_review.md.j2").render(lang=ctx.account.lang, brand=ctx.account.brand)
+
+
+def cards_review_user_prompt(settings: Settings, ctx: CardContext, draft) -> str:
+    """교열 단계: 처음 쓸 때와 같은 자료 + 초안 JSON."""
+    title = "검토할 초안" if ctx.account.lang == "ko" else "Draft to review"
+    return (cards_user_prompt(settings, ctx)
+            + f"\n\n## {title}\n\n```json\n{draft.model_dump_json(indent=1)}\n```\n")

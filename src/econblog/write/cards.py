@@ -9,7 +9,12 @@ from econblog.config import Settings
 from econblog.market import moves
 from econblog.models import CardCheck, CardCopy, CardEvent, CardStory
 from econblog.write.base import CardContext
-from econblog.write.prompting import cards_system_prompt, cards_user_prompt
+from econblog.write.prompting import (
+    cards_review_system_prompt,
+    cards_review_user_prompt,
+    cards_system_prompt,
+    cards_user_prompt,
+)
 
 log = logging.getLogger(__name__)
 
@@ -29,8 +34,17 @@ class ClaudeCardWriter:
     def write(self, ctx: CardContext) -> CardCopy:
         from econblog.write.claude import structured_call
 
-        return structured_call(self.client, self.settings, cards_system_prompt(self.settings, ctx),
-                               cards_user_prompt(self.settings, ctx), CardCopy)
+        draft = structured_call(self.client, self.settings, cards_system_prompt(self.settings, ctx),
+                                cards_user_prompt(self.settings, ctx), CardCopy)
+        if not self.settings.instagram.review:
+            return draft
+        # 교열: 같은 자료를 보여 주고 숫자·모호한 표현·근거 없는 일정을 고친 최종본을 받는다
+        try:
+            return structured_call(self.client, self.settings, cards_review_system_prompt(self.settings, ctx),
+                                   cards_review_user_prompt(self.settings, ctx, draft), CardCopy)
+        except Exception as e:  # noqa: BLE001
+            log.warning("카드 교열 실패, 초안을 그대로 씁니다: %s", e)
+            return draft
 
 
 def _two_lines(text: str) -> list[str]:

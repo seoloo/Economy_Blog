@@ -32,21 +32,31 @@ def allowed_numbers(snapshot: MarketSnapshot) -> set[float]:
     return vals
 
 
-def _numbers(text: str) -> list[str]:
-    return _NUM_RE.findall(text.replace("**", ""))
+def _numbers(text: str, names: tuple[str, ...] = ()) -> list[str]:
+    text = text.replace("**", "")
+    for n in names:   # 닛케이225, S&P 500, 러셀2000 처럼 이름 안의 숫자는 빼고 본다
+        text = text.replace(n, " ")
+    return _NUM_RE.findall(text)
+
+
+def _names_with_digits(snapshot: MarketSnapshot) -> tuple[str, ...]:
+    names = {x for s in snapshot.series.values() for x in (s.spec.label, s.spec.label_en, s.spec.id) if x and any(c.isdigit() for c in x)}
+    names |= {"S&P500", "S&P 500", "닛케이 225", "코스피200", "코스피 200", "Nikkei 225", "Russell 2000", "Dow 30"}
+    return tuple(sorted(names, key=len, reverse=True))
 
 
 def find_unverified_numbers(content: CardCopy, snapshot: MarketSnapshot) -> list[str]:
     allowed = allowed_numbers(snapshot)
+    names = _names_with_digits(snapshot)
     # 체크리스트 제목의 기준선(5,000선, 1,360원)은 LLM 이 정한 값이라 허용하고, 캡션에서 다시 써도 된다
-    levels = {float(n.replace(",", "")) for c in content.checklist for n in _numbers(c.title)}
+    levels = {float(n.replace(",", "")) for c in content.checklist for n in _numbers(c.title, names)}
     texts = [*content.cover_lines, content.board_note, content.sector_title, content.movers_title, content.asia_note,
              content.caption, *(c.detail for c in content.checklist)]
     for st in content.stories:
         texts += [*st.headline, *st.paragraphs, st.why]
     bad: list[str] = []
     for text in texts:
-        for tok in _numbers(text):
+        for tok in _numbers(text, names):
             x = float(tok.replace(",", ""))
             if x in allowed or x in levels:
                 continue

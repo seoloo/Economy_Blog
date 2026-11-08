@@ -257,3 +257,30 @@ def test_cards_with_warnings_are_not_auto_posted(settings, tmp_path, monkeypatch
                  warnings=["데이터에 없는 숫자: 14.8"], output_dir=tmp_path)
     card_deliver.deliver_cards(settings, [cs], ["local"])
     assert cs.media_id is None and "자동 게시하지 않았습니다" in cs.warnings[-1]
+
+
+def test_index_names_are_not_counted_as_numbers(settings):
+    from econblog.guard.numbers import find_unverified_numbers
+
+    snap = build_snapshot(settings, date(2026, 11, 7), offline=True)
+    text = _copy().model_copy(update={"stories": [], "board_note": "닛케이225와 S&P 500, Nikkei 225 모두 움직였습니다."})
+    assert find_unverified_numbers(text, snap) == []
+
+
+def test_claude_card_writer_runs_a_review_pass(settings, monkeypatch):
+    from econblog.write import cards as card_write
+    from econblog.write.base import CardContext
+
+    calls = []
+
+    def fake_call(client, s, system, user, fmt):
+        calls.append((system, user))
+        return _copy() if len(calls) == 1 else _copy().model_copy(update={"board_note": "교열본"})
+
+    monkeypatch.setattr("econblog.write.claude.make_client", lambda: object())
+    monkeypatch.setattr("econblog.write.claude.structured_call", fake_call)
+    snap = build_snapshot(settings, date(2026, 11, 7), offline=True)
+    kr = next(a for a in settings.instagram.accounts if a.key == "kr")
+    out = card_write.ClaudeCardWriter(settings).write(CardContext(date=date(2026, 11, 7), account=kr, articles=[], snapshot=snap))
+    assert out.board_note == "교열본" and len(calls) == 2
+    assert "교열 담당" in calls[1][0] and "검토할 초안" in calls[1][1]

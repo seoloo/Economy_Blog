@@ -108,6 +108,7 @@ class InstagramSettings(BaseModel):
     publish: bool = False
     render_images: bool = True     # 카드 JPEG 을 Chrome 으로 찍는다 (끄면 HTML 만 만든다)
     photos: bool = True            # Pixabay 배경 사진 (PIXABAY_API_KEY 필요, 없으면 단색 배경)
+    review: bool = True            # 카드 글을 쓴 뒤 Claude 교열 단계를 한 번 더 거친다
     graph_version: str = "v23.0"
     accounts: list[CardAccount] = Field(default_factory=list)
     # 카드에 나오면 안 되는 모호한 표현 (언어별). 나오면 경고를 붙인다.
