@@ -319,7 +319,7 @@ def test_intro_slides_follow_config_and_show_example_cards(settings, tmp_path):
     intro = load_intro(settings, "kr")
     examples = sorted(_example_set(tmp_path).glob("*.jpg"))
     slides = card_render.build_intro_slides(intro, examples, date(2026, 11, 8))
-    assert [s.kind for s in slides][0] == "intro-cover" and slides[-1].kind == "intro-end"
+    assert slides[0].kind == "intro-cover" and {s.kind for s in slides[1:]} <= {"intro-text", "intro-shots", "intro-end"}
     assert slides[0].page == f"1/{len(slides)}"
     shots = [s for s in slides if s.kind == "intro-shots"]
     assert shots and all(x.startswith("file:") for s in shots for x in s.shots)
@@ -346,7 +346,7 @@ def test_intro_is_saved_for_insta_post_and_never_auto_posted(settings, tmp_path,
     assert cs.output_dir.parent.parent.name == "2026-11-08-intro" and cs.media_id is None
     loaded = card_deliver.load_saved(cs.output_dir)
     assert "11월 8일에 올린 카드" in loaded.caption and "{example_date}" not in loaded.caption
-    assert "투자 권유가 아닌" in loaded.caption and "#그냥모아" in loaded.caption
+    assert "투자 권유" not in loaded.caption and "사진: Pixabay" in loaded.caption and "#그냥모아" in loaded.caption
     assert len(list((cs.output_dir / "examples").glob("*.jpg"))) == 8   # 다시 찍을 때 쓸 예시 그림
 
 

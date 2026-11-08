@@ -26,12 +26,17 @@ CAPTION_LIMIT = 2200
 HASHTAG_LIMIT = 30
 
 
-def full_caption(cs: CardSet, photo_used: bool) -> str:
-    """캡션 본문 + 면책·출처 + 해시태그. 인스타 한도(2,200자, 해시태그 30개)를 넘지 않게 자른다."""
+def full_caption(cs: CardSet, photo_used: bool, disclaimer: bool = True) -> str:
+    """캡션 본문 + 면책·출처 + 해시태그. 인스타 한도(2,200자, 해시태그 30개)를 넘지 않게 자른다.
+
+    disclaimer=False 면 면책 문구 없이 출처만 붙인다 (계정 소개 게시물).
+    """
     if cs.lang == "ko":
-        note = "투자 권유가 아닌 정보 제공용 콘텐츠입니다. 자료: Yahoo Finance" + (" · 사진: Pixabay" if photo_used else "")
+        note = ("투자 권유가 아닌 정보 제공용 콘텐츠입니다. " if disclaimer else "") + "자료: Yahoo Finance" \
+            + (" · 사진: Pixabay" if photo_used else "")
     else:
-        note = "For information only. Not financial advice. Data: Yahoo Finance" + (" · Photos: Pixabay" if photo_used else "")
+        note = ("For information only. Not financial advice. " if disclaimer else "") + "Data: Yahoo Finance" \
+            + (" · Photos: Pixabay" if photo_used else "")
     tags = " ".join("#" + t.lstrip("#").replace(" ", "") for t in cs.text.hashtags[:HASHTAG_LIMIT] if t.strip())
     tail = f"\n\n{note}\n\n{tags}".rstrip()
     body = cs.text.caption.strip()

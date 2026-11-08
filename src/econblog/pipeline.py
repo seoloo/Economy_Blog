@@ -175,7 +175,8 @@ def run_intro(settings: Settings, account_key: str, examples_dir, run_date: date
                     hashtags=intro.hashtags)
     cs = CardSet(account=account.key, brand=account.brand, lang=account.lang, date=run_date, text=text,
                  images=images, warnings=warnings, output_dir=card_dir)
-    cs.caption = full_caption(cs, photo_used=True)   # 예시 카드 안에 Pixabay 사진이 들어 있다
+    # 예시 카드 안에 Pixabay 사진이 들어 있다. 소개 게시물에는 면책 문구를 붙이지 않는다 (사용자 요청)
+    cs.caption = full_caption(cs, photo_used=True, disclaimer=False)
     publish_off = settings.instagram.model_copy(update={"publish": False})
     for line in deliver_cards(settings.model_copy(update={"instagram": publish_off}), [cs], methods or ["local"]):
         log.info("전달: %s", line)
