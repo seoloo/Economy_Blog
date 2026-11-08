@@ -402,3 +402,13 @@ def test_english_cards_have_a_korea_story_after_asia_check(settings):
     assert slides[labels.index("KOREA")].kind == "story"
     kr = next(a for a in settings.instagram.accounts if a.key == "kr")
     assert "KOREA" not in [s.label for s in card_render.build_slides(kr, _copy(), snap, date(2026, 11, 7))]
+
+
+def test_photo_needs_two_matching_words():
+    from econblog.render.photos import _relevant
+
+    chancellery = {"tags": "chancellery, berlin, building, architecture"}
+    assert not _relevant(chancellery, "federal reserve building")
+    assert _relevant({"tags": "circuit board, electronics"}, "circuit board")
+    assert _relevant({"tags": "seoul, skyline, night"}, "seoul skyline night")
+    assert _relevant({"tags": "refinery, industry"}, "refinery")

@@ -37,10 +37,14 @@ GENERIC_WORDS = {"with", "from", "night", "view", "city", "closeup", "close", "p
 
 
 def _relevant(hit: dict, query: str) -> bool:
-    """사진 태그에 검색어의 핵심 단어가 하나는 있어야 쓴다 (주제와 상관없는 인기 사진을 막는다)."""
+    """사진 태그에 검색어의 핵심 단어가 두 개(한 단어 검색어면 그 하나) 이상 있어야 쓴다.
+
+    한 단어만 맞으면 엉뚱한 사진이 걸린다. 예: 'federal reserve building' 에 'building' 만 맞은 독일 총리실 사진.
+    """
     words = [w for w in query.lower().split() if len(w) >= 4 and w not in GENERIC_WORDS]
     tags = str(hit.get("tags", "")).lower()
-    return not words or any(w.rstrip("s") in tags for w in words)
+    hits = sum(1 for w in words if w.rstrip("s") in tags)
+    return not words or hits >= min(2, len(words))
 
 
 class PhotoPicker:
