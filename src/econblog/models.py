@@ -335,6 +335,10 @@ class CardSet(BaseModel):
     media_id: str | None = None      # 인스타에 게시했으면 그 게시물 ID
     warnings: list[str] = Field(default_factory=list)
     output_dir: Path
+    reel: Path | None = None         # 같은 카드로 만든 릴스 영상 (MP4)
+    reel_music: str = ""             # 릴스에 쓴 곡 (제목 – 만든 사람)
+    reel_url: str | None = None
+    reel_media_id: str | None = None
 
 
 class IntroSlide(BaseModel):

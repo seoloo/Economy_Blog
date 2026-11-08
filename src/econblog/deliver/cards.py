@@ -52,6 +52,8 @@ def save_local(cs: CardSet) -> None:
     meta = {"account": cs.account, "brand": cs.brand, "lang": cs.lang, "date": cs.date.isoformat(),
             "images": [p.name for p in cs.images],
             "urls": cs.urls, "media_id": cs.media_id, "warnings": cs.warnings,
+            "reel": cs.reel.name if cs.reel else None, "reel_music": cs.reel_music,
+            "reel_url": cs.reel_url, "reel_media_id": cs.reel_media_id,
             "text": cs.text.model_dump()}
     (cs.output_dir / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -112,6 +114,38 @@ def publish_instagram(settings: Settings, account: CardAccount, image_urls: list
     return _call(session, "POST", f"{base}/{user}/media_publish", creation_id=parent, access_token=token)["id"]
 
 
+def reel_caption(cs: CardSet) -> str:
+    """릴스 캡션 = 캐러셀 캡션 + 음악 출처 한 줄 (해시태그 앞)."""
+    if not cs.reel_music:
+        return cs.caption
+    line = ("🎵 음악: " if cs.lang == "ko" else "🎵 Music: ") + f"{cs.reel_music} (Pixabay)"
+    body, sep, tags = cs.caption.rpartition("\n\n#")
+    return f"{body}\n{line}{sep}{tags}" if sep else f"{cs.caption}\n\n{line}"
+
+
+def publish_reel(settings: Settings, account: CardAccount, video_url: str, caption: str) -> str:
+    """릴스 게시: 동영상 컨테이너 → 처리 대기 → 게시. share_to_feed 가 false 면 릴스 탭에만 보인다."""
+    token, user = env(account.token_env), env(account.user_env)
+    if not token or not user:
+        raise GraphError("토큰 또는 계정 ID 없음")
+    session, base = _graph(token, settings.instagram.graph_version)
+    container = _call(session, "POST", f"{base}/{user}/media", media_type="REELS", video_url=video_url, caption=caption,
+                      share_to_feed=str(settings.instagram.reels.share_to_feed).lower(), access_token=token)["id"]
+    _wait_ready(session, base, container, token, timeout=600)   # 동영상은 처리에 시간이 더 걸린다
+    return _call(session, "POST", f"{base}/{user}/media_publish", creation_id=container, access_token=token)["id"]
+
+
+def _publish_reel(settings: Settings, account: CardAccount, cs: CardSet) -> str:
+    if not cs.reel or not cs.reel.exists():
+        raise GraphError("릴스 영상이 없음")
+    run_folder = cs.output_dir.parent.parent.name if cs.output_dir.parent.name == "insta" else cs.date.isoformat()
+    [cs.reel_url] = publish.publish_files(settings, [(cs.reel, f"{run_folder}/insta/{cs.account}/{cs.reel.name}")],
+                                          f"{cs.date} reel {cs.account}")
+    if not publish.wait_until_public([cs.reel_url]):
+        raise GraphError("릴스 공개 주소가 열리지 않음 (GitHub Pages 반영 지연)")
+    return publish_reel(settings, account, cs.reel_url, reel_caption(cs))
+
+
 def check_account(settings: Settings, account: CardAccount) -> tuple[bool, str]:
     """게시 없이 토큰·계정 ID 가 맞는지 확인한다 (계정 이름과 게시 한도 조회만). 토큰 값은 출력하지 않는다."""
     token, user = env(account.token_env), env(account.user_env)
@@ -155,10 +189,13 @@ def load_saved(card_dir) -> CardSet:
 
     card_dir = _Path(card_dir)
     meta = json.loads((card_dir / "meta.json").read_text(encoding="utf-8"))
+    reel = card_dir / "reel.mp4"
     return CardSet(account=meta["account"], brand=meta.get("brand", meta["account"]), lang=meta.get("lang", "ko"),
                    date=_date.fromisoformat(meta["date"]), text=CardCopy.model_validate(meta["text"]),
                    images=sorted(card_dir.glob("[0-9][0-9].jpg")),
-                   caption=(card_dir / "caption.txt").read_text(encoding="utf-8"), output_dir=card_dir)
+                   caption=(card_dir / "caption.txt").read_text(encoding="utf-8"), output_dir=card_dir,
+                   reel=reel if reel.exists() else None, reel_music=meta.get("reel_music") or "",
+                   reel_media_id=meta.get("reel_media_id"))
 
 
 def apply_edits(card_dir, edits: list[list[str]]) -> list:
@@ -195,6 +232,12 @@ def publish_saved(settings: Settings, card_dir) -> CardSet:
     account = next(a for a in settings.instagram.accounts if a.key == cs.account)
     cs.media_id = _publish(settings, account, cs)
     save_local(cs)
+    if cs.reel and not cs.reel_media_id and settings.instagram.reels.enabled:
+        try:
+            cs.reel_media_id = _publish_reel(settings, account, cs)
+        except Exception as e:  # noqa: BLE001
+            log.warning("릴스 게시 실패 %s: %s", cs.account, e)
+        save_local(cs)
     return cs
 
 
@@ -216,7 +259,10 @@ def build_cards_message(cardsets: list[CardSet], sender: str, recipients: str) -
     cids: list[tuple[str, bytes]] = []
     for cs in cardsets:
         status = ("인스타에 게시했습니다." if cs.media_id else
-                  "메일로만 보냈습니다. 카드를 저장해 직접 올리거나, 확인 후 settings.yaml 의 instagram.publish 를 켜세요.")
+                  "메일로만 보냈습니다. 확인 후 insta-edit / insta-post 로 올리세요.")
+        if cs.reel:
+            status += (" 릴스도 게시했습니다." if cs.reel_media_id else " 릴스 영상은 첨부 파일로 넣었습니다.") \
+                + (f" (음악: {cs.reel_music})" if cs.reel_music else " (음악 없음)")
         warns = "".join(f"<li>{escape(w)}</li>" for w in cs.warnings)
         imgs = []
         for i, p in enumerate(cs.images, 1):
@@ -235,6 +281,9 @@ def build_cards_message(cardsets: list[CardSet], sender: str, recipients: str) -
     html_part = msg.get_payload()[1]
     for cid, data in cids:
         html_part.add_related(data, "image", "jpeg", cid=f"<{cid}>")
+    for cs in cardsets:   # 릴스 영상은 첨부 파일로 (메일 본문 미리보기에는 안 보임)
+        if cs.reel and cs.reel.exists():
+            msg.add_attachment(cs.reel.read_bytes(), maintype="video", subtype="mp4", filename=f"{cs.account}_reel.mp4")
     return msg
 
 
@@ -263,6 +312,14 @@ def deliver_cards(settings: Settings, cardsets: list[CardSet], methods: list[str
             except Exception as e:  # noqa: BLE001
                 log.warning("인스타 게시 실패 %s: %s", cs.account, e)
                 cs.warnings.append(f"인스타 게시 실패: {e}")
+                continue
+            if cs.reel and settings.instagram.reels.enabled:
+                try:
+                    cs.reel_media_id = _publish_reel(settings, account, cs)
+                    results.append(f"릴스 게시 {cs.account}")
+                except Exception as e:  # noqa: BLE001
+                    log.warning("릴스 게시 실패 %s: %s", cs.account, e)
+                    cs.warnings.append(f"릴스 게시 실패: {e}")
     for cs in cardsets:
         save_local(cs)
     results.append(f"카드 저장 {', '.join(str(cs.output_dir) for cs in cardsets)}")

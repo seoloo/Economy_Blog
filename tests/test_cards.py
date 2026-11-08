@@ -412,3 +412,50 @@ def test_photo_needs_two_matching_words():
     assert _relevant({"tags": "circuit board, electronics"}, "circuit board")
     assert _relevant({"tags": "seoul, skyline, night"}, "seoul skyline night")
     assert _relevant({"tags": "refinery, industry"}, "refinery")
+
+
+def test_reel_music_rotates_by_day_and_account(settings):
+    from econblog.render.reels import pick_track
+
+    kr, en = settings.instagram.accounts[0], settings.instagram.accounts[1]
+    d = date(2026, 11, 10)
+    assert pick_track(settings, d, kr) != pick_track(settings, d, en)                   # 같은 날 두 계정은 다른 곡
+    assert pick_track(settings, d, kr) != pick_track(settings, date(2026, 11, 11), kr)  # 다음 날은 다음 곡
+    assert all("pixabay.com" in t.url for t in settings.instagram.reels.music)
+
+
+def test_reel_caption_credits_the_music_before_hashtags(tmp_path):
+    cs = CardSet(account="en", brand="4PM RECAP", lang="en", date=date(2026, 11, 10), text=_copy("en"),
+                 caption="Body\n\nData: Yahoo Finance\n\n#stocks #nasdaq", reel_music="Financial News – Kulakovka",
+                 output_dir=tmp_path)
+    cap = card_deliver.reel_caption(cs)
+    assert cap.index("🎵 Music: Financial News – Kulakovka (Pixabay)") < cap.index("#stocks")
+
+
+def test_reel_is_posted_to_the_reels_tab_only(settings, monkeypatch):
+    calls = []
+    monkeypatch.setenv("INSTAGRAM_ACCESS_TOKEN", "EAAtest")
+    monkeypatch.setenv("INSTAGRAM_USER_ID", "1784")
+    monkeypatch.setattr(card_deliver, "_wait_ready", lambda *a, **k: None)
+    monkeypatch.setattr(card_deliver, "_call", lambda s, m, url, **d: calls.append((url, d)) or {"id": f"id{len(calls)}"})
+    kr = next(a for a in settings.instagram.accounts if a.key == "kr")
+    assert card_deliver.publish_reel(settings, kr, "https://x/reel.mp4", "cap") == "id2"
+    assert calls[0][1]["media_type"] == "REELS" and calls[0][1]["share_to_feed"] == "false"
+    assert calls[1][0].endswith("/media_publish")
+
+
+def test_reel_video_is_built_from_cards(tmp_path):
+    from PIL import Image
+    from econblog.render.reels import build_command, ffmpeg_path, make_reel, reel_length
+
+    imgs = []
+    for i in range(3):
+        p = tmp_path / f"0{i + 1}.jpg"
+        Image.new("RGB", (1080, 1350), (i * 80, 40, 90)).save(p, "JPEG")
+        imgs.append(p)
+    cmd = " ".join(build_command("ffmpeg", imgs, None, tmp_path / "r.mp4", seconds=3.0, fade=0.3))
+    assert cmd.count("xfade") == 2 and "1080:1920" in cmd and f"{reel_length(3, 3.0, 0.3):.3f}" in cmd
+    if not ffmpeg_path():
+        pytest.skip("ffmpeg 없음")
+    out = make_reel(imgs, None, tmp_path / "r.mp4", seconds=1.0)
+    assert out.stat().st_size > 1000

@@ -76,7 +76,7 @@ tests/
 - **티스토리 HTML**은 `templates/_tistory.html.j2`의 공통 부품만 쓴다. 티스토리 편집기가 지우는 스타일(margin·padding·border·font-size 등)과 `thead/th`는 쓰지 않는다.
 - **대표 이미지(썸네일)**는 카테고리별 고정 그림(`assets/brand/thumb_*.jpg`)을 쓴다. 새 카테고리나 그림 교체는 `assets/brand/make_thumbnails.py`로 만들고, 글 종류와의 연결은 `settings.yaml`의 `thumbnails`에 둔다.
 - **새 차트**는 `charts/`에 ChartBuilder를 만들고 `charts/__init__.py`의 레지스트리에 등록한 뒤 `settings.yaml`에서 켠다.
-- **새 발송 방식**(예: 슬랙)은 `deliver/`에 Deliverer를 추가한다. 인스타 카드 전달(메일·게시)은 `deliver/cards.py`.
+- **새 발송 방식**(예: 슬랙)은 `deliver/`에 Deliverer를 추가한다. 인스타 카드 전달(메일·게시)은 `deliver/cards.py`, 릴스 영상은 `render/reels.py`.
 - **인스타 카드**: 계정·카드 순서는 `settings.yaml`의 `instagram`, 글은 `prompts/cards*.j2` + `write/cards.py`, 숫자 표시는 `market/moves.py`, 디자인은 `templates/cards/card.html.j2`. 카드 숫자는 데이터로만 만들고 LLM 이 쓰지 않는다. 프로필 고정용 계정 소개 게시물 글은 `config/intro.yaml`(사람이 쓴 글, LLM 미사용).
 - 단계 간 데이터는 반드시 `models.py`의 데이터 클래스로 주고받는다. dict를 그대로 넘기지 않는다.
 - 외부 API 키가 없으면 각 단계는 **오프라인 대체 구현으로 동작**해야 한다. 예: Laya가 없으면 키워드 분류기, 메일 설정이 없으면 로컬 파일 저장. 그래야 테스트와 dry run이 가능하다.
@@ -87,6 +87,7 @@ tests/
 - `output/`, `data/cache/`는 `.gitignore` 대상이다. 수집물과 초안은 레포에 올리지 않는다.
 - 이미지나 차트를 외부에서 가져오지 않는다. **차트는 공개 데이터로 직접 그린다.** 출처는 차트 하단에 표기한다.
   - 예외: **인스타 카드 배경 사진**에 한해 상업적 사용·수정이 허용된 무료 사진(Pixabay·Pexels 라이선스)을 쓸 수 있다. 사진 출처는 캡션에 적는다. 뉴스 보도사진, 남의 게시물 이미지, 로고는 쓰지 않는다. 블로그 글에는 여전히 외부 이미지를 넣지 않는다.
+  - 예외: **인스타 릴스 배경 음악**에 한해 Pixabay 무료 음원(상업적 사용 가능) 중 Content ID 에 등록되지 않은 곡만 쓴다. 곡 목록은 `settings.yaml`의 `instagram.reels.music`. 음원 파일은 레포·artifact 에 남기지 않고 실행할 때 내려받아 영상에만 넣는다.
 - LLM 프롬프트는 "출처 문장을 그대로 옮기지 말고 사실을 종합해 직접 분석하라"는 원칙을 유지한다.
 - `guard/copyright.py` 검사를 통과하지 못한 초안은 경고를 붙여서 발송한다.
 - 모든 글 하단에 참고 출처 링크와 "투자 권유 아님" 면책 문구를 넣는다. 인스타 카드는 소유자 결정으로 면책 문구를 넣지 않는다 (`settings.yaml`의 `instagram.disclaimer`, 출처 표기는 유지).

@@ -125,6 +125,20 @@ instagram:
   publish_weekdays: [1, 2, 3, 4, 5]   # 화~토(0=월). 정기 실행도 화~토. 월요일에 손으로 돌려도 게시하지 않는다
   disclaimer: false    # true 면 캡션 끝·마지막 카드 아래에 "투자 권유 아님" 문구를 넣는다 (블로그 글에는 항상 들어감)
   graph_version: v23.0
+  # 릴스: 그날 카드를 세로 영상(9:16)으로 이어 붙여 캐러셀과 같이 올린다. 릴스 탭에만 보이고 프로필 격자에는 안 쌓인다.
+  # 음악은 Pixabay 무료 음원(상업적 사용 가능, 출처 표기 의무 없음) 중 Content ID 에 등록되지 않은 곡만 날짜별로 돌려 쓴다.
+  # 음원 파일은 레포에 올리지 않고 실행할 때 내려받는다 (Pixabay 라이선스는 음원 파일 자체의 재배포를 막는다).
+  reels:
+    enabled: true
+    seconds: 3.0
+    share_to_feed: false
+    music:
+      - {title: "Financial News", artist: "Kulakovka", page: "https://pixabay.com/music/adventure-financial-news-614884/", url: "https://cdn.pixabay.com/download/audio/2026/10/04/audio_731a75b21c.mp3?filename=kulakovka-financial-news-614884.mp3"}
+      - {title: "News", artist: "Monume", page: "https://pixabay.com/music/beats-news-603976/", url: "https://cdn.pixabay.com/download/audio/2026/09/15/audio_9345babe94.mp3?filename=monume-news-603976.mp3"}
+      - {title: "Business", artist: "Sub_Clair", page: "https://pixabay.com/music/corporate-business-571900/", url: "https://cdn.pixabay.com/download/audio/2026/07/22/audio_033eb15d5b.mp3?filename=sub_clair-business-571900.mp3"}
+      - {title: "Corporate Ambient", artist: "AtlasAudio", page: "https://pixabay.com/music/corporate-corporate-ambient-625699/", url: "https://cdn.pixabay.com/download/audio/2026/10/23/audio_f62c992948.mp3?filename=atlasaudio-corporate-ambient-625699.mp3"}
+      - {title: "Corporate Marimba Business Background", artist: "alex-morgan", page: "https://pixabay.com/music/corporate-corporate-marimba-business-background-563569/", url: "https://cdn.pixabay.com/download/audio/2026/07/13/audio_489c65770f.mp3?filename=alex-morgan-corporate-marimba-business-background-563569.mp3"}
+      - {title: "Cinematic Corporate", artist: "alex-morgan", page: "https://pixabay.com/music/corporate-cinematic-corporate-556231/", url: "https://cdn.pixabay.com/download/audio/2026/06/23/audio_506b25c5cd.mp3?filename=alex-morgan-cinematic-corporate-556231.mp3"}
   # 카드에 쓰면 안 되는 모호한 표현. 나오면 [검토] 경고를 붙인다 (도시 이름으로 시장 부르기, 비유, 막연한 예측).
   vague_phrases:
     ko: ["서울은", "뉴욕은", "도쿄는", "월가는", "어디쯤", "온도차", "온도 차", "정반대의 하루", "웃었다", "울었다", "지켜볼 일", "일 겁니다"]

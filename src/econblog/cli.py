@@ -152,6 +152,34 @@ def _cmd_insta_edit(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_insta_reel(args: argparse.Namespace) -> int:
+    """만들어 둔 카드 묶음으로 릴스 영상을 만들고(없으면), --post 면 릴스만 게시한다."""
+    from econblog.deliver.cards import _publish_reel, load_saved, save_local
+    from econblog.render.cards import THEMES
+    from econblog.render.reels import build_reel
+
+    settings = load_settings()
+    card_dir = args.dir or _latest_card_dir(settings, args.account)
+    if card_dir is None:
+        print(f"output/ 에서 {args.account} 카드를 찾지 못함")
+        return 1
+    cs = load_saved(card_dir)
+    account = next(a for a in settings.instagram.accounts if a.key == cs.account)
+    if not cs.reel:
+        cs.reel, track = build_reel(settings, account, cs.images, cs.output_dir, cs.date, bg=THEMES[cs.lang]["dark"])
+        cs.reel_music = f"{track.title} – {track.artist}" if track else ""
+        save_local(cs)
+    print(f"릴스 영상: {cs.reel} (음악: {cs.reel_music or '없음'})")
+    if args.post:
+        if cs.reel_media_id:
+            print(f"이미 게시됨: {cs.reel_media_id}")
+            return 0
+        cs.reel_media_id = _publish_reel(settings, account, cs)
+        save_local(cs)
+        print(f"릴스 게시 완료: {cs.account}, 게시물 ID {cs.reel_media_id}")
+    return 0
+
+
 def _cmd_insta_intro(args: argparse.Namespace) -> int:
     """프로필에 고정할 계정 소개 게시물을 만든다 (게시하지 않음). 확인 후 insta-post 로 올린다."""
     from pathlib import Path
@@ -220,6 +248,12 @@ def main(argv: list[str] | None = None) -> int:
     p_ige.add_argument("--dir", help="카드 폴더 (기본: output/ 에서 가장 최근 것)")
     p_ige.add_argument("--edits", help='[["찾을 문장", "바꿀 문장"], ...] JSON (없으면 CARD_EDITS 환경변수)')
     p_ige.set_defaults(func=_cmd_insta_edit)
+
+    p_igr = sub.add_parser("insta-reel", help="만들어 둔 카드로 릴스 영상 만들기 (--post 면 릴스만 게시)")
+    p_igr.add_argument("--account", default="kr")
+    p_igr.add_argument("--dir", help="카드 폴더 (기본: output/ 에서 가장 최근 것)")
+    p_igr.add_argument("--post", action="store_true", help="릴스를 인스타에 게시한다")
+    p_igr.set_defaults(func=_cmd_insta_reel)
 
     p_igi = sub.add_parser("insta-intro", help="프로필에 고정할 계정 소개 게시물 만들기 (게시하지 않음)")
     p_igi.add_argument("--account", default="kr")

@@ -98,6 +98,24 @@ class CardAccount(BaseModel):
     check: list[str] = Field(default_factory=list)   # 아시아·한국 체크 (series key)
 
 
+class MusicTrack(BaseModel):
+    """릴스 배경 음악 한 곡. 상업적 사용이 허용되고 Content ID 에 등록되지 않은 무료 음원만 쓴다."""
+
+    title: str
+    artist: str
+    page: str                      # 라이선스를 확인한 곡 페이지
+    url: str                       # 실행할 때마다 내려받는 MP3 주소 (레포에 음원 파일을 올리지 않는다)
+
+
+class ReelSettings(BaseModel):
+    """카드를 이어 붙인 세로 영상(릴스). 캐러셀과 같은 날 같이 올린다."""
+
+    enabled: bool = True
+    seconds: float = 3.0           # 카드 한 장을 보여 주는 시간
+    share_to_feed: bool = False    # false 면 릴스 탭·추천에만 나오고 프로필 격자와 피드에는 안 나온다
+    music: list[MusicTrack] = Field(default_factory=list)   # 날짜마다 돌아가며 쓴다
+
+
 class InstagramSettings(BaseModel):
     """인스타 카드뉴스. enabled 면 시황 글과 같은 실행에서 카드를 만들어 메일로 보낸다.
 
@@ -114,6 +132,7 @@ class InstagramSettings(BaseModel):
     publish_weekdays: list[int] = Field(default_factory=lambda: [1, 2, 3, 4, 5])
     graph_version: str = "v23.0"
     accounts: list[CardAccount] = Field(default_factory=list)
+    reels: ReelSettings = Field(default_factory=ReelSettings)
     # 카드에 나오면 안 되는 모호한 표현 (언어별). 나오면 경고를 붙인다.
     vague_phrases: dict[str, list[str]] = Field(default_factory=dict)
     # 개인에 대한 의혹·소문처럼 사람이 확인해야 하는 표현 (언어별). 나오면 경고를 붙여 자동 게시를 멈춘다.
