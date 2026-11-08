@@ -33,6 +33,16 @@ def _allowed(hit: dict) -> bool:
     return not (tags & BLOCKED_TAGS)
 
 
+GENERIC_WORDS = {"with", "from", "night", "view", "city", "closeup", "close", "photo", "background", "modern"}
+
+
+def _relevant(hit: dict, query: str) -> bool:
+    """사진 태그에 검색어의 핵심 단어가 하나는 있어야 쓴다 (주제와 상관없는 인기 사진을 막는다)."""
+    words = [w for w in query.lower().split() if len(w) >= 4 and w not in GENERIC_WORDS]
+    tags = str(hit.get("tags", "")).lower()
+    return not words or any(w.rstrip("s") in tags for w in words)
+
+
 class PhotoPicker:
     """한 번의 실행에서 같은 사진이 두 번 나오지 않게 고른 사진 ID 를 기억한다."""
 
@@ -64,7 +74,7 @@ class PhotoPicker:
         })
         resp.raise_for_status()
         hits = [h for h in resp.json().get("hits", [])
-                if h.get("id") not in self.used and h.get("largeImageURL") and _allowed(h)]
+                if h.get("id") not in self.used and h.get("largeImageURL") and _allowed(h) and _relevant(h, query)]
         if not hits:
             return None
         # 인기 순 상위 몇 장 안에서 날짜마다 다른 사진이 나오게 고른다

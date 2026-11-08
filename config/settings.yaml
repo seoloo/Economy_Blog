@@ -123,6 +123,10 @@ instagram:
   enabled: true
   publish: false
   graph_version: v23.0
+  # 카드에 쓰면 안 되는 모호한 표현. 나오면 [검토] 경고를 붙인다 (도시 이름으로 시장 부르기, 비유, 막연한 예측).
+  vague_phrases:
+    ko: ["서울은", "뉴욕은", "도쿄는", "월가는", "어디쯤", "온도차", "온도 차", "정반대의 하루", "웃었다", "울었다", "지켜볼 일", "일 겁니다"]
+    en: ["Seoul sold", "New York bought", "Wall Street shrugged", "far from settled", "somewhere in between", "remains to be seen", "only time will tell", "rages on"]
   accounts:
     - key: kr
       lang: ko

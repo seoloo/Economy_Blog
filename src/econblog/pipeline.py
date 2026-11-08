@@ -15,7 +15,7 @@ from econblog.config import Settings
 from econblog.deliver import deliver_all
 from econblog.deliver.cards import deliver_cards, full_caption
 from econblog.guard.copyright import find_copied_passages
-from econblog.guard.style import find_ai_phrases
+from econblog.guard.style import find_ai_phrases, find_vague_phrases
 from econblog.market import build_snapshot
 from econblog.models import CardSet, ClassifiedArticle, Draft, GuideDraft, GuideTopic, MarketSnapshot, PostContent, RenderedPost
 from econblog.render.cards import build_slides, render_cards
@@ -122,6 +122,7 @@ def run_cards(
         warnings += find_copied_passages(text, references, settings.guard.max_shared_chars)
         if account.lang == "ko":
             warnings += find_ai_phrases(text, settings.guard.ai_phrases)
+        warnings += find_vague_phrases(text, settings.instagram.vague_phrases.get(account.lang, []))
         photos = PhotoPicker(settings, card_dir / "photos", seed=f"{run_date}-{account.key}", offline=offline)
         slides = build_slides(account, text, snapshot, run_date, photos)
         images, render_warnings = render_cards(settings, account, slides, card_dir)

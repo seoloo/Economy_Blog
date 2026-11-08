@@ -110,6 +110,8 @@ class InstagramSettings(BaseModel):
     photos: bool = True            # Pixabay 배경 사진 (PIXABAY_API_KEY 필요, 없으면 단색 배경)
     graph_version: str = "v23.0"
     accounts: list[CardAccount] = Field(default_factory=list)
+    # 카드에 나오면 안 되는 모호한 표현 (언어별). 나오면 경고를 붙인다.
+    vague_phrases: dict[str, list[str]] = Field(default_factory=dict)
 
 
 class DeliverSettings(BaseModel):

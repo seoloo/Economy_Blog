@@ -17,3 +17,11 @@ def find_ai_phrases(content: PostContent | GuidePost | CardCopy, limits: dict[st
         if count > allowed:
             over.append(f"「{phrase}」 {count}회(허용 {allowed})")
     return ["AI 말투 표현이 많음: " + ", ".join(over)] if over else []
+
+
+def find_vague_phrases(content: CardCopy, phrases: list[str]) -> list[str]:
+    """카드 글에 모호한 표현(도시 이름으로 시장 부르기, 비유, 막연한 예측)이 있으면 경고한다."""
+    text = " ".join(post_texts(content)).lower()
+    found = [p for p in phrases if p.lower() in text]
+    return ["카드 문장이 모호함: " + ", ".join(f"「{p}」" for p in found)] if found else []
+

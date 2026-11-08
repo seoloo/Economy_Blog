@@ -305,7 +305,7 @@ class CardCopy(BaseModel):
     movers_title: str = Field(description="미국 대형주 등락 장 제목. 한국어 12자, 영어 25자 안팎.")
     asia_note: str = Field(description="아시아·한국 체크 장 아래 상자에 들어갈 한두 문장. 그 장이 없는 계정은 빈 문자열.")
     events: list[CardEvent] = Field(description="앞으로 볼 일정 0~5개. 기사나 블로그 글에 나온 일정만. 없으면 빈 목록.")
-    takeaway: str = Field(description="마지막 장 '오늘의 한 줄'. 2~3줄로 나눌 곳에 줄바꿈(\n)을 넣는다.")
+    takeaway: str = Field(description="마지막 장. 두 문장: 오늘 가장 중요한 사실(이름+숫자) + 다음 거래일에 확인할 것. 문장 사이에 줄바꿈(\n).")
     caption: str = Field(
         description="게시물 캡션 본문(해시태그 제외). 첫 줄 제목, 번호 붙인 요약 3개, 다음에 볼 것. 한국어 600~900자, 영어 120~180단어.")
     hashtags: list[str] = Field(description="해시태그 8~12개. # 없이 띄어쓰기 없는 단어로.")

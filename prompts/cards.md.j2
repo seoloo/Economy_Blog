@@ -59,14 +59,14 @@ Write today's carousel for the U.S. session on {{ session_label }}. All data bel
 ## {{ "작성 요청" if lang == "ko" else "What to write" }}
 
 {% if lang == "ko" -%}
-- cover_lines: 표지 제목 두 줄 (줄마다 10자 안팎). 숫자 하나는 꼭 넣습니다.
+- cover_lines: 표지 제목 두 줄 (줄마다 10자 안팎). 지수·종목 이름과 숫자를 꼭 넣습니다.
 - cover_photo_query, stories[].photo_query: 배경 사진 검색어. 영어 2~3단어로, 주제가 바로 떠오르는 사물·장소로 씁니다 (예: circuit board, server room, seoul skyline night, oil refinery, stock market screen). 음식으로도 읽히는 단어(wafer, chips)와 사람이 나올 검색어는 피합니다. 세 검색어는 서로 다르게 씁니다.
 - board_note: 숫자판 장 제목 아래 한 줄 (30자 안팎). 오늘 숫자의 흐름을 한 문장으로.
 - stories: 이슈 카드 두 장. 오늘 시장을 가장 크게 움직인 재료 두 가지. 제목 두 줄(줄마다 12자 안팎), 본문 두 문단(문단마다 70~100자를 넘기지 않음), 왜 중요한지 한 문장(50자 안팎). 카드 한 장에 들어가야 하므로 길이를 꼭 지킵니다.
-- sector_title, movers_title: 히트맵·대형주 장 제목 (12자 안팎). 그날 데이터에서 가장 눈에 띄는 점을 씁니다. 예: "기술주만 웃었다", "AMD 11% 급등"
+- sector_title, movers_title: 히트맵·대형주 장 제목 (12자 안팎). 그날 데이터에서 가장 눈에 띄는 점을 이름과 숫자로 씁니다. 형식: 「[업종·종목] [숫자] [상승/하락]」
 - asia_note: 빈 문자열로 둡니다.
 - events: 앞으로 볼 일정 0~5개 (기사·블로그 글에 나온 것만).
-- takeaway: 마지막 장 오늘의 한 줄. 두세 줄로 나눌 곳에 줄바꿈을 넣습니다 (전체 40자 안팎).
+- takeaway: 마지막 장. 두 문장(오늘 가장 중요한 사실 + 다음 거래일에 확인할 것), 문장 사이에 줄바꿈. 전체 60자 안팎.
 - caption: 600~900자. 해시태그는 넣지 않습니다.
 - hashtags: 8~12개. 「미국증시」, 「코스피」로 시작합니다.
 {%- else -%}
@@ -74,10 +74,10 @@ Write today's carousel for the U.S. session on {{ session_label }}. All data bel
 - cover_photo_query, stories[].photo_query: 2-3 English words for an object or place that instantly signals the topic (e.g. "new york skyline", "circuit board", "server room", "oil refinery", "stock market screen"). Avoid words that also mean food (wafer, chips) and anything that returns people. Use three different queries.
 - board_note: one line under the scoreboard title, about 12 words.
 - stories: two story cards on the two biggest drivers of the U.S. session. Two-line headline (about 20 characters per line), two paragraphs of 25-35 words each (hard limit: the card has no room for more), and a one-sentence "why it matters" of about 20 words.
-- sector_title, movers_title: short titles (about 25 characters) naming the most striking move, e.g. "Tech alone in the green", "AMD leads, Netflix lags".
+- sector_title, movers_title: short titles (about 25 characters) naming the most striking move with a name and a number, e.g. "Tech up 1.45%, staples lag".
 - asia_note: one or two sentences for the Asia & Korea check card, using the Korea & Asia numbers above.
 - events: 0-5 upcoming events, only from the articles or the blog summary.
-- takeaway: the closing one-liner, split into 2-3 short lines with line breaks (about 12 words total).
+- takeaway: two sentences (the key fact + one specific thing to check next session), with a line break between them. About 25 words total.
 - caption: 120-180 words, no hashtags.
 - hashtags: 8-12, starting with "stockmarket" and "stocks".
 {%- endif %}

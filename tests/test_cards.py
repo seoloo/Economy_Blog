@@ -166,7 +166,9 @@ def test_photo_picker_downloads_and_never_repeats(settings, tmp_path, monkeypatc
     class FakeSession:
         def get(self, url, timeout, params=None):
             if params:
-                hits = [{"id": i, "largeImageURL": f"https://img/{i}.jpg"} for i in (1, 2)]
+                hits = [{"id": 9, "largeImageURL": "https://img/9.jpg", "tags": "wafer, chip, dessert"},   # 과자
+                        {"id": 8, "largeImageURL": "https://img/8.jpg", "tags": "beach, sea"}]             # 상관없음
+                hits += [{"id": i, "largeImageURL": f"https://img/{i}.jpg", "tags": "computer chip, circuit"} for i in (1, 2)]
                 return type("R", (), {"raise_for_status": lambda s: None, "json": lambda s: {"hits": hits}})()
             return type("R", (), {"raise_for_status": lambda s: None, "content": b"jpeg"})()
 
@@ -194,3 +196,14 @@ def test_check_account_reads_without_posting(settings, monkeypatch):
     ok, line = card_deliver.check_account(settings, kr)
     assert ok and "@dailyjustmoa" in line and "graph.facebook.com" in line and "EAAtest" not in line
     assert set(calls) == {"GET"}
+
+
+def test_vague_phrases_are_flagged(settings):
+    from econblog.guard.style import find_vague_phrases
+
+    vague = _copy().model_copy(update={"takeaway": "서울은 6% 빠졌습니다.\n월요일은 그 사이 어디쯤일 겁니다."})
+    warning = find_vague_phrases(vague, settings.instagram.vague_phrases["ko"])
+    assert warning and "서울은" in warning[0] and "어디쯤" in warning[0]
+    clear = _copy().model_copy(update={"takeaway": "코스피가 6.02% 내렸습니다.\n월요일에는 SK하이닉스 반등 여부를 확인합니다.",
+                                       "sector_title": "기술 업종 1.45% 상승"})
+    assert find_vague_phrases(clear, settings.instagram.vague_phrases["ko"]) == []
