@@ -8,9 +8,12 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from econblog.config import Settings
 from econblog.models import NowRow
-from econblog.write.base import WriteContext
+from econblog.market import moves
+from econblog.write.base import CardContext, WriteContext
 
 WEEKDAYS = "월화수목금토일"
+# 인스타 카드에만 쓰는 시리즈 (업종 ETF·개별 종목). 블로그 글 프롬프트에는 넣지 않는다.
+CARD_ONLY = {"us_sector", "us_stock", "kr_stock", "crypto"}
 
 
 def signed(x: float) -> str:
@@ -34,7 +37,8 @@ def system_prompt(settings: Settings) -> str:
 
 
 def user_prompt(settings: Settings, ctx: WriteContext) -> str:
-    series = [ctx.snapshot.series[s.key] for s in settings.series if s.key in ctx.snapshot.series]
+    series = [ctx.snapshot.series[s.key] for s in settings.series
+              if s.key in ctx.snapshot.series and s.category not in CARD_ONLY]
 
     def labels(keys: list[str]) -> list[str]:
         return [ctx.snapshot.series[k].spec.label for k in keys if k in ctx.snapshot.series]
@@ -94,3 +98,69 @@ def guide_user_prompt(settings: Settings, ctx) -> str:
     return _env(settings).get_template("guide.md.j2").render(
         date=ctx.date, topic=ctx.topic, rows=guide_rows(ctx), charts=ctx.charts,
     )
+
+
+# ---------------------------------------------------------------- 인스타 카드
+
+
+EN_WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+CARD_STRUCTURE = {
+    "ko": {
+        "cover": "표지: 사진 배경, 날짜, 제목 두 줄(cover_lines), 숫자 칩 세 개",
+        "board": "숫자판: 지표 10개 (자동) + 한 줄 요약(board_note)",
+        "story": "이슈 카드: 위쪽 사진, 제목 두 줄, 본문 두 문단, '왜 중요할까' 상자",
+        "sectors": "미국 업종 히트맵 (자동) + 제목(sector_title)",
+        "movers": "미국 대형주 등락 순위 (자동) + 제목(movers_title)",
+        "check": "아시아·한국 체크 (자동) + 설명(asia_note)",
+        "events": "앞으로 볼 일정 (events, 없으면 이 장은 빠짐)",
+        "closing": "마지막 장: 오늘의 한 줄(takeaway)",
+    },
+    "en": {
+        "cover": "Cover: photo, date, two-line headline (cover_lines), three number chips",
+        "board": "Scoreboard: 10 indicators (auto) + one-line note (board_note)",
+        "story": "Story card: photo on top, two-line headline, two paragraphs, 'why it matters' box",
+        "sectors": "S&P 500 sector heatmap (auto) + title (sector_title)",
+        "movers": "Mega-cap movers ranking (auto) + title (movers_title)",
+        "check": "Asia & Korea check (auto numbers) + note (asia_note)",
+        "events": "What's next (events; card is dropped if empty)",
+        "closing": "Closing card: the takeaway",
+    },
+}
+
+
+def _fact(s, lang: str) -> str:
+    change, _ = moves.change_text(s, lang)
+    return f"{moves.name(s, lang)} ({s.spec.id}): {moves.value_text(s, lang)}, {change} ({s.last_date})"
+
+
+def card_date_label(d: date) -> str:
+    return f"{d.month}월 {d.day}일({WEEKDAYS[d.weekday()]})"
+
+
+def cards_system_prompt(settings: Settings, ctx: CardContext) -> str:
+    return _env(settings).get_template("cards_system.md.j2").render(
+        lang=ctx.account.lang, brand=ctx.account.brand, date_label=card_date_label(ctx.date))
+
+
+def cards_user_prompt(settings: Settings, ctx: CardContext) -> str:
+    lang = ctx.account.lang
+    snap = ctx.snapshot
+    main_keys = [s.key for s in settings.series if s.category not in CARD_ONLY or s.category == "crypto"]
+    us = snap.series.get("sp500")
+    session = us.last_date if us and us.last_date else ctx.date
+    return _env(settings).get_template("cards.md.j2").render(
+        lang=lang,
+        date=ctx.date,
+        weekday=WEEKDAYS[ctx.date.weekday()],
+        session_label=f"{EN_WEEKDAYS[session.weekday()]}, {session:%b} {session.day}",
+        market=[_fact(s, lang) for s in moves.by_keys(snap, main_keys)],
+        missing=sorted(snap.errors),
+        sectors=[_fact(s, lang) for s in moves.ranked(snap, "us_sector")],
+        stocks=[_fact(s, lang) for s in moves.ranked(snap, "us_stock")],
+        korea=[_fact(s, lang) for s in moves.by_keys(snap, ctx.account.check or ["st_hynix", "st_samsung"])],
+        post=ctx.post,
+        articles=ctx.articles,
+        structure=[CARD_STRUCTURE[lang][k] for k in dict.fromkeys(ctx.account.slides)],
+    )
+

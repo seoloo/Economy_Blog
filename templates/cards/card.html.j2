@@ -1,0 +1,208 @@
+{#- 인스타 카드 한 장 (1080x1350). render/cards.py 가 장마다 이 템플릿을 채워 Chrome 으로 찍는다.
+    t: 계정 테마(색·문구), s: 카드 한 장(Slide). 숫자는 모두 데이터에서 만들어 넘어온다. -#}
+<!doctype html>
+<html lang="{{ t.lang }}"><head><meta charset="utf-8">
+<style>
+:root {
+  --bg:{{ t.bg }}; --ink:{{ t.ink }}; --muted:{{ t.muted }}; --line:{{ t.line }}; --dark:{{ t.dark }};
+  --hl1:{{ t.hl1 }}; --hl1ink:{{ t.hl1ink }}; --hl2:{{ t.hl2 }}; --hl2ink:{{ t.hl2ink }};
+  --accent:{{ t.accent }}; --kick:{{ t.kick }}; --up:{{ t.up }}; --down:{{ t.down }}; --dot:{{ t.dot }}; --mark:{{ t.mark }};
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html, body { width:1080px; height:1350px; overflow:hidden; }
+body { font-family:'Noto Sans KR','Noto Sans CJK KR','Malgun Gothic',sans-serif; word-break:keep-all;
+       -webkit-font-smoothing:antialiased; color:var(--ink); }
+b, strong { font-weight:800; }
+.card { position:relative; width:1080px; height:1350px; background:var(--bg); overflow:hidden; }
+.photo { position:absolute; left:0; top:0; width:100%; height:100%; object-fit:cover; }
+.nophoto { position:absolute; inset:0; background:radial-gradient(circle at 78% 20%, {{ t.glow }} 0, var(--dark) 62%); }
+
+.bar { position:absolute; left:0; right:0; top:0; height:118px; padding:0 64px; display:flex;
+       align-items:center; justify-content:space-between; z-index:5; }
+.brand { font-weight:900; font-size:34px; letter-spacing:-.5px; }
+.brand i { font-style:normal; color:var(--dot); }
+.page { font-size:25px; font-weight:700; color:var(--muted); letter-spacing:1px; }
+.light .brand { color:#fff; } .light .page { color:rgba(255,255,255,.82); }
+
+.foot { position:absolute; left:64px; right:64px; bottom:46px; font-size:22px; color:var(--muted); line-height:1.4; z-index:5;
+        display:flex; justify-content:space-between; gap:20px; }
+.light .foot { color:rgba(255,255,255,.65); }
+
+.kicker { display:inline-block; font-size:28px; font-weight:900; letter-spacing:1.5px; color:var(--kick); }
+.hl { display:block; margin-bottom:12px; }
+.hl span { display:inline; padding:4px 22px 8px; line-height:1.42; -webkit-box-decoration-break:clone; box-decoration-break:clone;
+           font-weight:900; letter-spacing:-2px; }
+.hl.a span { background:var(--hl1); color:var(--hl1ink); }
+.hl.b span { background:var(--hl2); color:var(--hl2ink); }
+.up { color:var(--up); } .down { color:var(--down); } .flat { color:var(--muted); }
+
+/* 표지 */
+.veil { position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.55) 0, rgba(0,0,0,0) 22%, rgba(0,0,0,.05) 40%,
+        rgba(0,0,0,.72) 68%, rgba(0,0,0,.9) 100%); }
+.cover-main { position:absolute; left:64px; right:64px; bottom:150px; z-index:4; }
+.cover-main .kicker { color:var(--accent); margin-bottom:22px; background:rgba(0,0,0,.72); padding:8px 18px; border-radius:10px; }
+.cover-main .hl span { font-size:94px; }
+.chips { display:flex; gap:16px; flex-wrap:wrap; margin-top:34px; }
+.chip { background:rgba(255,255,255,.94); border-radius:16px; padding:14px 22px; font-size:30px; font-weight:800; color:#111;
+        font-variant-numeric:tabular-nums; }
+.chip em { font-style:normal; margin-left:10px; }
+.swipe { position:absolute; right:64px; bottom:56px; z-index:5; font-size:27px; font-weight:900; color:#fff; }
+.swipe::after { content:" →"; color:var(--accent); }
+
+/* 데이터 장 공통 머리 */
+.head { position:absolute; left:64px; right:64px; top:130px; }
+.head h2 { font-size:66px; line-height:1.15; font-weight:900; letter-spacing:-2.5px; margin-top:10px; }
+.head p { font-size:30px; color:var(--muted); margin-top:14px; line-height:1.45; }
+
+/* 숫자판 */
+.tiles { position:absolute; left:64px; right:64px; top:390px; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.tile { background:#fff; border-radius:20px; padding:20px 26px 18px; box-shadow:0 6px 20px rgba(0,0,0,.05); border:2px solid var(--line); }
+.tile .n { font-size:27px; font-weight:700; color:var(--muted); }
+.tile .vc { display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-top:4px; }
+.tile .v { font-size:44px; line-height:1.2; font-weight:900; letter-spacing:-1px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.tile .c { font-size:28px; font-weight:800; font-variant-numeric:tabular-nums; white-space:nowrap; }
+
+/* 업종 히트맵 */
+.heat { position:absolute; left:64px; right:64px; top:400px; display:grid; grid-template-columns:repeat(3,1fr);
+        grid-auto-rows:186px; gap:12px; }
+.cell { border-radius:18px; padding:22px 24px; display:flex; flex-direction:column; justify-content:space-between; }
+.cell .n { font-size:29px; font-weight:800; line-height:1.2; }
+.cell .v { font-size:54px; font-weight:900; letter-spacing:-1px; font-variant-numeric:tabular-nums; }
+.cell.wide { grid-column:span 2; }
+
+/* 대형주 순위 */
+.rank { position:absolute; left:64px; right:64px; top:380px; }
+.rrow { display:flex; align-items:center; height:70px; border-bottom:2px solid var(--line); }
+.rrow .tk { width:150px; font-size:30px; font-weight:900; }
+.rrow .nm { width:250px; font-size:27px; color:var(--muted); font-weight:600; white-space:nowrap; overflow:hidden; }
+.rrow .tr { flex:1; position:relative; height:34px; }
+.rrow .ax { position:absolute; top:-18px; bottom:-18px; left:50%; width:2px; background:var(--line); }
+.rrow .fl { position:absolute; top:0; height:34px; border-radius:6px; }
+.rrow .fl.up { background:var(--up); } .rrow .fl.down { background:var(--down); }
+.rrow .pv { width:150px; text-align:right; font-size:32px; font-weight:900; font-variant-numeric:tabular-nums; }
+
+/* 이슈 */
+.story-photo { position:absolute; left:0; top:0; width:100%; height:560px; object-fit:cover; }
+.story-band { position:absolute; left:0; right:0; top:0; height:560px; background:radial-gradient(circle at 80% 10%, {{ t.glow }} 0, var(--dark) 70%); }
+.story-fade { position:absolute; left:0; right:0; top:0; height:560px;
+              background:linear-gradient(180deg, rgba(0,0,0,.5) 0, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 55%, var(--bg) 100%); }
+.story { position:absolute; left:64px; right:64px; top:330px; z-index:4; }
+.story .label { display:inline-block; background:var(--accent); color:var(--hl2ink); font-size:27px; font-weight:900;
+                padding:8px 20px; border-radius:10px; margin-bottom:18px; letter-spacing:1px; }
+.story .hl span { font-size:70px; }
+.story .txt { margin-top:30px; font-size:35px; line-height:1.62; }
+.story .txt p { margin-bottom:22px; }
+.story .txt strong { background:linear-gradient(transparent 60%, var(--mark) 60%); }
+.why { position:absolute; left:64px; right:64px; bottom:110px; background:var(--dark); color:#fff; border-radius:20px;
+       padding:26px 32px; font-size:31px; line-height:1.55; z-index:4; }
+.why .wl { display:block; font-size:24px; font-weight:900; letter-spacing:1.5px; color:var(--accent); margin-bottom:6px; }
+
+/* 아시아·한국 체크 */
+.list { position:absolute; left:64px; right:64px; top:400px; }
+.lrow { display:flex; align-items:center; height:92px; border-bottom:2px solid var(--line); }
+.lrow .n { flex:1; font-size:36px; font-weight:700; }
+.lrow .v { width:290px; text-align:right; font-size:38px; font-weight:800; font-variant-numeric:tabular-nums; }
+.lrow .c { width:210px; text-align:right; font-size:36px; font-weight:900; font-variant-numeric:tabular-nums; }
+.note-box { position:absolute; left:64px; right:64px; bottom:110px; background:#fff; border:2px solid var(--line);
+            border-radius:20px; padding:26px 32px; font-size:32px; line-height:1.6; }
+
+/* 일정 */
+.cal { position:absolute; left:64px; right:64px; top:400px; }
+.crow { display:flex; align-items:center; gap:28px; padding:24px 0; border-bottom:2px solid var(--line); }
+.crow .d { width:170px; min-height:104px; border-radius:18px; background:var(--dark); color:#fff; display:flex;
+           align-items:center; justify-content:center; text-align:center; padding:10px; flex:none;
+           font-size:30px; font-weight:900; line-height:1.25; }
+.crow .e { flex:1; }
+.crow .e .t { font-size:36px; font-weight:800; }
+.crow .e .s { font-size:28px; color:var(--muted); margin-top:4px; }
+.crow .tag { font-size:24px; font-weight:800; padding:8px 16px; border-radius:10px; background:var(--hl2); color:var(--hl2ink); flex:none; }
+
+/* 마무리 */
+.dark-veil { position:absolute; inset:0; background:rgba(0,0,0,.72); }
+.close-main { position:absolute; left:64px; right:64px; top:118px; bottom:300px; color:#fff; z-index:4;
+              display:flex; flex-direction:column; justify-content:center; }
+.close-main .kicker { align-self:flex-start; color:var(--accent); }
+.close-main h2 { font-size:84px; line-height:1.3; font-weight:900; letter-spacing:-2.5px; margin-top:28px; }
+.big-brand { position:absolute; left:64px; bottom:120px; font-size:110px; font-weight:900; letter-spacing:-4px; color:#fff; z-index:4; }
+.big-brand i { font-style:normal; color:var(--dot); }
+</style></head>
+<body>
+{%- set light = s.kind in ("cover", "closing", "story") %}
+<div class="card {{ 'light' if light }}">
+{% if s.kind == "cover" %}
+  {% if s.photo %}<img class="photo" src="{{ s.photo }}">{% else %}<div class="nophoto"></div>{% endif %}<div class="veil"></div>
+{% elif s.kind == "closing" %}
+  {% if s.photo %}<img class="photo" src="{{ s.photo }}"><div class="dark-veil"></div>{% else %}<div class="nophoto"></div>{% endif %}
+{% elif s.kind == "story" %}
+  {% if s.photo %}<img class="story-photo" src="{{ s.photo }}">{% else %}<div class="story-band"></div>{% endif %}<div class="story-fade"></div>
+{% endif %}
+  <div class="bar"><span class="brand">{{ t.brand }}<i>{{ t.brand_dot }}</i></span><span class="page">{{ s.page }}</span></div>
+
+{% if s.kind == "cover" %}
+  <div class="cover-main">
+    <div class="kicker">{{ s.kicker }}</div>
+    {% for line in s.lines %}<div class="hl {{ 'a' if loop.index is odd else 'b' }}"><span>{{ line }}</span></div>{% endfor %}
+    <div class="chips">{% for c in s.chips %}<div class="chip">{{ c.n }}<em class="{{ c.d }}">{{ c.v }}</em></div>{% endfor %}</div>
+  </div>
+  <div class="swipe">{{ t.swipe }}</div>
+
+{% elif s.kind == "board" %}
+  <div class="head"><div class="kicker">{{ s.kicker }}</div><h2>{{ s.title }}</h2><p>{{ s.sub }}</p></div>
+  <div class="tiles">{% for x in s.tiles %}
+    <div class="tile"><div class="n">{{ x.n }}</div><div class="vc"><span class="v">{{ x.v }}</span><span class="c {{ x.d }}">{{ x.c }}</span></div></div>{% endfor %}
+  </div>
+  <div class="foot"><span>{{ s.source }}</span></div>
+
+{% elif s.kind == "sectors" %}
+  <div class="head"><div class="kicker">{{ s.kicker }}</div><h2>{{ s.title }}</h2><p>{{ s.sub }}</p></div>
+  <div class="heat">{% for x in s.cells %}
+    <div class="cell {{ 'wide' if x.wide }}" style="background:{{ x.bg }};color:{{ x.fg }}"><div class="n">{{ x.n }}</div><div class="v">{{ x.v }}</div></div>{% endfor %}
+  </div>
+  <div class="foot"><span>{{ s.source }}</span></div>
+
+{% elif s.kind == "movers" %}
+  <div class="head"><div class="kicker">{{ s.kicker }}</div><h2>{{ s.title }}</h2><p>{{ s.sub }}</p></div>
+  {% set m = s.rows | map(attribute='p') | map('abs') | max %}
+  <div class="rank">{% for r in s.rows %}{% set w = ((r.p | abs) / m * 48) if m else 0 %}
+    <div class="rrow"><span class="tk">{{ r.tk }}</span><span class="nm">{{ r.nm }}</span>
+      <div class="tr"><div class="ax"></div>
+        {% if r.p >= 0 %}<div class="fl up" style="left:50%;width:{{ w }}%"></div>{% else %}<div class="fl down" style="right:50%;width:{{ w }}%"></div>{% endif %}
+      </div><span class="pv {{ 'up' if r.p > 0 else 'down' if r.p < 0 else 'flat' }}">{{ '%+.2f' % r.p }}%</span></div>{% endfor %}
+  </div>
+  <div class="foot"><span>{{ s.source }}</span></div>
+
+{% elif s.kind == "story" %}
+  <div class="story">
+    <div class="label">{{ s.label }}</div>
+    {% for line in s.lines %}<div class="hl {{ 'a' if loop.index is odd else 'b' }}"><span>{{ line }}</span></div>{% endfor %}
+    <div class="txt">{% for p in s.paras %}<p>{{ p }}</p>{% endfor %}</div>
+  </div>
+  {% if s.why %}<div class="why"><span class="wl">{{ t.why }}</span>{{ s.why }}</div>{% endif %}
+  <div class="foot" style="color:var(--muted)"><span>{{ s.source }}</span><span>{{ s.credit }}</span></div>
+
+{% elif s.kind == "check" %}
+  <div class="head"><div class="kicker">{{ s.kicker }}</div><h2>{{ s.title }}</h2><p>{{ s.sub }}</p></div>
+  <div class="list">{% for r in s.tiles %}
+    <div class="lrow"><span class="n">{{ r.n }}</span><span class="v">{{ r.v }}</span><span class="c {{ r.d }}">{{ r.c }}</span></div>{% endfor %}
+  </div>
+  {% if s.note %}<div class="note-box">{{ s.note }}</div>{% endif %}
+  <div class="foot"><span>{{ s.source }}</span></div>
+
+{% elif s.kind == "events" %}
+  <div class="head"><div class="kicker">{{ s.kicker }}</div><h2>{{ s.title }}</h2></div>
+  <div class="cal">{% for e in s.events %}
+    <div class="crow"><div class="d">{{ e.when }}</div>
+      <div class="e"><div class="t">{{ e.title }}</div><div class="s">{{ e.detail }}</div></div><span class="tag">{{ e.tag }}</span></div>{% endfor %}
+  </div>
+  <div class="foot"><span>{{ s.source }}</span></div>
+
+{% elif s.kind == "closing" %}
+  <div class="close-main">
+    <div class="kicker">{{ s.kicker }}</div>
+    <h2>{% for line in s.lines %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</h2>
+  </div>
+  <div class="big-brand">{{ t.brand }}<i>{{ t.brand_dot }}</i></div>
+  <div class="foot"><span>{{ t.disclaimer }}</span><span>{{ s.credit }}</span></div>
+{% endif %}
+</div>
+</body></html>

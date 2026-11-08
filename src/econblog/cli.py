@@ -3,6 +3,7 @@
     python -m econblog run                 # 실제 실행 (API 키 필요)
     python -m econblog run --dry-run       # 샘플 데이터로 전체 흐름 확인, 외부 호출 없음
     python -m econblog run --date 2026-11-06 --deliver local
+    python -m econblog run --cards-only     # 블로그 초안 메일 없이 인스타 카드만 메일로
     python -m econblog check-sources       # RSS 소스가 살아 있는지 점검
     python -m econblog guide --list        # 경제 공부 글 주제 목록과 오늘 차례
     python -m econblog guide --topic yield_curve --dry-run
@@ -24,11 +25,16 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
     settings = load_settings()
     methods = args.deliver.split(",") if args.deliver else (["local"] if args.dry_run else None)
+    card_methods = None
+    if args.cards_only:  # 블로그 초안은 로컬에만 두고 인스타 카드만 메일로 받는다 (카드 점검용)
+        card_methods = methods or settings.deliver.methods
+        methods = ["local"]
     post = run(
         settings,
         run_date=date.fromisoformat(args.date) if args.date else None,
         offline=args.dry_run,
         deliver_methods=methods,
+        card_methods=card_methods,
     )
     print(f"완료: {post.output_dir}")
     return 0
@@ -101,6 +107,7 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--dry-run", action="store_true", help="샘플 데이터 사용, 외부 API 호출 없음")
     p_run.add_argument("--date", help="기준 날짜 YYYY-MM-DD (기본: 오늘, KST)")
     p_run.add_argument("--deliver", help="전달 방식 쉼표 구분 (예: local,email)")
+    p_run.add_argument("--cards-only", action="store_true", help="블로그 초안 메일 없이 인스타 카드만 보낸다")
     p_run.set_defaults(func=_cmd_run)
 
     p_gd = sub.add_parser("guide", help="경제 공부 글 초안 생성")

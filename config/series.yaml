@@ -3,28 +3,62 @@
 #   - yahoo: yfinance(비공식 Yahoo Finance). 지수·환율·원자재. 차트에 출처 표기.
 #   - fred:  FRED API (FRED_API_KEY 필요). 미국 금리 등.
 #   - ecos:  한국은행 ECOS API (ECOS_API_KEY 필요). params에 cycle/item 코드 지정.
-#  category: index_kr | index_global | fx | rates | commodity
+#  category: index_kr | index_global | fx | rates | commodity | crypto | us_sector | us_stock | kr_stock
+#  label_en: 영어 계정(인스타 카드)에서 쓰는 이름
 
 series:
   # ---------- 지수
-  - {key: kospi, label: 코스피, provider: yahoo, id: "^KS11", unit: pt, category: index_kr}
-  - {key: kosdaq, label: 코스닥, provider: yahoo, id: "^KQ11", unit: pt, category: index_kr}
-  - {key: sp500, label: S&P 500, provider: yahoo, id: "^GSPC", unit: pt, category: index_global}
-  - {key: nasdaq, label: 나스닥, provider: yahoo, id: "^IXIC", unit: pt, category: index_global}
-  - {key: dow, label: 다우존스, provider: yahoo, id: "^DJI", unit: pt, category: index_global}
-  - {key: nikkei, label: 닛케이225, provider: yahoo, id: "^N225", unit: pt, category: index_global}
-  - {key: vix, label: VIX 변동성 지수, provider: yahoo, id: "^VIX", unit: pt, category: index_global}
+  - {key: kospi, label: 코스피, label_en: "KOSPI", provider: yahoo, id: "^KS11", unit: pt, category: index_kr}
+  - {key: kosdaq, label: 코스닥, label_en: "KOSDAQ", provider: yahoo, id: "^KQ11", unit: pt, category: index_kr}
+  - {key: sp500, label: S&P 500, label_en: "S&P 500", provider: yahoo, id: "^GSPC", unit: pt, category: index_global}
+  - {key: nasdaq, label: 나스닥, label_en: "Nasdaq", provider: yahoo, id: "^IXIC", unit: pt, category: index_global}
+  - {key: dow, label: 다우존스, label_en: "Dow Jones", provider: yahoo, id: "^DJI", unit: pt, category: index_global}
+  - {key: nikkei, label: 닛케이225, label_en: "Nikkei 225", provider: yahoo, id: "^N225", unit: pt, category: index_global}
+  - {key: vix, label: VIX 변동성 지수, label_en: "VIX", provider: yahoo, id: "^VIX", unit: pt, category: index_global}
 
   # ---------- 환율
-  - {key: usdkrw, label: 원/달러 환율, provider: yahoo, id: "KRW=X", unit: 원, category: fx}
-  - {key: dxy, label: 달러인덱스, provider: yahoo, id: "DX-Y.NYB", unit: pt, category: fx}
+  - {key: usdkrw, label: 원/달러 환율, label_en: "USD/KRW", provider: yahoo, id: "KRW=X", unit: 원, category: fx}
+  - {key: dxy, label: 달러인덱스, label_en: "Dollar Index", provider: yahoo, id: "DX-Y.NYB", unit: pt, category: fx}
 
   # ---------- 원자재
-  - {key: wti, label: WTI 유가, provider: yahoo, id: "CL=F", unit: 달러, category: commodity}
-  - {key: gold, label: 금, provider: yahoo, id: "GC=F", unit: 달러, category: commodity}
+  - {key: wti, label: WTI 유가, label_en: "WTI Crude", provider: yahoo, id: "CL=F", unit: 달러, category: commodity}
+  - {key: gold, label: 금, label_en: "Gold", provider: yahoo, id: "GC=F", unit: 달러, category: commodity}
 
   # ---------- 금리
-  - {key: us10y, label: 미 국채 10년, provider: fred, id: DGS10, unit: "%", category: rates}
-  - {key: us2y, label: 미 국채 2년, provider: fred, id: DGS2, unit: "%", category: rates}
-  - {key: kr3y, label: 국고채 3년, provider: ecos, id: 817Y002, unit: "%", category: rates, params: {cycle: D, item: "010200000"}}
-  - {key: kr_base_rate, label: 한국은행 기준금리, provider: ecos, id: 722Y001, unit: "%", category: rates, params: {cycle: D, item: "0101000"}}
+  - {key: us10y, label: 미 국채 10년, label_en: "10Y Treasury", provider: fred, id: DGS10, unit: "%", category: rates}
+  - {key: us2y, label: 미 국채 2년, label_en: "2Y Treasury", provider: fred, id: DGS2, unit: "%", category: rates}
+  - {key: kr3y, label: 국고채 3년, label_en: "Korea 3Y", provider: ecos, id: 817Y002, unit: "%", category: rates, params: {cycle: D, item: "010200000"}}
+  - {key: kr_base_rate, label: 한국은행 기준금리, label_en: "BOK base rate", provider: ecos, id: 722Y001, unit: "%", category: rates, params: {cycle: D, item: "0101000"}}
+
+  # ---------- 인스타 카드용 (미국 업종·대형주, 반도체, 한국 반도체주). 블로그 본문 프롬프트에는 넣지 않는다.
+  - {key: sox, label: 필라델피아 반도체지수, label_en: "Semis (SOX)", provider: yahoo, id: "^SOX", unit: pt, category: index_global}
+  - {key: rut, label: 러셀2000, label_en: "Russell 2000", provider: yahoo, id: "^RUT", unit: pt, category: index_global}
+  - {key: btc, label: 비트코인, label_en: "Bitcoin", provider: yahoo, id: "BTC-USD", unit: 달러, category: crypto}
+
+  - {key: sec_xlk, label: 기술, label_en: "Technology", provider: yahoo, id: XLK, unit: 달러, category: us_sector}
+  - {key: sec_xlc, label: 커뮤니케이션, label_en: "Communication", provider: yahoo, id: XLC, unit: 달러, category: us_sector}
+  - {key: sec_xly, label: 임의소비재, label_en: "Cons. Discretionary", provider: yahoo, id: XLY, unit: 달러, category: us_sector}
+  - {key: sec_xlp, label: 필수소비재, label_en: "Cons. Staples", provider: yahoo, id: XLP, unit: 달러, category: us_sector}
+  - {key: sec_xlf, label: 금융, label_en: "Financials", provider: yahoo, id: XLF, unit: 달러, category: us_sector}
+  - {key: sec_xlv, label: 헬스케어, label_en: "Health Care", provider: yahoo, id: XLV, unit: 달러, category: us_sector}
+  - {key: sec_xli, label: 산업재, label_en: "Industrials", provider: yahoo, id: XLI, unit: 달러, category: us_sector}
+  - {key: sec_xle, label: 에너지, label_en: "Energy", provider: yahoo, id: XLE, unit: 달러, category: us_sector}
+  - {key: sec_xlb, label: 소재, label_en: "Materials", provider: yahoo, id: XLB, unit: 달러, category: us_sector}
+  - {key: sec_xlu, label: 유틸리티, label_en: "Utilities", provider: yahoo, id: XLU, unit: 달러, category: us_sector}
+  - {key: sec_xlre, label: 부동산, label_en: "Real Estate", provider: yahoo, id: XLRE, unit: 달러, category: us_sector}
+
+  - {key: st_aapl, label: 애플, label_en: "Apple", provider: yahoo, id: AAPL, unit: 달러, category: us_stock}
+  - {key: st_msft, label: 마이크로소프트, label_en: "Microsoft", provider: yahoo, id: MSFT, unit: 달러, category: us_stock}
+  - {key: st_nvda, label: 엔비디아, label_en: "Nvidia", provider: yahoo, id: NVDA, unit: 달러, category: us_stock}
+  - {key: st_googl, label: 알파벳, label_en: "Alphabet", provider: yahoo, id: GOOGL, unit: 달러, category: us_stock}
+  - {key: st_amzn, label: 아마존, label_en: "Amazon", provider: yahoo, id: AMZN, unit: 달러, category: us_stock}
+  - {key: st_meta, label: 메타, label_en: "Meta", provider: yahoo, id: META, unit: 달러, category: us_stock}
+  - {key: st_tsla, label: 테슬라, label_en: "Tesla", provider: yahoo, id: TSLA, unit: 달러, category: us_stock}
+  - {key: st_avgo, label: 브로드컴, label_en: "Broadcom", provider: yahoo, id: AVGO, unit: 달러, category: us_stock}
+  - {key: st_jpm, label: JP모건, label_en: "JPMorgan", provider: yahoo, id: JPM, unit: 달러, category: us_stock}
+  - {key: st_lly, label: 일라이릴리, label_en: "Eli Lilly", provider: yahoo, id: LLY, unit: 달러, category: us_stock}
+  - {key: st_nflx, label: 넷플릭스, label_en: "Netflix", provider: yahoo, id: NFLX, unit: 달러, category: us_stock}
+  - {key: st_amd, label: AMD, label_en: "AMD", provider: yahoo, id: AMD, unit: 달러, category: us_stock}
+
+  - {key: st_samsung, label: 삼성전자, label_en: "Samsung Electronics", provider: yahoo, id: "005930.KS", unit: 원, category: kr_stock}
+  - {key: st_hynix, label: SK하이닉스, label_en: "SK hynix", provider: yahoo, id: "000660.KS", unit: 원, category: kr_stock}

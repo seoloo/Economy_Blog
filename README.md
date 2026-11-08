@@ -47,6 +47,17 @@ RSS 수집 → Laya 분류·중복 제거 → 시장 데이터(yfinance·FRED·E
 - 이미지 레포에는 날짜 폴더가 아니라 `shared/`에 한 번만 올라가고, 그림이 바뀔 때만 다시 올라갑니다.
 - 글마다 데이터로 그린 표지(시황: 지수 4개 카드, 경제 공부: 키워드 카드)로 돌아가려면 `config/settings.yaml`의 `thumbnails`에서 해당 항목을 지웁니다.
 
+## 인스타 카드뉴스 (한국어·영어 계정)
+
+시황 글과 같은 실행에서 인스타 카드 묶음을 계정마다 만들어 `[인스타 카드]` 메일로 보냅니다.
+- **한국어 계정(그냥모아, 8장)**: 표지 → 오늘 시장 한눈에 → 이슈 2장 → 미국 업종 히트맵 → 미국 대형주 → 일정 → 오늘의 한 줄
+- **영어 계정(4PM RECAP, 9장)**: 미국장 메인. 표지 → 스코어보드 → 업종 → 대형주 → 이슈 2장 → 아시아·한국 체크 → 일정 → 테이크어웨이
+- 숫자 카드는 데이터로 그리고, 글(제목·이슈·캡션)은 Claude 가 씁니다. 배경 사진은 Pixabay 에서 찾습니다 (`PIXABAY_API_KEY`, 없으면 단색 배경).
+- 메일에 카드 이미지와 캡션이 들어 있어, 처음에는 휴대폰에 저장해 직접 올립니다.
+- 자동 게시: 계정 토큰을 Secrets(`INSTAGRAM_ACCESS_TOKEN`·`INSTAGRAM_USER_ID`, 영어 계정은 `INSTAGRAM_EN_…`)에 넣고 `config/settings.yaml`의 `instagram.publish`를 `true`로 바꾸면 그날부터 게시합니다. 카드는 공개 이미지 레포에 올린 주소로 게시됩니다.
+- 카드만 다시 받아 보려면 **Actions → daily-post → Run workflow**에서 `mode`를 `cards`로 실행합니다 (블로그 초안 메일은 보내지 않음).
+- 계정 이름·카드 순서·숫자판 지표는 `settings.yaml`의 `instagram.accounts`, 디자인은 `templates/cards/card.html.j2`에서 바꿉니다.
+
 ## 처음 설정
 
 ### 0. 티스토리 스킨 (Book Club)

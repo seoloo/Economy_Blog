@@ -1,0 +1,83 @@
+{% if lang == "ko" -%}
+오늘은 {{ date.year }}년 {{ date.month }}월 {{ date.day }}일({{ weekday }})입니다. 아래 자료로 오늘의 카드뉴스 글을 써 주세요.
+{%- else -%}
+Write today's carousel for the U.S. session on {{ session_label }}. All data below is from that close.
+{%- endif %}
+
+## {{ "시장 데이터" if lang == "ko" else "Market data" }}
+
+{% for r in market -%}
+- {{ r }}
+{% endfor %}
+{% if missing %}{{ "수집하지 못한 데이터" if lang == "ko" else "Missing data (do not mention)" }}: {{ missing | join(", ") }}
+{% endif %}
+
+## {{ "미국 업종 (S&P 500 업종 ETF, 등락률 순)" if lang == "ko" else "U.S. sectors (S&P 500 sector ETFs, best to worst)" }}
+
+{% for r in sectors -%}
+- {{ r }}
+{% endfor %}
+
+## {{ "미국 대형주 (등락률 순)" if lang == "ko" else "U.S. mega caps (best to worst)" }}
+
+{% for r in stocks -%}
+- {{ r }}
+{% endfor %}
+{% if korea %}
+
+## {{ "한국 반도체주" if lang == "ko" else "Korea & Asia (earlier the same day)" }}
+
+{% for r in korea -%}
+- {{ r }}
+{% endfor %}
+{% endif %}
+{% if post %}
+
+## {{ "오늘 블로그 글 (같은 날 시황 글, 카드와 내용이 어긋나지 않게)" if lang == "ko" else "Our Korean blog post for the same day (background only; written for Korean readers)" }}
+
+- {{ post.title }}
+- {{ post.summary_line }}
+{% for issue in post.issues -%}
+- [{{ issue.title }}] {{ issue.paragraphs | join(" ") }}
+{% endfor %}
+{% if post.watch_points %}- {{ "앞으로 볼 것" if lang == "ko" else "Watch points" }}: {{ post.watch_points | join(" / ") }}
+{% endif %}
+{% endif %}
+
+## {{ "기사 (중요도 순)" if lang == "ko" else "Articles (most important first)" }}
+
+{% for x in articles -%}
+- {{ x.article.title }} ({{ x.article.source_name }}): {{ x.article.summary or "-" }}
+{% endfor %}
+
+## {{ "카드 구성" if lang == "ko" else "Carousel" }}
+
+{% for line in structure -%}
+{{ loop.index }}. {{ line }}
+{% endfor %}
+
+## {{ "작성 요청" if lang == "ko" else "What to write" }}
+
+{% if lang == "ko" -%}
+- cover_lines: 표지 제목 두 줄 (줄마다 10자 안팎). 숫자 하나는 꼭 넣습니다.
+- cover_photo_query, stories[].photo_query: 배경 사진 검색어. 영어 2~3단어로, 주제가 바로 떠오르는 사물·장소로 씁니다 (예: semiconductor chip, seoul skyline night, oil refinery). 사람 얼굴이나 회사 로고가 나올 검색어는 피합니다.
+- board_note: 숫자판 장 제목 아래 한 줄 (30자 안팎). 오늘 숫자의 흐름을 한 문장으로.
+- stories: 이슈 카드 두 장. 오늘 시장을 가장 크게 움직인 재료 두 가지. 제목 두 줄(줄마다 12자 안팎), 본문 두 문단(문단마다 80~120자), 왜 중요한지 한두 문장(60자 안팎).
+- sector_title, movers_title: 히트맵·대형주 장 제목 (12자 안팎). 그날 데이터에서 가장 눈에 띄는 점을 씁니다. 예: "기술주만 웃었다", "AMD 11% 급등"
+- asia_note: 빈 문자열로 둡니다.
+- events: 앞으로 볼 일정 0~5개 (기사·블로그 글에 나온 것만).
+- takeaway: 마지막 장 오늘의 한 줄. 두세 줄로 나눌 곳에 줄바꿈을 넣습니다 (전체 40자 안팎).
+- caption: 600~900자. 해시태그는 넣지 않습니다.
+- hashtags: 8~12개. 「미국증시」, 「코스피」로 시작합니다.
+{%- else -%}
+- cover_lines: two-line cover headline, about 18 characters per line, with at least one number.
+- cover_photo_query, stories[].photo_query: 2-3 English words for a background photo that instantly signals the topic (e.g. "new york stock exchange", "semiconductor chip", "oil refinery"). Avoid queries that would return people's faces or company logos.
+- board_note: one line under the scoreboard title, about 12 words.
+- stories: two story cards on the two biggest drivers of the U.S. session. Two-line headline (about 20 characters per line), two paragraphs (30-45 words each), and a one- or two-sentence "why it matters" (about 25 words).
+- sector_title, movers_title: short titles (about 25 characters) naming the most striking move, e.g. "Tech alone in the green", "AMD leads, Netflix lags".
+- asia_note: one or two sentences for the Asia & Korea check card, using the Korea & Asia numbers above.
+- events: 0-5 upcoming events, only from the articles or the blog summary.
+- takeaway: the closing one-liner, split into 2-3 short lines with line breaks (about 12 words total).
+- caption: 120-180 words, no hashtags.
+- hashtags: 8-12, starting with "stockmarket" and "stocks".
+{%- endif %}

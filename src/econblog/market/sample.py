@@ -13,6 +13,7 @@ BASE_LEVELS = {
     "kospi": 2600, "kosdaq": 750, "sp500": 6000, "nasdaq": 19500, "dow": 44000, "nikkei": 39000, "vix": 18,
     "usdkrw": 1380, "dxy": 104, "wti": 70, "gold": 2700,
     "us10y": 4.3, "us2y": 3.9, "kr3y": 2.6, "kr_base_rate": 2.5,
+    "sox": 5000, "rut": 2300, "btc": 90000, "st_samsung": 70000, "st_hynix": 200000,
 }
 
 

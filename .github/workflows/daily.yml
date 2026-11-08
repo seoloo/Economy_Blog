@@ -17,9 +17,9 @@ on:
         type: boolean
         default: false
       mode:
-        description: "run = 시황 글, guide = 경제 공부 글, classify = 수집·분류만 점검 (글 작성·메일 없음)"
+        description: "run = 시황 글(+인스타 카드), cards = 인스타 카드만 메일로, guide = 경제 공부 글, classify = 수집·분류만 점검"
         type: choice
-        options: [run, guide, classify]
+        options: [run, cards, guide, classify]
         default: run
       topic:
         description: "guide 일 때 주제 아이디 (config/guides.yaml, 비우면 오늘 차례)"
@@ -35,7 +35,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -47,7 +47,7 @@ jobs:
       - name: 한글 폰트 설치
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq fonts-nanum
+          sudo apt-get install -y -qq fonts-nanum fonts-noto-cjk fonts-noto-cjk-extra
           rm -rf ~/.cache/matplotlib
 
       - name: 의존성 설치
@@ -65,6 +65,11 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
           CHARTS_REPO_TOKEN: ${{ secrets.CHARTS_REPO_TOKEN }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}
+          INSTAGRAM_EN_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_EN_ACCESS_TOKEN }}
+          INSTAGRAM_EN_USER_ID: ${{ secrets.INSTAGRAM_EN_USER_ID }}
         run: |
           if [ "${{ inputs.mode }}" = "classify" ]; then
             python -m econblog -v classify
@@ -81,6 +86,8 @@ jobs:
             else
               python -m econblog guide --scheduled $args
             fi
+          elif [ "${{ inputs.mode }}" = "cards" ]; then
+            python -m econblog run --cards-only $args
           else
             python -m econblog run $args
           fi

@@ -113,3 +113,31 @@ guard:
 
 deliver:
   methods: [local, email]   # local: output/ 저장, email: 메일 발송 (설정 없으면 건너뜀)
+
+# 인스타 카드뉴스. 시황 글과 같은 실행에서 계정마다 카드 묶음을 만들어 메일로 보낸다.
+#  publish: true 로 바꾸면 토큰이 있는 계정에 바로 게시한다 (처음 1~2주는 false 로 두고 메일로 확인).
+#  slides 순서: cover 표지, board 숫자판, story 이슈(두 번), sectors 미국 업종, movers 미국 대형주,
+#               check 아시아·한국 체크, events 일정(없으면 빠짐), closing 오늘의 한 줄
+instagram:
+  enabled: true
+  publish: false
+  graph_version: v23.0
+  accounts:
+    - key: kr
+      lang: ko
+      brand: 그냥모아
+      brand_dot: "."
+      token_env: INSTAGRAM_ACCESS_TOKEN
+      user_env: INSTAGRAM_USER_ID
+      slides: [cover, board, story, story, sectors, movers, events, closing]
+      chips: [kospi, nasdaq, usdkrw]
+      board: [kospi, kosdaq, sp500, nasdaq, dow, nikkei, usdkrw, us10y, wti, gold]
+    - key: en
+      lang: en
+      brand: 4PM RECAP
+      token_env: INSTAGRAM_EN_ACCESS_TOKEN
+      user_env: INSTAGRAM_EN_USER_ID
+      slides: [cover, board, sectors, movers, story, story, check, events, closing]
+      chips: [sp500, nasdaq, dow]
+      board: [sp500, nasdaq, dow, rut, sox, vix, us10y, dxy, wti, btc]
+      check: [kospi, nikkei, st_hynix, st_samsung, usdkrw]

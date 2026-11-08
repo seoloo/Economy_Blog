@@ -51,7 +51,7 @@ config/
   series.yaml          # 시장 데이터 시리즈 정의 (provider + id)
   guides.yaml          # 경제 공부 글 주제 목록 (순서대로 자동 작성)
 prompts/               # LLM 프롬프트 (코드에 프롬프트 하드코딩 금지)
-templates/             # 티스토리용 HTML Jinja 템플릿
+templates/             # 티스토리용 HTML Jinja 템플릿 (cards/ 는 인스타 카드)
 src/econblog/
   models.py            # 단계 간 주고받는 데이터 클래스 (계약)
   config.py            # YAML + 환경변수 로딩
@@ -63,7 +63,7 @@ src/econblog/
   charts/              # 차트 생성     (base.ChartBuilder 구현)
   write/               # 초안 작성기   (base.Writer 구현)
   guard/               # 저작권(원문 복사) 검사
-  render/              # Draft → HTML
+  render/              # Draft → HTML, 인스타 카드(cards.py, 배경 사진 photos.py)
   deliver/             # 결과 전달     (base.Deliverer 구현)
 tests/
 .github/workflows/daily.yml
@@ -76,7 +76,8 @@ tests/
 - **티스토리 HTML**은 `templates/_tistory.html.j2`의 공통 부품만 쓴다. 티스토리 편집기가 지우는 스타일(margin·padding·border·font-size 등)과 `thead/th`는 쓰지 않는다.
 - **대표 이미지(썸네일)**는 카테고리별 고정 그림(`assets/brand/thumb_*.jpg`)을 쓴다. 새 카테고리나 그림 교체는 `assets/brand/make_thumbnails.py`로 만들고, 글 종류와의 연결은 `settings.yaml`의 `thumbnails`에 둔다.
 - **새 차트**는 `charts/`에 ChartBuilder를 만들고 `charts/__init__.py`의 레지스트리에 등록한 뒤 `settings.yaml`에서 켠다.
-- **새 발송 방식**(예: 슬랙)은 `deliver/`에 Deliverer를 추가한다.
+- **새 발송 방식**(예: 슬랙)은 `deliver/`에 Deliverer를 추가한다. 인스타 카드 전달(메일·게시)은 `deliver/cards.py`.
+- **인스타 카드**: 계정·카드 순서는 `settings.yaml`의 `instagram`, 글은 `prompts/cards*.j2` + `write/cards.py`, 숫자 표시는 `market/moves.py`, 디자인은 `templates/cards/card.html.j2`. 카드 숫자는 데이터로만 만들고 LLM 이 쓰지 않는다.
 - 단계 간 데이터는 반드시 `models.py`의 데이터 클래스로 주고받는다. dict를 그대로 넘기지 않는다.
 - 외부 API 키가 없으면 각 단계는 **오프라인 대체 구현으로 동작**해야 한다. 예: Laya가 없으면 키워드 분류기, 메일 설정이 없으면 로컬 파일 저장. 그래야 테스트와 dry run이 가능하다.
 
@@ -85,7 +86,7 @@ tests/
 - 기사 **원문 전체를 저장하거나 커밋하지 않는다.** RSS의 제목, 요약, 링크만 메모리에서 쓴다.
 - `output/`, `data/cache/`는 `.gitignore` 대상이다. 수집물과 초안은 레포에 올리지 않는다.
 - 이미지나 차트를 외부에서 가져오지 않는다. **차트는 공개 데이터로 직접 그린다.** 출처는 차트 하단에 표기한다.
-  - 예외: **인스타 카드 배경 사진**에 한해 상업적 사용·수정이 허용된 무료 사진(Pexels 라이선스)을 쓸 수 있다. 사진 출처는 캡션에 적는다. 뉴스 보도사진, 남의 게시물 이미지, 로고는 쓰지 않는다. 블로그 글에는 여전히 외부 이미지를 넣지 않는다.
+  - 예외: **인스타 카드 배경 사진**에 한해 상업적 사용·수정이 허용된 무료 사진(Pixabay·Pexels 라이선스)을 쓸 수 있다. 사진 출처는 캡션에 적는다. 뉴스 보도사진, 남의 게시물 이미지, 로고는 쓰지 않는다. 블로그 글에는 여전히 외부 이미지를 넣지 않는다.
 - LLM 프롬프트는 "출처 문장을 그대로 옮기지 말고 사실을 종합해 직접 분석하라"는 원칙을 유지한다.
 - `guard/copyright.py` 검사를 통과하지 못한 초안은 경고를 붙여서 발송한다.
 - 모든 글 하단에 참고 출처 링크와 "투자 권유 아님" 면책 문구를 넣는다.

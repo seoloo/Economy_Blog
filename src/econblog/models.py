@@ -63,6 +63,7 @@ class SeriesSpec(BaseModel):
 
     key: str
     label: str
+    label_en: str = ""  # 영어 계정(인스타 카드)에서 쓰는 이름
     provider: str
     id: str
     unit: str = ""
@@ -268,4 +269,57 @@ class RenderedPost(BaseModel):
     draft: Draft | GuideDraft
     html: str
     preview_html: str
+    output_dir: Path
+
+
+# ---------------------------------------------------------------- 인스타 카드뉴스 (LLM 출력 스키마)
+
+
+class CardStory(BaseModel):
+    headline: list[str] = Field(description="카드 제목 두 줄. 한국어는 줄마다 12자 안팎, 영어는 20자 안팎.")
+    paragraphs: list[str] = Field(
+        description="본문 두 문단. 한국어는 문단마다 80~120자, 영어는 30~45단어. 가장 중요한 수치나 구절 1~2곳만 **굵게**.")
+    why: str = Field(description="'왜 중요할까' 상자에 들어갈 한두 문장. 한국어 60자 안팎, 영어 25단어 안팎.")
+    photo_query: str = Field(
+        description="배경 사진 검색어. 영어 2~3단어 (예: semiconductor chip, oil refinery). 사람 얼굴·회사 로고가 나올 검색어는 피한다.")
+
+
+class CardEvent(BaseModel):
+    when: str = Field(description="날짜. 예: 11/12(수), Wed 11/12. 기사에 날짜가 없으면 '이번 주' 또는 'This week'.")
+    title: str = Field(description="일정 이름. 짧게.")
+    detail: str = Field(description="왜 볼 만한지 한 줄.")
+    tag: str = Field(description="분류 한 단어. 예: 지표, 실적, 금리 / Data, Earnings, Fed")
+
+
+class CardCopy(BaseModel):
+    """인스타 카드뉴스 한 묶음의 글. 숫자 카드(숫자판·업종·대형주)는 데이터로 그리고 여기에는 글만 담는다."""
+
+    cover_lines: list[str] = Field(
+        description="표지 제목 두 줄. 오늘 시장을 가장 잘 보여 주는 숫자를 넣는다. 줄마다 한국어 10자 안팎, 영어 18자 안팎.")
+    cover_photo_query: str = Field(description="표지 배경 사진 검색어. 영어 2~3단어.")
+    board_note: str = Field(description="숫자판 장 제목 아래 한 줄 요약. 한국어 30자 안팎, 영어 12단어 안팎.")
+    stories: list[CardStory] = Field(description="이슈 카드 두 장. 오늘 시장을 움직인 재료 순서대로.")
+    sector_title: str = Field(description="미국 업종 히트맵 장 제목. 한국어 12자, 영어 25자 안팎.")
+    movers_title: str = Field(description="미국 대형주 등락 장 제목. 한국어 12자, 영어 25자 안팎.")
+    asia_note: str = Field(description="아시아·한국 체크 장 아래 상자에 들어갈 한두 문장. 그 장이 없는 계정은 빈 문자열.")
+    events: list[CardEvent] = Field(description="앞으로 볼 일정 0~5개. 기사나 블로그 글에 나온 일정만. 없으면 빈 목록.")
+    takeaway: str = Field(description="마지막 장 '오늘의 한 줄'. 2~3줄로 나눌 곳에 줄바꿈(\n)을 넣는다.")
+    caption: str = Field(
+        description="게시물 캡션 본문(해시태그 제외). 첫 줄 제목, 번호 붙인 요약 3개, 다음에 볼 것. 한국어 600~900자, 영어 120~180단어.")
+    hashtags: list[str] = Field(description="해시태그 8~12개. # 없이 띄어쓰기 없는 단어로.")
+
+
+class CardSet(BaseModel):
+    """한 계정의 하루치 카드뉴스. 게시·메일 단계로 넘긴다."""
+
+    account: str                     # settings.instagram.accounts 의 key
+    brand: str
+    lang: str
+    date: date
+    text: CardCopy
+    images: list[Path] = Field(default_factory=list)   # 카드 JPEG (게시 순서)
+    caption: str = ""                # 캡션 + 해시태그 + 출처 (게시용 완성본)
+    urls: list[str] = Field(default_factory=list)       # 공개 주소에 올린 카드 주소
+    media_id: str | None = None      # 인스타에 게시했으면 그 게시물 ID
+    warnings: list[str] = Field(default_factory=list)
     output_dir: Path

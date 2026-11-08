@@ -55,11 +55,16 @@ class EmailDeliverer(Deliverer):
         return all(env(k) for k in REQUIRED)
 
     def deliver(self, post: RenderedPost) -> str:
-        user = env("SMTP_USER")
-        recipients = env("MAIL_TO")
-        msg = build_message(post, user, recipients)
-        with smtplib.SMTP(env("SMTP_HOST"), int(env("SMTP_PORT") or 587), timeout=60) as smtp:
-            smtp.starttls()
-            smtp.login(user, env("SMTP_PASSWORD"))
-            smtp.send_message(msg)
+        send(build_message(post, env("SMTP_USER"), env("MAIL_TO")))
         return "메일 발송 완료"
+
+
+def is_configured() -> bool:
+    return all(env(k) for k in REQUIRED)
+
+
+def send(msg: EmailMessage) -> None:
+    with smtplib.SMTP(env("SMTP_HOST"), int(env("SMTP_PORT") or 587), timeout=60) as smtp:
+        smtp.starttls()
+        smtp.login(env("SMTP_USER"), env("SMTP_PASSWORD"))
+        smtp.send_message(msg)

@@ -10,6 +10,7 @@ from econblog.models import Article
 def settings(tmp_path):
     s = load_settings()
     s.output_dir = tmp_path / "output"
+    s.instagram.render_images = False  # 카드 JPEG 은 test_cards 에서 한 장만 찍어 본다
     return s
 
 

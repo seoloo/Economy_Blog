@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from datetime import date
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from dotenv import load_dotenv
@@ -82,6 +83,35 @@ class GuardSettings(BaseModel):
     ai_phrases: dict[str, int] = Field(default_factory=dict)
 
 
+class CardAccount(BaseModel):
+    """인스타 계정 하나. 카드 구성과 게시용 비밀값 이름을 담는다."""
+
+    key: str                       # 출력 폴더·파일 이름에 쓰는 짧은 이름 (kr, en)
+    lang: Literal["ko", "en"]
+    brand: str                     # 카드 왼쪽 위와 마지막 장에 들어가는 이름
+    brand_dot: str = ""            # 이름 뒤에 붙는 색깔 점 (그냥모아.)
+    token_env: str                 # 액세스 토큰 환경변수 이름 (GitHub Secrets)
+    user_env: str                  # 인스타 계정 숫자 ID 환경변수 이름
+    slides: list[str]              # 카드 순서: cover, board, story, sectors, movers, check, events, closing
+    chips: list[str] = Field(default_factory=list)   # 표지 숫자 칩 (series key)
+    board: list[str] = Field(default_factory=list)   # 숫자판 (series key, 10개)
+    check: list[str] = Field(default_factory=list)   # 아시아·한국 체크 (series key)
+
+
+class InstagramSettings(BaseModel):
+    """인스타 카드뉴스. enabled 면 시황 글과 같은 실행에서 카드를 만들어 메일로 보낸다.
+
+    publish 가 true 이고 계정 토큰이 있으면 인스타에 바로 게시한다. 처음에는 메일로만 받아 확인한다.
+    """
+
+    enabled: bool = False
+    publish: bool = False
+    render_images: bool = True     # 카드 JPEG 을 Chrome 으로 찍는다 (끄면 HTML 만 만든다)
+    photos: bool = True            # Pixabay 배경 사진 (PIXABAY_API_KEY 필요, 없으면 단색 배경)
+    graph_version: str = "v23.0"
+    accounts: list[CardAccount] = Field(default_factory=list)
+
+
 class DeliverSettings(BaseModel):
     methods: list[str] = Field(default_factory=lambda: ["local"])
 
@@ -101,6 +131,7 @@ class Settings(BaseModel):
     guide: GuideSettings = Field(default_factory=GuideSettings)
     guard: GuardSettings = Field(default_factory=GuardSettings)
     deliver: DeliverSettings = Field(default_factory=DeliverSettings)
+    instagram: InstagramSettings = Field(default_factory=InstagramSettings)
 
     sources: list[Source] = Field(default_factory=list)
     series: list[SeriesSpec] = Field(default_factory=list)

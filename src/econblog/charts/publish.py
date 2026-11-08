@@ -12,7 +12,9 @@ from __future__ import annotations
 import base64
 import hashlib
 import logging
+import time
 from datetime import date
+from pathlib import Path
 
 import requests
 
@@ -47,16 +49,46 @@ def _upload(session: requests.Session, settings: Settings, path: str, data: byte
     resp.raise_for_status()
 
 
-def publish_charts(settings: Settings, charts: list[Chart], run_date: date, offline: bool = False) -> list[str]:
-    """올린 차트에 url 을 채운다. 실패하면 경고 문구를 돌려주고 해당 차트는 안내 상자로 남긴다."""
-    if offline or not is_configured(settings):
-        return []
+def _session() -> requests.Session:
     session = requests.Session()
     session.headers.update({
         "Authorization": f"Bearer {env('CHARTS_REPO_TOKEN')}",
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
     })
+    return session
+
+
+def publish_files(settings: Settings, files: list[tuple[Path, str]], message: str) -> list[str]:
+    """(로컬 파일, 레포 안 경로) 목록을 올리고 공개 주소를 순서대로 돌려준다. 하나라도 실패하면 예외."""
+    session = _session()
+    base = settings.publish.base_url.rstrip("/")
+    urls = []
+    for local, remote in files:
+        _upload(session, settings, remote, local.read_bytes(), f"{message} {local.name}")
+        urls.append(f"{base}/{remote}")
+    return urls
+
+
+def wait_until_public(urls: list[str], timeout: float = 300, interval: float = 10) -> bool:
+    """GitHub Pages 는 올린 뒤 반영까지 1~2분 걸린다. 모든 주소가 열릴 때까지 기다린다."""
+    deadline = time.monotonic() + timeout
+    pending = list(urls)
+    while pending:
+        pending = [u for u in pending if requests.head(u, timeout=20, allow_redirects=True).status_code != 200]
+        if not pending:
+            return True
+        if time.monotonic() > deadline:
+            return False
+        time.sleep(interval)
+    return True
+
+
+def publish_charts(settings: Settings, charts: list[Chart], run_date: date, offline: bool = False) -> list[str]:
+    """올린 차트에 url 을 채운다. 실패하면 경고 문구를 돌려주고 해당 차트는 안내 상자로 남긴다."""
+    if offline or not is_configured(settings):
+        return []
+    session = _session()
     base = settings.publish.base_url.rstrip("/")
     failed: list[str] = []
     for chart in charts:

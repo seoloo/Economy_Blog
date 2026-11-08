@@ -13,13 +13,17 @@ from econblog.classify import classify_and_select
 from econblog.collect import collect_all
 from econblog.config import Settings
 from econblog.deliver import deliver_all
+from econblog.deliver.cards import deliver_cards, full_caption
 from econblog.guard.copyright import find_copied_passages
 from econblog.guard.style import find_ai_phrases
 from econblog.market import build_snapshot
-from econblog.models import Draft, GuideDraft, GuideTopic, RenderedPost
+from econblog.models import CardSet, ClassifiedArticle, Draft, GuideDraft, GuideTopic, MarketSnapshot, PostContent, RenderedPost
+from econblog.render.cards import build_slides, render_cards
+from econblog.render.photos import PhotoPicker
 from econblog.render.html import render_guide, render_post
 from econblog.write import write_post
-from econblog.write.base import GuideContext, WriteContext
+from econblog.write.base import CardContext, GuideContext, WriteContext
+from econblog.write.cards import write_cards
 from econblog.write.guide import write_guide
 from econblog.write.prompting import guide_rows
 
@@ -35,7 +39,9 @@ def run(
     run_date: date | None = None,
     offline: bool = False,
     deliver_methods: list[str] | None = None,
+    card_methods: list[str] | None = None,
 ) -> RenderedPost:
+    """시황 글 초안을 만들어 전달하고, 인스타 카드도 만든다. card_methods 를 따로 주면 카드만 그 방식으로 보낸다."""
     run_date = run_date or today(settings)
     out_dir = settings.resolve_output_dir() / run_date.isoformat()
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -82,7 +88,51 @@ def run(
         log.info("전달: %s", line)
     if warnings:
         log.warning("검토 필요 %d건: %s", len(warnings), " | ".join(warnings))
+
+    # 8. 인스타 카드뉴스 (실패해도 블로그 초안은 이미 나갔으므로 경고만 남긴다)
+    if settings.instagram.enabled and settings.instagram.accounts:
+        try:
+            methods = card_methods or (deliver_methods if deliver_methods is not None else settings.deliver.methods)
+            run_cards(settings, run_date, snapshot, selected, content, out_dir, offline, methods)
+        except Exception as e:  # noqa: BLE001
+            log.warning("인스타 카드 실패: %s", e)
     return post
+
+
+# ---------------------------------------------------------------- 인스타 카드뉴스
+
+
+def run_cards(
+    settings: Settings,
+    run_date: date,
+    snapshot: MarketSnapshot,
+    articles: list[ClassifiedArticle],
+    post: PostContent | None,
+    out_dir,
+    offline: bool,
+    methods: list[str],
+) -> list[CardSet]:
+    """계정마다 카드 글 작성 → 사진 → 카드 그리기, 그다음 한꺼번에 전달(게시·메일)."""
+    references = [c.article for c in articles]
+    cardsets: list[CardSet] = []
+    for account in settings.instagram.accounts:
+        card_dir = out_dir / "insta" / account.key
+        ctx = CardContext(date=run_date, account=account, articles=articles, snapshot=snapshot, post=post)
+        text, warnings = write_cards(settings, ctx, offline=offline)
+        warnings += find_copied_passages(text, references, settings.guard.max_shared_chars)
+        if account.lang == "ko":
+            warnings += find_ai_phrases(text, settings.guard.ai_phrases)
+        photos = PhotoPicker(settings, card_dir / "photos", seed=f"{run_date}-{account.key}", offline=offline)
+        slides = build_slides(account, text, snapshot, run_date, photos)
+        images, render_warnings = render_cards(settings, account, slides, card_dir)
+        cs = CardSet(account=account.key, brand=account.brand, lang=account.lang, date=run_date, text=text,
+                     images=images, warnings=warnings + render_warnings, output_dir=card_dir)
+        cs.caption = full_caption(cs, photo_used=any(s.credit for s in slides))
+        cardsets.append(cs)
+        log.info("카드 %s: %d장 (경고 %d건)", account.key, len(images) or len(slides), len(cs.warnings))
+    for line in deliver_cards(settings, cardsets, methods, offline=offline):
+        log.info("전달: %s", line)
+    return cardsets
 
 
 # ---------------------------------------------------------------- 경제 공부 글
