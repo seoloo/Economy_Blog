@@ -25,6 +25,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
     from econblog.pipeline import run
 
     settings = load_settings()
+    if args.no_publish:  # 카드만 만들어 메일로 받고, 확인한 뒤 insta-post 로 올린다
+        settings.instagram.publish = False
     methods = args.deliver.split(",") if args.deliver else (["local"] if args.dry_run else None)
     card_methods = None
     if args.cards_only:  # 블로그 초안은 로컬에만 두고 인스타 카드만 메일로 받는다 (카드 점검용)
@@ -225,6 +227,7 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--date", help="기준 날짜 YYYY-MM-DD (기본: 오늘, KST)")
     p_run.add_argument("--deliver", help="전달 방식 쉼표 구분 (예: local,email)")
     p_run.add_argument("--cards-only", action="store_true", help="블로그 초안 메일 없이 인스타 카드만 보낸다")
+    p_run.add_argument("--no-publish", action="store_true", help="인스타에 올리지 않고 카드만 만든다")
     p_run.set_defaults(func=_cmd_run)
 
     p_gd = sub.add_parser("guide", help="경제 공부 글 초안 생성")

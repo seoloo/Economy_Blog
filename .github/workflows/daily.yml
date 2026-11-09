@@ -34,6 +34,10 @@ on:
       edits:
         description: 'insta-edit 일 때 고칠 문장 JSON: [["찾을 문장", "바꿀 문장"], ...]'
         required: false
+      publish:
+        description: "run·cards 일 때 인스타에 바로 올리기 (끄면 카드만 만들어 메일로 보내고, 확인 후 insta-post 로 올린다)"
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -121,6 +125,7 @@ jobs:
           args=""
           if [ -n "${{ inputs.date }}" ]; then args="$args --date ${{ inputs.date }}"; fi
           if [ "${{ inputs.dry_run }}" = "true" ]; then args="$args --dry-run --deliver local,email"; fi
+          if [ "${{ inputs.publish }}" = "false" ]; then pub="--no-publish"; else pub=""; fi
           if [ "${{ github.event.schedule }}" = "0 23 * * 2,5" ]; then
             python -m econblog guide --scheduled $args
           elif [ "${{ inputs.mode }}" = "guide" ]; then
@@ -130,9 +135,9 @@ jobs:
               python -m econblog guide --scheduled $args
             fi
           elif [ "${{ inputs.mode }}" = "cards" ]; then
-            python -m econblog run --cards-only $args
+            python -m econblog run --cards-only $pub $args
           else
-            python -m econblog run $args
+            python -m econblog run $pub $args
           fi
 
       # 메일이 안 왔을 때 대비용. 레포가 public 이면 로그인한 누구나 받을 수 있으므로 보관 기간을 짧게 둔다.
