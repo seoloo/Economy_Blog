@@ -80,8 +80,13 @@ def _call(session: requests.Session, method: str, url: str, **data) -> dict:
     except ValueError:
         body = {}
     if resp.status_code >= 400 or "error" in body:
-        msg = (body.get("error") or {}).get("message") or resp.text[:200]
-        raise GraphError(msg)
+        err = body.get("error") or {}
+        msg = err.get("message") or resp.text[:200]
+        # 원인을 찾을 수 있게 오류 종류·코드·서브코드·추적 ID 를 같이 남긴다 (토큰은 남기지 않음)
+        extra = [f"{k}={err[k]}" for k in ("type", "code", "error_subcode", "fbtrace_id") if err.get(k) is not None]
+        if err.get("error_user_msg"):
+            extra.append(err["error_user_msg"])
+        raise GraphError(f"{msg} ({', '.join(extra)}; HTTP {resp.status_code})" if extra else msg)
     return body
 
 
@@ -158,7 +163,13 @@ def check_account(settings: Settings, account: CardAccount) -> tuple[bool, str]:
     try:
         info = _call(session, "GET", f"{base}/{user}", fields="username,media_count", access_token=token)
     except GraphError as e:
-        return False, f"{account.key}: 계정 조회 실패 ({host}): {e}"
+        detail = ""
+        try:   # 토큰 자체가 살아 있는지(/me) 따로 본다: 토큰은 되는데 계정 조회만 막혔는지 가리기 위해
+            me = _call(session, "GET", f"{base}/me", fields="id", access_token=token)
+            detail = f" / 토큰 자체는 유효 (/me id 끝자리 {str(me.get('id', ''))[-4:]})"
+        except GraphError as e2:
+            detail = f" / /me 도 실패: {e2}"
+        return False, f"{account.key}: 계정 조회 실패 ({host}, 토큰 앞 {token[:3]}…): {e}{detail}"
     try:
         quota = _call(session, "GET", f"{base}/{user}/content_publishing_limit", fields="quota_usage", access_token=token)
         used = (quota.get("data") or [{}])[0].get("quota_usage", "?")
