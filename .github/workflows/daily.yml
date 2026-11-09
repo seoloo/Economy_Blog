@@ -2,9 +2,9 @@ name: daily-post
 
 on:
   schedule:
-    # 화~토 07:00 KST = UTC 월~금 22:00. 일·월요일(KST) 아침은 토요일 이후 새로 열린 장이 없어 쉰다.
-    # GitHub 사정으로 수십 분 늦어질 수 있음
-    - cron: "0 22 * * 1-5"
+    # 화~토 06:30 KST = UTC 월~금 21:30. 출근길(8시 전)에 볼 수 있게 미국 마감(겨울 06:00 KST) 직후 시작한다.
+    # 일·월요일(KST) 아침은 토요일 이후 새로 열린 장이 없어 쉰다. GitHub 사정으로 늦어질 수 있음
+    - cron: "30 21 * * 1-5"
     # 경제 공부 글: 수·토 08:00 KST = UTC 화·금 23:00 (settings.yaml guide.weekdays 와 맞춘다)
     - cron: "0 23 * * 2,5"
   workflow_dispatch:
