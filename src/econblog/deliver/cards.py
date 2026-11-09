@@ -10,8 +10,10 @@ from __future__ import annotations
 import json
 import logging
 import time
+from datetime import date, datetime
 from email.message import EmailMessage
 from html import escape
+from zoneinfo import ZoneInfo
 
 import requests
 
@@ -166,6 +168,29 @@ def check_account(settings: Settings, account: CardAccount) -> tuple[bool, str]:
     return True, f"{account.key}: @{info.get('username')} 연결됨 ({host}, 게시물 {info.get('media_count', 0)}개), {limit}"
 
 
+def posted_today(settings: Settings, account: CardAccount, today: date | None = None) -> bool:
+    """이 계정에 오늘(KST) 올린 캐러셀이 이미 있는지. 예약 실행이 늦게 돌아 수동 실행과 겹칠 때 두 번 올리지 않게 한다.
+    조회가 실패하면 False (게시는 그대로 진행)."""
+    token, user = env(account.token_env), env(account.user_env)
+    kst = ZoneInfo("Asia/Seoul")
+    today = today or datetime.now(kst).date()
+    session, base = _graph(token, settings.instagram.graph_version)
+    try:
+        items = _call(session, "GET", f"{base}/{user}/media", fields="timestamp,media_type", limit=10,
+                      access_token=token).get("data", [])
+    except GraphError as e:
+        log.warning("오늘 게시 여부 확인 실패 %s: %s", account.key, e)
+        return False
+    for it in items:
+        try:
+            when = datetime.strptime(it.get("timestamp", ""), "%Y-%m-%dT%H:%M:%S%z").astimezone(kst).date()
+        except ValueError:
+            continue
+        if it.get("media_type") == "CAROUSEL_ALBUM" and when == today:
+            return True
+    return False
+
+
 def _publish(settings: Settings, account: CardAccount, cs: CardSet) -> str:
     if not cs.images:
         raise GraphError("카드 이미지가 없음")
@@ -305,6 +330,10 @@ def deliver_cards(settings: Settings, cardsets: list[CardSet], methods: list[str
             if cs.warnings:   # 검토 경고(숫자·저작권·모호한 표현)가 있는 날은 사람이 보고 올린다
                 log.info("인스타 게시 건너뜀 %s: 검토 경고 %d건", cs.account, len(cs.warnings))
                 cs.warnings.append("검토 경고가 있어 자동 게시하지 않았습니다 (확인 후 insta-post 로 올리세요)")
+                continue
+            if posted_today(settings, account):
+                log.info("인스타 게시 건너뜀 %s: 오늘 이미 게시함", cs.account)
+                results.append(f"인스타 게시 건너뜀 {cs.account} (오늘 이미 게시)")
                 continue
             try:
                 cs.media_id = _publish(settings, account, cs)

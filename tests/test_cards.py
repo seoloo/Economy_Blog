@@ -156,6 +156,24 @@ def test_publish_is_skipped_without_tokens(settings, tmp_path, monkeypatch):
     assert cs.media_id is None and (tmp_path / "caption.txt").exists()
 
 
+def test_already_posted_today_is_not_posted_again(settings, tmp_path, monkeypatch):
+    settings.instagram.publish = True
+    monkeypatch.setenv("INSTAGRAM_ACCESS_TOKEN", "IGAAtest")
+    monkeypatch.setenv("INSTAGRAM_USER_ID", "123")
+    media = {"data": [{"timestamp": "2026-11-09T22:40:00+0000", "media_type": "CAROUSEL_ALBUM"},   # 11/10 07:40 KST
+                      {"timestamp": "2026-11-08T10:00:00+0000", "media_type": "CAROUSEL_ALBUM"}]}
+    monkeypatch.setattr(card_deliver, "_call", lambda s, m, url, **d: media)
+    kr = next(a for a in settings.instagram.accounts if a.key == "kr")
+    assert card_deliver.posted_today(settings, kr, date(2026, 11, 10))
+    assert not card_deliver.posted_today(settings, kr, date(2026, 11, 11))
+
+    monkeypatch.setattr(card_deliver, "posted_today", lambda *a, **k: True)
+    monkeypatch.setattr(card_deliver, "_publish", lambda *a: pytest.fail("두 번 게시하면 안 됨"))
+    settings.instagram.publish_weekdays = list(range(7))
+    cs = CardSet(account="kr", brand="그냥모아", lang="ko", date=date(2026, 11, 10), text=_copy(), output_dir=tmp_path)
+    assert "인스타 게시 건너뜀 kr (오늘 이미 게시)" in card_deliver.deliver_cards(settings, [cs], ["local"])
+
+
 def test_cards_email_has_inline_images_and_caption(tmp_path):
     img = tmp_path / "01.jpg"
     from PIL import Image
