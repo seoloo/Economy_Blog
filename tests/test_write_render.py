@@ -75,7 +75,8 @@ def test_dry_run_end_to_end(settings):
         assert text in html, text
     assert html.index("정리하면") < html.index("※ 이 글은") < html.index("■ 최근에 올라온 글") < html.index("키워드:")
     assert html.index("오늘 시장 한눈에") < html.index("해외 시장") < html.index("국내 시장")
-    assert post.draft.content.title.startswith("[템플릿 초안] 미국증시·코스피 시황 | 11월 6일(금)")
+    assert post.draft.content.title.startswith("[템플릿 초안] ")
+    assert post.draft.content.title.endswith(" | 11월 6일(금) 미국증시·코스피 시황")
 
     msg = build_message(post, "me@example.com", "me@example.com")
     html_body = next(p.get_content() for p in msg.walk() if p.get_content_type() == "text/html" and not p.get_filename())

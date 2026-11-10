@@ -27,9 +27,9 @@ def _env(settings: Settings) -> Environment:
     return env
 
 
-def title_prefix(settings: Settings, d: date) -> str:
-    """제목 앞부분(연재 머리말 | 날짜). 매일 같은 형식이라 검색에서 연재로 묶인다."""
-    return f"{settings.post.series_title} | {d.month}월 {d.day}일({WEEKDAYS[d.weekday()]})"
+def title_tail(settings: Settings, d: date) -> str:
+    """제목 뒷부분(날짜 + 연재 머리말). 검색어가 되는 질문을 맨 앞에 두고, 매일 같은 꼬리로 연재를 묶는다."""
+    return f"{d.month}월 {d.day}일({WEEKDAYS[d.weekday()]}) {settings.post.series_title}"
 
 
 def system_prompt(settings: Settings) -> str:
@@ -46,7 +46,7 @@ def user_prompt(settings: Settings, ctx: WriteContext) -> str:
     return _env(settings).get_template("daily_post.md.j2").render(
         date=ctx.date,
         weekday=WEEKDAYS[ctx.date.weekday()],
-        title_prefix=title_prefix(settings, ctx.date),
+        title_tail=title_tail(settings, ctx.date),
         series=series,
         missing=sorted(ctx.snapshot.errors),
         charts=ctx.charts,

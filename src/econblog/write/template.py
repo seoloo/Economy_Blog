@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from econblog.models import Issue, PostContent, Series
 from econblog.write.base import WriteContext, Writer
-from econblog.write.prompting import title_prefix
+from econblog.write.prompting import title_tail
 
 
 def _move(s: Series | None) -> str | None:
@@ -42,7 +42,7 @@ class TemplateWriter(Writer):
         ]
         top = ctx.articles[0].topic if ctx.articles else "시장"
         return PostContent(
-            title=f"[템플릿 초안] {title_prefix(self.settings, ctx.date)} | {top} 정리",
+            title=f"[템플릿 초안] {top} 정리 | {title_tail(self.settings, ctx.date)}",
             lead="LLM 없이 데이터로만 만든 뼈대 초안입니다. 도입부와 분석을 직접 채워 넣어야 합니다.",
             summary_line="(오늘 시장 한 줄 요약을 직접 작성하세요)",
             global_market=para("index_global", "rates", "commodity"),

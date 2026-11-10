@@ -71,7 +71,7 @@ write:
 
 # 글 구성. 표·요약 상자의 수치는 시장 데이터로 바로 채운다 (LLM 이 수치를 만들지 않도록).
 post:
-  series_title: 미국증시·코스피 시황   # 제목 형식: <series_title> | 11월 7일(토) | 질문 한 줄
+  series_title: 미국증시·코스피 시황   # 제목 형식: 질문 한 줄 | 11월 7일(토) <series_title>
   glance: [sp500, nasdaq, kospi, kosdaq, usdkrw, us10y, wti, gold]   # 2열 카드라 짝수가 보기 좋다
   global_table: [sp500, nasdaq, dow, nikkei, us10y, us2y, dxy, wti, gold]
   korea_table: [kospi, kosdaq, usdkrw, kr3y, kr_base_rate]

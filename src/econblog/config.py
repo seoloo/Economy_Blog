@@ -49,7 +49,7 @@ class WriteSettings(BaseModel):
 class PostSettings(BaseModel):
     """글 구성. 표와 요약 상자의 수치는 LLM 이 아니라 시장 데이터에서 바로 만든다."""
 
-    series_title: str = "미국증시·코스피 시황"   # 제목 맨 앞 연재 머리말 (검색 키워드)
+    series_title: str = "미국증시·코스피 시황"   # 제목 뒤쪽 연재 머리말 (검색 키워드)
     glance: list[str] = Field(default_factory=list)          # '오늘 시장 한눈에' 상자
     global_table: list[str] = Field(default_factory=list)    # 해외 시장 표
     korea_table: list[str] = Field(default_factory=list)     # 국내 시장 표
