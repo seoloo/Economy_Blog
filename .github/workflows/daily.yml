@@ -9,8 +9,8 @@ on:
     - cron: "13 21 * * 1-5"   # 06:13 KST
     - cron: "28 21 * * 1-5"   # 06:28 KST (예비)
     - cron: "47 21 * * 1-5"   # 06:47 KST (예비)
-    # 경제 공부 글: 수·토 08:07 KST = UTC 화·금 23:07 (settings.yaml guide.weekdays 와 맞춘다)
-    - cron: "7 23 * * 2,5"
+    # 경제 공부 글: 월·수·토·일 08:07 KST = UTC 일·화·금·토 23:07 (settings.yaml guide.weekdays 와 맞춘다)
+    - cron: "7 23 * * 0,2,5,6"
   workflow_dispatch:
     inputs:
       date:
@@ -104,7 +104,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           # 아침 예약은 두 번 걸어 둔다. 오늘(UTC) 이미 성공한 아침 예약 실행이 있으면 이번 것은 건너뛴다.
-          if [ "${{ github.event_name }}" = "schedule" ] && [ "${{ github.event.schedule }}" != "7 23 * * 2,5" ]; then
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "${{ github.event.schedule }}" != "7 23 * * 0,2,5,6" ]; then
             done_today=$(gh run list -R "$GITHUB_REPOSITORY" --workflow daily.yml --event schedule --status success               --created ">=$(date -u +%F)" --json databaseId,displayTitle --jq '[.[] | select(.databaseId != ${{ github.run_id }})] | length')
             if [ "${done_today:-0}" -gt 0 ]; then echo "오늘 아침 실행이 이미 끝나서 건너뜀"; exit 0; fi
           fi
@@ -136,7 +136,7 @@ jobs:
           if [ -n "${{ inputs.date }}" ]; then args="$args --date ${{ inputs.date }}"; fi
           if [ "${{ inputs.dry_run }}" = "true" ]; then args="$args --dry-run --deliver local,email"; fi
           if [ "${{ inputs.publish }}" = "false" ]; then pub="--no-publish"; else pub=""; fi
-          if [ "${{ github.event.schedule }}" = "7 23 * * 2,5" ]; then
+          if [ "${{ github.event.schedule }}" = "7 23 * * 0,2,5,6" ]; then
             python -m econblog guide --scheduled $args
           elif [ "${{ inputs.mode }}" = "guide" ]; then
             if [ -n "${{ inputs.topic }}" ]; then
