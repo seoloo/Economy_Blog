@@ -1,5 +1,6 @@
 from datetime import date
 
+from econblog.deliver.email import build_naver_message
 from econblog.models import Issue, PostContent
 from econblog.pipeline import run
 from econblog.render.html import render_post
@@ -39,6 +40,16 @@ def test_naver_html_uses_rewritten_post_and_email_shows_both_titles(settings, tm
     assert "네이버판 제목" in out.naver_html and "네이버판 제목" not in out.html
     assert "네이버 제목" in out.preview_html and "반도체, 나스닥" in out.preview_html
     assert "티스토리 제목" in out.preview_html
+
+    # 네이버용은 따로 한 통: 제목이 네이버판 제목이고, 본문이 곧 붙여넣을 글이다
+    msg = build_naver_message(out, "me@example.com", "me@example.com")
+    assert msg["Subject"].startswith("[네이버 블로그 초안] 11/06 네이버판 제목")
+    body = msg.get_body(preferencelist=("html",)).get_content()
+    assert "네이버 블로그용 글입니다" in body and "반도체, 나스닥" in body and "티스토리판과 같은 글입니다" not in body
+    assert "naver.html" in [a.get_filename() for a in msg.iter_attachments()]
+    # 다시 쓴 글이 없으면 같은 글이라는 안내가 붙는다
+    plain = build_naver_message(render_post(settings, post.draft, tmp_path), "me@example.com", "me@example.com")
+    assert "티스토리판과 같은 글입니다" in plain.get_body(preferencelist=("html",)).get_content()
 
 
 def test_check_naver_ignores_rank_words():
