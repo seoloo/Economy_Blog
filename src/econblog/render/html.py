@@ -73,7 +73,9 @@ def _env(settings: Settings) -> Environment:
 
 def _render_all(template, draft: Draft | GuideDraft, out_dir: Path, common: dict) -> RenderedPost:
     def one(mode: str) -> str:
-        return template.render(mode=mode, **common).strip() + "\n"
+        # 네이버판은 다시 쓴 글(draft.naver)로 그린다. 없으면 티스토리판과 같은 글
+        ctx = {**common, "c": draft.naver or draft.content} if mode == "naver" else common
+        return template.render(mode=mode, **ctx).strip() + "\n"
 
     return RenderedPost(draft=draft, html=one("tistory"), preview_html=one("preview"),
                         naver_html=one("naver"), output_dir=out_dir)

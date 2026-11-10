@@ -139,10 +139,17 @@
 {%- set copy_box = "background:#ffffff;border:1px solid #dddddd;border-radius:6px;padding:8px 10px;margin:4px 0 10px;font-size:15px;" %}
 <div style="background:#f4f6fa;border:1px solid #d9dee8;border-radius:8px;padding:14px 18px;margin-bottom:16px;font-size:14px;">
   <strong>복사해서 붙여넣기</strong> <span style="color:#7d8593;">(칸을 세 번 클릭하면 그 칸만 선택돼요)</span>
-  <div style="margin-top:8px;color:#7d8593;">제목</div>
+{%- set nv = draft.naver %}
+  <div style="margin-top:8px;color:#7d8593;">{{ "티스토리 제목" if nv else "제목" }}</div>
   <div style="{{ copy_box }}">{{ c.title | plain }}</div>
-  <div style="color:#7d8593;">태그 (티스토리·네이버 같이)</div>
+  <div style="color:#7d8593;">{{ "티스토리 태그" if nv else "태그 (티스토리·네이버 같이)" }}</div>
   <div style="{{ copy_box }}">{{ c.tags | map("replace", " ", "") | join(", ") }}</div>
+{%- if nv %}
+  <div style="color:#7d8593;">네이버 제목 <span style="color:#a0a6b1;">(네이버판은 같은 내용을 다른 문장으로 다시 쓴 글이에요)</span></div>
+  <div style="{{ copy_box }}">{{ nv.title | plain }}</div>
+  <div style="color:#7d8593;">네이버 태그</div>
+  <div style="{{ copy_box }}">{{ nv.tags | map("replace", " ", "") | join(", ") }}</div>
+{%- endif %}
 </div>
 <div style="background:#fffaf0;border:1px solid #f0e2c0;border-radius:8px;padding:14px 18px;margin-bottom:28px;font-size:14px;">
   <strong>발행 전 확인</strong>
@@ -159,7 +166,7 @@
   <strong style="display:block;margin-top:10px;">네이버 블로그 (티스토리에 먼저 올린 뒤)</strong>
   <ol style="margin:8px 0 0 18px;padding:0;">
     <li>첨부한 naver.html 을 브라우저로 열고 전체 선택(Ctrl+A)·복사해 스마트에디터 본문에 붙여넣기</li>
-    <li>제목 칸·태그 칸에 위 제목과 태그 붙여넣기</li>
+    <li>제목 칸·태그 칸에 위 {{ "네이버 " if draft.naver else "" }}제목과 태그 붙여넣기</li>
     <li>[사진] 줄 자리에 첨부한 이미지 올리고, 맨 위 그림을 대표 사진으로 지정하기</li>
   </ol>
   {%- if draft.warnings %}

@@ -30,6 +30,7 @@ from econblog.write import write_post
 from econblog.write.base import CardContext, GuideContext, WriteContext
 from econblog.write.cards import write_cards
 from econblog.write.guide import write_guide
+from econblog.write.naver import rewrite_for_naver
 from econblog.write.prompting import guide_rows
 
 log = logging.getLogger(__name__)
@@ -85,9 +86,11 @@ def run(
     warnings += find_stale_series(snapshot)
     if snapshot.errors:
         warnings.append("데이터 수집 실패: " + ", ".join(sorted(snapshot.errors)))
+    naver, naver_warnings = _naver_version(settings, content, references, offline)
+    warnings += naver_warnings
 
     # 7. 렌더링·전달
-    draft = Draft(date=run_date, content=content, charts=charts, quotes=snapshot.quotes(),
+    draft = Draft(date=run_date, content=content, naver=naver, charts=charts, quotes=snapshot.quotes(),
                   references=references, warnings=warnings)
     post = render_post(settings, draft, out_dir, recent=fetch_recent(settings, offline, content.title))
     for line in deliver_all(settings, post, deliver_methods):
@@ -103,6 +106,15 @@ def run(
         except Exception as e:  # noqa: BLE001
             log.warning("인스타 카드 실패: %s", e)
     return post
+
+
+def _naver_version(settings: Settings, content, references, offline: bool):
+    """네이버판을 다시 쓰고, 티스토리판과 같은 검사(출처 문장·AI 말투)를 한 번 더 한다."""
+    naver, warnings = rewrite_for_naver(settings, content, offline=offline)
+    if naver is not None:
+        warnings += ["[네이버판] " + w for w in find_copied_passages(naver, references, settings.guard.max_shared_chars)]
+        warnings += ["[네이버판] " + w for w in find_ai_phrases(naver, settings.guard.ai_phrases)]
+    return naver, warnings
 
 
 # ---------------------------------------------------------------- 인스타 카드뉴스
@@ -267,7 +279,9 @@ def run_guide(
         warnings.append("데이터 수집 실패: " + ", ".join(sorted(snapshot.errors)))
 
     # 5. 렌더링·전달
-    draft = GuideDraft(date=run_date, topic=topic, content=content, charts=charts,
+    naver, naver_warnings = _naver_version(settings, content, [], offline)
+    warnings += naver_warnings
+    draft = GuideDraft(date=run_date, topic=topic, content=content, naver=naver, charts=charts,
                        now_rows=guide_rows(ctx), warnings=warnings)
     post = render_guide(settings, draft, out_dir, recent=fetch_recent(settings, offline, content.title))
     for line in deliver_all(settings, post, deliver_methods):

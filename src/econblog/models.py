@@ -203,6 +203,7 @@ class Draft(BaseModel):
     kind: Literal["daily"] = "daily"
     date: date
     content: PostContent
+    naver: PostContent | None = None   # 네이버판 (같은 사실, 다른 문장). 없으면 content 를 그대로 쓴다
     charts: list[Chart] = Field(default_factory=list)
     quotes: dict[str, Quote] = Field(default_factory=dict)
     references: list[Article] = Field(default_factory=list)
@@ -274,6 +275,7 @@ class GuideDraft(BaseModel):
     date: date
     topic: GuideTopic
     content: GuidePost
+    naver: GuidePost | None = None     # 네이버판 (같은 사실, 다른 문장)
     charts: list[Chart] = Field(default_factory=list)
     now_rows: list[NowRow] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
