@@ -158,6 +158,9 @@ instagram:
       slides: [cover, board, story, story, sectors, movers, events, closing]
       chips: [kospi, nasdaq, usdkrw]
       board: [kospi, kosdaq, sp500, nasdaq, dow, nikkei, usdkrw, us10y, wti, gold]
+      # 마지막 장(릴스 마지막 장도) 노란 띠. 2026-11-10 시안 2번으로 결정
+      blog_line: 오늘 시황 전체 정리는 블로그에 있어요
+      blog_line_tail: 프로필 링크 ↗
     - key: en
       lang: en
       brand: 4PM RECAP

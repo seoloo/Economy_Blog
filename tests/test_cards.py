@@ -63,8 +63,9 @@ def test_slides_follow_account_order_and_use_data_numbers(settings):
 
     pages = card_render.render_html(settings, kr, slides)
     assert "오늘 시장 한눈에" in pages[1] and "<strong>6.02%</strong>" in pages[2]
-    for page in pages:   # 사용자가 빼 달라고 한 권유 문구는 카드에 없다
-        assert "저장" not in page and "프로필 링크" not in page
+    for page in pages:   # 사용자가 빼 달라고 한 권유 문구는 카드에 없다 (블로그 안내 띠는 사용자가 정한 마지막 장 문구라 예외)
+        assert "저장" not in page
+        assert ("프로필 링크" not in page) or ('class="blog-band"' in page and page.count("프로필 링크") == 1)
 
     en = next(a for a in settings.instagram.accounts if a.key == "en")
     copy = _copy().model_copy(update={"events": []})
@@ -486,3 +487,18 @@ def test_reel_video_is_built_from_cards(tmp_path):
         pytest.skip("ffmpeg 없음")
     out = make_reel(imgs, [1.0, 1.0, 1.0], None, tmp_path / "r.mp4")
     assert out.stat().st_size > 1000
+
+
+def test_closing_card_has_blog_band_only_where_configured(settings):
+    from econblog.render.cards import Slide, render_html
+
+    closing = Slide(kind="closing", page="8/8", kicker="오늘 장 체크리스트", title="장 열리면 볼 3가지")
+    kr = next(a for a in settings.instagram.accounts if a.key == "kr")
+    en = next(a for a in settings.instagram.accounts if a.key == "en")
+    [ko_html] = render_html(settings, kr, [closing])
+    assert 'class="blog-band"' in ko_html and "오늘 시황 전체 정리는 블로그에 있어요" in ko_html and "프로필 링크" in ko_html
+    assert "with-blog" in ko_html
+    [en_html] = render_html(settings, en, [closing])
+    assert 'class="blog-band"' not in en_html
+    [cover] = render_html(settings, kr, [Slide(kind="cover", page="1/8", kicker="k")])
+    assert 'class="blog-band"' not in cover

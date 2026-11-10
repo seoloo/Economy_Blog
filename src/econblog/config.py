@@ -98,6 +98,9 @@ class CardAccount(BaseModel):
     chips: list[str] = Field(default_factory=list)   # 표지 숫자 칩 (series key)
     board: list[str] = Field(default_factory=list)   # 숫자판 (series key, 10개)
     check: list[str] = Field(default_factory=list)   # 아시아·한국 체크 (series key)
+    # 마지막 장 맨 아래 노란 띠 (블로그 안내). 비우면 띠를 넣지 않는다. 문구는 사람이 정한 것만 쓴다
+    blog_line: str = ""
+    blog_line_tail: str = ""         # 띠 오른쪽 작은 글자 (예: 프로필 링크 ↗)
 
 
 class MusicTrack(BaseModel):

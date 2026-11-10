@@ -323,7 +323,8 @@ def _env(settings: Settings) -> Environment:
 
 def render_html(settings: Settings, account: CardAccount, slides: list[Slide]) -> list[str]:
     tpl = _env(settings).get_template("card.html.j2")
-    theme = {**THEMES[account.lang], "brand": account.brand, "brand_dot": account.brand_dot}
+    theme = {**THEMES[account.lang], "brand": account.brand, "brand_dot": account.brand_dot,
+             "blog_line": account.blog_line, "blog_line_tail": account.blog_line_tail}
     if not settings.instagram.disclaimer:
         theme["disclaimer"] = ""
     return [tpl.render(t=theme, s=s) for s in slides]

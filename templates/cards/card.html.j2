@@ -130,6 +130,12 @@ b, strong { font-weight:800; }
 .chk .now { font-size:27px; color:var(--accent); font-weight:800; margin-top:8px; font-variant-numeric:tabular-nums; }
 .big-brand { position:absolute; left:64px; bottom:120px; font-size:110px; font-weight:900; letter-spacing:-4px; color:#fff; z-index:4; }
 .big-brand i { font-style:normal; color:var(--dot); }
+/* 마지막 장 블로그 안내 띠: 있으면 이름·체크리스트를 위로 올려 자리를 만든다 (사진 출처 줄은 그대로 아래) */
+.with-blog .big-brand { bottom:200px; font-size:96px; }
+.with-blog .chk { bottom:350px; }
+.blog-band { position:absolute; left:0; right:0; bottom:96px; height:100px; z-index:6; background:var(--accent); color:var(--dark);
+             display:flex; align-items:center; justify-content:space-between; padding:0 64px; font-size:36px; font-weight:900; }
+.blog-band .tail { font-size:30px; }
 
 /* 계정 소개 게시물 (config/intro.yaml) */
 .fan { position:absolute; left:0; right:0; top:130px; height:700px; z-index:2; }
@@ -159,7 +165,7 @@ b, strong { font-weight:800; }
 </style></head>
 <body>
 {%- set light = s.kind in ("cover", "closing", "story", "intro-cover", "intro-end") %}
-<div class="card {{ 'light' if light }}">
+<div class="card {{ 'light' if light }} {{ 'with-blog' if s.kind == 'closing' and t.blog_line }}">
 {% if s.kind in ("intro-cover", "intro-end") %}
   <div class="nophoto"></div>
 {% elif s.kind == "cover" %}
@@ -236,6 +242,7 @@ b, strong { font-weight:800; }
     {% for e in s.events %}<div class="it"><div class="box"></div><div><div class="nm">{{ e.title }}</div><div class="ds">{{ e.detail }}</div>{% if e.when %}<div class="now">{{ e.when }}</div>{% endif %}</div></div>{% endfor %}
   </div>
   <div class="big-brand">{{ t.brand }}<i>{{ t.brand_dot }}</i></div>
+  {% if t.blog_line %}<div class="blog-band"><span>{{ t.blog_line }}</span>{% if t.blog_line_tail %}<span class="tail">{{ t.blog_line_tail }}</span>{% endif %}</div>{% endif %}
   <div class="foot"><span>{{ t.disclaimer }}</span><span>{{ s.credit }}</span></div>
 
 {% elif s.kind == "intro-cover" %}
