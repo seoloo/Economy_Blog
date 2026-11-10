@@ -39,3 +39,8 @@ def test_naver_html_uses_rewritten_post_and_email_shows_both_titles(settings, tm
     assert "네이버판 제목" in out.naver_html and "네이버판 제목" not in out.html
     assert "네이버 제목" in out.preview_html and "반도체, 나스닥" in out.preview_html
     assert "티스토리 제목" in out.preview_html
+
+
+def test_check_naver_ignores_rank_words():
+    from econblog.write.naver import NUM
+    assert NUM.findall("상승률 1위는 2.74% 오른 나스닥, 2번째는 다우. 코스피 5,268.") == ["2.74", "5,268"]

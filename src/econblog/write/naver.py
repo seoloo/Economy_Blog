@@ -18,7 +18,8 @@ from econblog.models import GuidePost, PostContent
 log = logging.getLogger(__name__)
 T = TypeVar("T", PostContent, GuidePost)
 
-NUM = re.compile(r"\d[\d,]*(?:\.\d+)?")
+# "1위", "두 번째"처럼 순서를 나타내는 숫자는 데이터가 아니라서 비교하지 않는다
+NUM = re.compile(r"\d[\d,]*(?:\.\d+)?(?!\d|[,.]\d|\s*(?:위|번째))")
 MAX_SHARED = 40   # 원본과 이만큼(글자) 넘게 똑같이 이어지면 경고
 
 
