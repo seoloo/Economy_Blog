@@ -83,15 +83,45 @@ def build_naver_message_from_dir(out_dir: Path, sender: str, recipients: str) ->
             tags = [t.strip() for t in html_lib.unescape(box.group(1)).split(",") if t.strip()]
     charts = out_dir / "charts"
     images = [charts / name for name in meta.get("charts", []) if (charts / name).exists()]
+    # 공개 주소는 티스토리판(post.html)의 그림 주소에서 찾는다
+    urls = {}
+    post = out_dir / "post.html"
+    if post.exists():
+        for src in re.findall(r'<img src="(https?://[^"]+)"', post.read_text(encoding="utf-8")):
+            urls[src.rsplit("/", 1)[-1]] = src
     month, day = meta["date"].split("-")[1:]
     return _naver_message(
         naver_html, title, tags, f"{month}/{day}", guide=meta.get("kind") == "guide",
         notes=[w for w in meta.get("warnings", []) if "네이버판" in w], rewritten=title != meta["title"],
-        images=images, sender=sender, recipients=recipients)
+        images=images, sender=sender, recipients=recipients, urls=urls)
+
+
+PHOTO_LINE = r"<p[^>]*>\[사진\] {name} — [^<]*</p>"
+IMG_STYLE = "max-width:100%;height:auto;"
+
+
+def _fill_photos(naver_html: str, images: list[Path], urls: dict[str, str]) -> tuple[str, list[Path]]:
+    """[사진] 안내 줄을 실제 그림으로 바꾼다. 공개 주소가 있으면 그 주소로, 없으면 메일 안에 넣는다.
+
+    돌려주는 목록은 메일 안에 넣어야 하는(cid) 그림이다.
+    """
+    inline = []
+    for path in images:
+        line = re.compile(PHOTO_LINE.format(name=re.escape(path.name)))
+        if not line.search(naver_html):
+            continue
+        src = urls.get(path.name)
+        if not src:
+            src = f"cid:{path.stem}"
+            inline.append(path)
+        tag = f'<img src="{src}" alt="" style="{IMG_STYLE}">'
+        naver_html = line.sub(lambda m, tag=tag: tag, naver_html)
+    return naver_html, inline
 
 
 def _naver_message(naver_html: str, title: str, tags: list[str], day: str, *, guide: bool, notes: list[str],
-                   rewritten: bool, images: list[Path], sender: str, recipients: str) -> EmailMessage:
+                   rewritten: bool, images: list[Path], sender: str, recipients: str,
+                   urls: dict[str, str] | None = None) -> EmailMessage:
     flag = f"[검토 {len(notes)}건] " if notes else ""
     kind = "네이버 블로그 초안·경제 공부" if guide else "네이버 블로그 초안"
     msg = EmailMessage()
@@ -105,11 +135,19 @@ def _naver_message(naver_html: str, title: str, tags: list[str], day: str, *, gu
     box = ('<div style="background:#eaf7ee;border:1px solid #b7dfc2;padding:14px 16px;margin:0 0 24px;font-size:14px;line-height:1.7;">'
            "<b>네이버 블로그용 글입니다.</b> 티스토리판과 같은 내용을 다른 문장으로 다시 쓴 글이에요."
            f"<br><b>제목</b>: {esc(title)}<br><b>태그</b>: {esc(', '.join(tags))}"
-           "<br>이 상자 아래부터 끝까지 복사해 붙여넣고, [사진] 줄 자리에는 첨부한 이미지를 올리세요."
+           "<br>이 상자 아래부터 끝까지 복사해 붙여넣으세요. 그림이 같이 옮겨지지 않으면 그 자리에 첨부한 이미지를 올리세요."
            f"{same}{warn}</div>")
-    body = re.sub(r"(<body[^>]*>)", lambda m: m.group(1) + box, naver_html, count=1)
+    # 메일 본문에는 [사진] 안내 줄 대신 실제 그림을 보여 준다 (첨부 naver.html 도 공개 주소가 있으면 그림이 들어 있다)
+    shown, inline = _fill_photos(naver_html, images, urls or {})
+    body = re.sub(r"(<body[^>]*>)", lambda m: m.group(1) + box, shown, count=1)
     msg.set_content(f"{title}\n\nHTML 메일을 지원하는 메일 앱에서 확인하세요. 붙여넣기용 naver.html 이 첨부되어 있습니다.")
     msg.add_alternative(body, subtype="html")
+    html_part = msg.get_payload()[1]
+    for path in inline:
+        html_part.add_related(path.read_bytes(), "image", _subtype(path), cid=f"<{path.stem}>")
+    # 공개 주소로 그림을 채웠으면 첨부 파일에도 그 그림이 들어가게 한다
+    if not inline:
+        naver_html = shown
     msg.add_attachment(naver_html.encode("utf-8"), maintype="text", subtype="html", filename="naver.html")
     for path in images:
         msg.add_attachment(path.read_bytes(), maintype="image", subtype=_subtype(path), filename=path.name)

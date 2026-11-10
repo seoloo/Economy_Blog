@@ -65,3 +65,10 @@ def test_naver_mail_can_be_rebuilt_from_saved_draft(settings):
     assert "네이버 블로그용 글입니다" in body and "오늘 시장 한눈에" in body
     names = [a.get_filename() for a in msg.iter_attachments()]
     assert "naver.html" in names and "thumb_market.jpg" in names
+    # 본문에는 [사진] 안내 줄 대신 실제 그림이 들어간다 (공개 주소가 없으면 메일 안에 넣는다)
+    assert "[사진]" not in body and 'src="cid:index_change"' in body
+    # 공개 주소가 있는 그림은 그 주소로 넣는다 (복사해 붙여넣어도 그림이 따라간다)
+    (post.output_dir / "post.html").write_text(
+        '<img src="https://example.com/a/index_change.png" alt="">', encoding="utf-8")
+    again = build_naver_message_from_dir(post.output_dir, "me@example.com", "me@example.com")
+    assert 'src="https://example.com/a/index_change.png"' in again.get_body(preferencelist=("html",)).get_content()

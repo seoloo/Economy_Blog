@@ -9,7 +9,7 @@
     mode 는 렌더링할 때 넘기는 값("tistory" | "preview" | "naver")이다.
     naver = 네이버 블로그 붙여넣기용. 브라우저로 열어 전체 복사해 스마트에디터에 붙여넣는다.
             붙여넣으면 여백(margin)이 사라지므로 티스토리처럼 빈 문단으로 간격을 만들고, 보이는 모양은 preview 스타일을 쓴다.
-            이미지는 붙여넣기로 옮겨지지 않으므로 [사진] 안내 줄을 넣는다. -#}
+            이미지는 공개 주소에 올린 그림을 그대로 넣는다 (메일에서 그림이 보인다). 올리지 못했을 때만 [사진] 안내 줄을 넣는다. -#}
 {%- set ACCENT = "#13294b" -%}
 {%- set SOFT = "#f4f6fa" -%}
 {%- set MUTED = "#7d8593" -%}
@@ -52,7 +52,7 @@
 
 {%- macro chart_block(chart, caption=True) -%}
 <figure{{ sty("text-align:center;", "margin:20px 0;") }}>
-{%- if chart.url and mode != "naver" %}
+{%- if chart.url %}
   <img src="{{ chart.url }}" alt="{{ chart.alt_text }}"{{ sty("", "max-width:100%;height:auto;") }}>
 {%- elif mode == "preview" %}
   <img src="charts/{{ chart.path.name }}" alt="{{ chart.alt_text }}" style="max-width:100%;height:auto;">
@@ -167,7 +167,7 @@
   <ol style="margin:8px 0 0 18px;padding:0;">
     <li>첨부한 naver.html 을 브라우저로 열고 전체 선택(Ctrl+A)·복사해 스마트에디터 본문에 붙여넣기</li>
     <li>제목 칸·태그 칸에 위 {{ "네이버 " if draft.naver else "" }}제목과 태그 붙여넣기</li>
-    <li>[사진] 줄 자리에 첨부한 이미지 올리고, 맨 위 그림을 대표 사진으로 지정하기</li>
+    <li>그림이 같이 옮겨지지 않았으면 그 자리에 첨부한 이미지를 올리고, 맨 위 그림을 대표 사진으로 지정하기</li>
   </ol>
   {%- if draft.warnings %}
   <p style="margin:12px 0 0;color:#d03b3b;"><strong>⚠ 검토 필요 {{ draft.warnings | length }}건</strong></p>
