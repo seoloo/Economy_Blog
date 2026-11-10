@@ -124,6 +124,30 @@ def _cmd_insta_post(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_naver_mail(args: argparse.Namespace) -> int:
+    """이미 만든 초안 폴더의 naver.html 을 네이버용 메일로 다시 보낸다."""
+    from pathlib import Path
+
+    from econblog.config import env
+    from econblog.deliver import email
+
+    settings = load_settings()
+    if args.dir:
+        out_dir = Path(args.dir)
+    else:
+        found = sorted(settings.resolve_output_dir().glob("*/naver.html"))
+        if not found:
+            print("output/ 에서 naver.html 을 찾지 못함")
+            return 1
+        out_dir = found[-1].parent
+    if not email.is_configured():
+        print("메일 설정(SMTP_*, MAIL_TO)이 없어 보내지 못함")
+        return 1
+    email.send(email.build_naver_message_from_dir(out_dir, env("SMTP_USER"), env("MAIL_TO")))
+    print(f"네이버용 메일 발송 완료: {out_dir.name}")
+    return 0
+
+
 def _latest_card_dir(settings, account: str):
     found = sorted(settings.resolve_output_dir().glob(f"*/insta/{account}/meta.json"))
     return found[-1].parent if found else None
@@ -268,6 +292,10 @@ def main(argv: list[str] | None = None) -> int:
     p_igi.add_argument("--examples", default="examples", help="예시로 보여 줄, 실제로 올린 카드 묶음이 있는 폴더")
     p_igi.add_argument("--deliver", help="전달 방식 쉼표 구분 (예: local,email)")
     p_igi.set_defaults(func=_cmd_insta_intro)
+
+    p_nm = sub.add_parser("naver-mail", help="이미 만든 초안의 네이버판을 메일로 다시 보내기 (글을 새로 쓰지 않음)")
+    p_nm.add_argument("--dir", help="초안 폴더 (기본: output/ 에서 가장 최근 것)")
+    p_nm.set_defaults(func=_cmd_naver_mail)
 
     p_chk = sub.add_parser("check-sources", help="RSS 소스 점검")
     p_chk.add_argument("--hours", type=int, default=72)

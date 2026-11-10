@@ -1,6 +1,6 @@
 from datetime import date
 
-from econblog.deliver.email import build_naver_message
+from econblog.deliver.email import build_naver_message, build_naver_message_from_dir
 from econblog.models import Issue, PostContent
 from econblog.pipeline import run
 from econblog.render.html import render_post
@@ -55,3 +55,13 @@ def test_naver_html_uses_rewritten_post_and_email_shows_both_titles(settings, tm
 def test_check_naver_ignores_rank_words():
     from econblog.write.naver import NUM
     assert NUM.findall("상승률 1위는 2.74% 오른 나스닥, 2번째는 다우. 코스피 5,268.") == ["2.74", "5,268"]
+
+
+def test_naver_mail_can_be_rebuilt_from_saved_draft(settings):
+    post = run(settings, run_date=date(2026, 11, 6), offline=True, deliver_methods=["local"])
+    msg = build_naver_message_from_dir(post.output_dir, "me@example.com", "me@example.com")
+    assert msg["Subject"].startswith("[네이버 블로그 초안] 11/06 ")
+    body = msg.get_body(preferencelist=("html",)).get_content()
+    assert "네이버 블로그용 글입니다" in body and "오늘 시장 한눈에" in body
+    names = [a.get_filename() for a in msg.iter_attachments()]
+    assert "naver.html" in names and "thumb_market.jpg" in names
