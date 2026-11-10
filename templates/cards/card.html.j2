@@ -206,7 +206,7 @@ b, strong { font-weight:800; }
     <div class="rrow"><span class="tk">{{ r.tk }}</span><span class="nm">{{ r.nm }}</span>
       <div class="tr"><div class="ax"></div>
         {% if r.p >= 0 %}<div class="fl up" style="left:50%;width:{{ w }}%"></div>{% else %}<div class="fl down" style="right:50%;width:{{ w }}%"></div>{% endif %}
-      </div><span class="pv {{ 'up' if r.p > 0 else 'down' if r.p < 0 else 'flat' }}">{{ '%+.2f' % r.p }}%</span></div>{% endfor %}
+      </div><span class="pv {{ 'up' if r.p > 0 else 'down' if r.p < 0 else 'flat' }}">{{ ('%+.2f' % r.p) if r.p else '0.00' }}%</span></div>{% endfor %}
   </div>
   <div class="foot"><span>{{ s.source }}</span></div>
 
