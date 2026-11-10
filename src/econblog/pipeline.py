@@ -16,6 +16,7 @@ from econblog.config import Settings
 from econblog.deliver import deliver_all
 from econblog.deliver.cards import deliver_cards, full_caption
 from econblog.guard.copyright import find_copied_passages
+from econblog.guard.freshness import find_stale_series
 from econblog.guard.numbers import find_unverified_numbers
 from econblog.guard.style import find_ai_phrases, find_vague_phrases
 from econblog.market import build_snapshot
@@ -81,6 +82,7 @@ def run(
     warnings += find_copied_passages(content, references, settings.guard.max_shared_chars)
     warnings += find_ai_phrases(content, settings.guard.ai_phrases)
     warnings += publish_warnings
+    warnings += find_stale_series(snapshot)
     if snapshot.errors:
         warnings.append("데이터 수집 실패: " + ", ".join(sorted(snapshot.errors)))
 
@@ -130,6 +132,7 @@ def run_cards(
         warnings += find_vague_phrases(text, settings.instagram.sensitive_phrases.get(account.lang, []),
                                        label="개인 의혹·소문 표현, 사실 확인 필요")
         warnings += find_unverified_numbers(text, snapshot)
+        warnings += find_stale_series(snapshot)   # 지난 값이 오늘 종가처럼 찍히면 자동 게시하지 않는다
         photos = PhotoPicker(settings, card_dir / "photos", seed=f"{run_date}-{account.key}", offline=offline)
         slides = build_slides(account, text, snapshot, run_date, photos)
         images, render_warnings = render_cards(settings, account, slides, card_dir)
