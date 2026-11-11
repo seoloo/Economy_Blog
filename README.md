@@ -131,7 +131,7 @@ pytest
 - 지표 추가: `config/series.yaml`
 - 차트 추가: `config/settings.yaml`의 `charts`
 - 경제 공부 주제 추가: `config/guides.yaml` 맨 아래에 한 항목
-- 글 스타일 변경: `prompts/` (말투 공통 규칙은 `prompts/_human.md`)
+- 글 스타일 변경: `prompts/` (말투 공통 규칙은 `prompts/_human.md`, 블로그 말투 견본은 `prompts/_voice.md`. 검사에 걸린 문장은 `write/polish.py`가 다시 쓴다)
 - 레이아웃 변경: `templates/post.html.j2`(시황), `templates/guide.html.j2`(경제 공부), 공통 부품은 `templates/_tistory.html.j2`
 
 ## 참고
