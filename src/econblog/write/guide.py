@@ -50,7 +50,7 @@ class TemplateGuideWriter:
                                    table=GuideTable(columns=["구분", "내용"], rows=[["(직접 작성)", "(직접 작성)"]]))],
             now_comment=f"지금 수치: {now}",
             myths=[GuideMyth(myth="(흔히 하는 오해)", fact="(실제로는 어떤지 직접 작성)")],
-            closing="(정리하면 문단을 직접 작성하세요)",
+            closing="(맺음 문단을 직접 작성하세요)",
             tags=[t.keyword.replace(" ", ""), "경제공부", "경제용어"],
             keywords=[t.keyword, f"{t.keyword} 뜻", "경제 공부"],
         )

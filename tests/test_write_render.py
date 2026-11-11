@@ -70,10 +70,10 @@ def test_dry_run_end_to_end(settings):
     tags = ", ".join(post.draft.content.tags)
     assert f">{tags}</div>" in preview and "복사해서 붙여넣기" not in html
     # 데이터로 만든 요약 상자·표와 새 섹션
-    for text in ("오늘 시장 한눈에", "<table", "코스피", "한국 증시 체크포인트", "정리하면", "■ 최근에 올라온 글",
+    for text in ("오늘 시장 한눈에", "<table", "코스피", "한국 증시 체크포인트", "마치며", "■ 최근에 올라온 글",
                  "키워드: 미국증시"):
         assert text in html, text
-    assert html.index("정리하면") < html.index("※ 이 글은") < html.index("■ 최근에 올라온 글") < html.index("키워드:")
+    assert html.index("마치며") < html.index("※ 이 글은") < html.index("■ 최근에 올라온 글") < html.index("키워드:")
     assert html.index("오늘 시장 한눈에") < html.index("해외 시장") < html.index("국내 시장")
     assert post.draft.content.title.startswith("[템플릿 초안] ")
     assert post.draft.content.title.endswith(" | 11월 6일(금) 미국증시·코스피 시황")

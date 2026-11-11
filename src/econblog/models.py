@@ -193,7 +193,7 @@ class PostContent(BaseModel):
     korea_checkpoints: list[str] = Field(description="해외 흐름이 오늘 한국 증시에 줄 수 있는 영향 2~4개. 항목마다 1~2문장.")
     issues: list[Issue] = Field(description="오늘의 주요 이슈 3~5개.")
     watch_points: list[str] = Field(description="앞으로 확인할 일정·지표 체크포인트.")
-    closing: str = Field(description="'정리하면' 문단 2~3문장. 오늘 흐름을 다시 짚고 다음 거래일에 볼 것 하나로 끝낸다.")
+    closing: str = Field(description="'마치며' 소제목 아래 맺음 문단 2~3문장. 요약을 되풀이하지 않고, 제목의 질문에 답한 뒤 다음 장에서 먼저 볼 것 하나로 끝낸다.")
     tags: list[str] = Field(description="티스토리·네이버 태그 5~10개. 띄어쓰기 없는 짧은 단어.")
     keywords: list[str] = Field(default_factory=list,
                                 description="글 맨 끝 키워드 줄에 넣을 검색어 5~8개. 사람들이 검색창에 칠 법한 말 (띄어쓰기 가능).")
@@ -245,7 +245,7 @@ class GuideMyth(BaseModel):
 class GuidePost(BaseModel):
     """경제 공부 글 본문. 필드 순서가 곧 LLM 이 쓰는 순서다.
 
-    흐름: 인사 도입 → 질문형 소제목(문단 + 간단한 표) → 지금 수치 → 흔히 하는 오해 → 정리하면 → 키워드 줄
+    흐름: 인사 도입 → 질문형 소제목(문단 + 간단한 표) → 지금 수치 → 흔히 하는 오해 → 마치며 → 키워드 줄
     """
 
     title: str = Field(description="'키워드 정리｜질문형 부제' 형식 (40자 안팎).")
@@ -254,7 +254,7 @@ class GuidePost(BaseModel):
     sections: list[GuideSection] = Field(description="본문 소제목 4~6개. 첫 소제목은 뜻을 설명하는 \"~란?\".")
     now_comment: str = Field(description="'지금 수치' 데이터를 근거로 현재 상황을 해석하는 2~3문장.")
     myths: list[GuideMyth] = Field(description="흔히 하는 오해 3~4개.")
-    closing: str = Field(description="'정리하면' 문단 2~3문장. 글 전체를 짧게 다시 묶는다.")
+    closing: str = Field(description="'마치며' 소제목 아래 맺음 문단 2~3문장. 요약을 되풀이하지 않고, 하나만 기억할 것과 필자가 먼저 확인하는 한 가지로 끝낸다.")
     tags: list[str] = Field(description="티스토리·네이버 태그 5~10개. 띄어쓰기 없는 짧은 단어.")
     keywords: list[str] = Field(description="글 맨 끝 키워드 줄에 넣을 검색어 5~8개 (띄어쓰기 가능).")
 

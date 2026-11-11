@@ -38,13 +38,13 @@ def test_guide_dry_run_end_to_end(settings):
     assert (out / "charts" / "yield_curve_spread.png").exists()
 
     html = (out / "post.html").read_text(encoding="utf-8")
-    # 참고 글 구성: 인사 도입 → 제목 소제목 + 대표 이미지 → 질문형 소제목(표) → 지금 수치 → 흔히 하는 오해 → 정리하면 → 끝
+    # 참고 글 구성: 인사 도입 → 제목 소제목 + 대표 이미지 → 질문형 소제목(표) → 지금 수치 → 흔히 하는 오해 → 마치며 → 끝
     order = ["흔히 하는 오해도", "<h2", "[이미지 삽입] thumb_study.jpg", "장단기 금리차란?", "<table",
-             "지금 수치로 보면?", "최근 5년 범위", "미 국채 10년", "흔히 하는 오해</h3>", "① ", "정리하면",
+             "지금 수치로 보면?", "최근 5년 범위", "미 국채 10년", "흔히 하는 오해</h3>", "① ", "마치며</h3>",
              "※ 이 글은", "■ 최근에 올라온 글", "키워드: 장단기 금리차"]
     pos = [html.index(t) for t in order]
     assert pos == sorted(pos), order
-    assert "#장단기금리차" not in html and "마무리" not in html
+    assert "#장단기금리차" not in html and "마무리" not in html and "정리하면" not in html
 
     # 네이버판: 제목·확인 상자 없이 본문만, 이미지는 [사진] 안내, 티스토리 글 링크 없음
     naver = (out / "naver.html").read_text(encoding="utf-8")

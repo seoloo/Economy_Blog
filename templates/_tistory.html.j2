@@ -38,7 +38,7 @@
 {{ gap() }}
 {%- endmacro -%}
 
-{#- 질문형 소제목 (경제 공부 글의 본문 소제목, '정리하면' 등) -#}
+{#- 질문형 소제목 (경제 공부 글의 본문 소제목, '마치며' 등) -#}
 {%- macro h3(title) -%}
 {{ gap(2) }}
 <h3 data-ke-size="size23"{{ sty("color:" ~ ACCENT ~ ";", "font-size:19px;margin:32px 0 10px;line-height:1.5;") }}>{{ title }}</h3>
@@ -179,9 +179,9 @@
 <h1 style="font-size:26px;line-height:1.4;">{{ c.title | plain }}</h1>
 {%- endmacro -%}
 
-{#- 정리하면: 글 전체를 다시 묶는 문단. 시황 글은 번호 붙은 큰 소제목, 경제 공부 글은 질문형 소제목과 같은 크기 -#}
+{#- 마치며: 글을 맺는 문단. 시황 글은 번호 붙은 큰 소제목, 경제 공부 글은 질문형 소제목과 같은 크기 -#}
 {%- macro wrap_up(text, level="h2") -%}
-{% if level == "h2" %}{{ h2("정리하면") }}{% else %}{{ h3("정리하면") }}{% endif %}
+{% if level == "h2" %}{{ h2("마치며") }}{% else %}{{ h3("마치며") }}{% endif %}
 {{ p(text | rich) }}
 {{ gap() }}
 {%- endmacro -%}
