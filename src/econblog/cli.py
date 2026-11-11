@@ -25,8 +25,10 @@ def _cmd_run(args: argparse.Namespace) -> int:
     from econblog.pipeline import run
 
     settings = load_settings()
-    if args.no_publish:  # 카드만 만들어 메일로 받고, 확인한 뒤 insta-post 로 올린다
+    if args.no_publish or args.test:  # 카드만 만들어 메일로 받고, 확인한 뒤 insta-post 로 올린다
         settings.instagram.publish = False
+    if args.test:  # 같은 날 다시 돌려도 이미 올린 글이 쓰는 공개 그림을 덮어쓰지 않는다 (그림은 메일 안에 넣는다)
+        settings.publish.repo = ""
     methods = args.deliver.split(",") if args.deliver else (["local"] if args.dry_run else None)
     card_methods = None
     if args.cards_only:  # 블로그 초안은 로컬에만 두고 인스타 카드만 메일로 받는다 (카드 점검용)
@@ -252,6 +254,7 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--deliver", help="전달 방식 쉼표 구분 (예: local,email)")
     p_run.add_argument("--cards-only", action="store_true", help="블로그 초안 메일 없이 인스타 카드만 보낸다")
     p_run.add_argument("--no-publish", action="store_true", help="인스타에 올리지 않고 카드만 만든다")
+    p_run.add_argument("--test", action="store_true", help="시험 실행: 인스타 게시와 공개 그림 올리기 없이 메일만 보낸다")
     p_run.set_defaults(func=_cmd_run)
 
     p_gd = sub.add_parser("guide", help="경제 공부 글 초안 생성")

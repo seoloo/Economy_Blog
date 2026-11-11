@@ -42,6 +42,10 @@ on:
         description: "run·cards 일 때 인스타에 바로 올리기 (끄면 카드만 만들어 메일로 보내고, 확인 후 insta-post 로 올린다)"
         type: boolean
         default: true
+      test:
+        description: "run·cards 시험 실행: 인스타 게시도 공개 그림 올리기도 하지 않고 메일만 보낸다 (이미 올린 글의 차트가 바뀌지 않는다)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -140,6 +144,7 @@ jobs:
           if [ -n "${{ inputs.date }}" ]; then args="$args --date ${{ inputs.date }}"; fi
           if [ "${{ inputs.dry_run }}" = "true" ]; then args="$args --dry-run --deliver local,email"; fi
           if [ "${{ inputs.publish }}" = "false" ]; then pub="--no-publish"; else pub=""; fi
+          if [ "${{ inputs.test }}" = "true" ]; then pub="--test"; fi
           if [ "${{ github.event.schedule }}" = "7 23 * * 2,5" ]; then
             python -m econblog guide --scheduled $args
           elif [ "${{ inputs.mode }}" = "guide" ]; then
