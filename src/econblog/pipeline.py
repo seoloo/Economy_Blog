@@ -31,6 +31,7 @@ from econblog.write.base import CardContext, GuideContext, WriteContext
 from econblog.write.cards import write_cards
 from econblog.write.guide import write_guide
 from econblog.write.naver import rewrite_for_naver
+from econblog.write.polish import polish
 from econblog.write.prompting import guide_rows
 
 log = logging.getLogger(__name__)
@@ -77,6 +78,7 @@ def run(
     body_charts = [c for c in charts if c.position != "cover"]
     ctx = WriteContext(date=run_date, articles=selected, snapshot=snapshot, charts=body_charts)
     content, warnings = write_post(settings, ctx, offline=offline)
+    content = polish(settings, content, offline=offline)   # 말투 검사에 걸린 문장만 다시 쓴다
 
     # 6. 저작권 검사
     references = [c.article for c in selected]
@@ -109,9 +111,10 @@ def run(
 
 
 def _naver_version(settings: Settings, content, references, offline: bool):
-    """네이버판을 다시 쓰고, 티스토리판과 같은 검사(출처 문장·AI 말투)를 한 번 더 한다."""
+    """네이버판을 다시 쓰고, 티스토리판과 같은 말투 고쳐 쓰기·검사(출처 문장·AI 말투)를 한 번 더 한다."""
     naver, warnings = rewrite_for_naver(settings, content, offline=offline)
     if naver is not None:
+        naver = polish(settings, naver, offline=offline)
         warnings += ["[네이버판] " + w for w in find_copied_passages(naver, references, settings.guard.max_shared_chars)]
         warnings += ["[네이버판] " + w for w in find_ai_phrases(naver, settings.guard.ai_phrases)]
     return naver, warnings
@@ -271,6 +274,7 @@ def run_guide(
     # 3. 초안
     ctx = GuideContext(date=run_date, topic=topic, snapshot=snapshot, charts=charts[1:])
     content, write_warnings = write_guide(settings, ctx, offline=offline)
+    content = polish(settings, content, offline=offline)
     warnings = write_warnings + warnings
 
     # 4. 말투 검사 (참고 기사가 없으므로 원문 복사 검사는 하지 않는다)

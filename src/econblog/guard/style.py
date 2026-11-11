@@ -9,13 +9,15 @@ from econblog.guard.copyright import post_texts
 from econblog.models import CardCopy, GuidePost, PostContent
 
 
-def find_ai_phrases(content: PostContent | GuidePost | CardCopy, limits: dict[str, int]) -> list[str]:
+def over_limit(content: PostContent | GuidePost | CardCopy, limits: dict[str, int]) -> dict[str, tuple[int, int]]:
+    """허용 횟수를 넘긴 표현 → (나온 횟수, 허용 횟수)."""
     text = "\n".join(post_texts(content))
-    over = []
-    for phrase, allowed in limits.items():
-        count = text.count(phrase)
-        if count > allowed:
-            over.append(f"「{phrase}」 {count}회(허용 {allowed})")
+    counts = {phrase: (text.count(phrase), allowed) for phrase, allowed in limits.items()}
+    return {phrase: v for phrase, v in counts.items() if v[0] > v[1]}
+
+
+def find_ai_phrases(content: PostContent | GuidePost | CardCopy, limits: dict[str, int]) -> list[str]:
+    over = [f"「{phrase}」 {count}회(허용 {allowed})" for phrase, (count, allowed) in over_limit(content, limits).items()]
     return ["AI 말투 표현이 많음: " + ", ".join(over)] if over else []
 
 

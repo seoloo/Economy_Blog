@@ -366,6 +366,19 @@ class CardSet(BaseModel):
     reel_media_id: str | None = None
 
 
+class SentenceFix(BaseModel):
+    """말투 검사에 걸린 문장 하나를 고친 결과."""
+
+    number: int = Field(description="고칠 문장 목록의 번호 (1부터)")
+    text: str = Field(description="고쳐 쓴 문장")
+
+
+class StyleFixes(BaseModel):
+    """말투 고쳐 쓰기 단계의 출력 (write/polish.py)."""
+
+    fixes: list[SentenceFix]
+
+
 class IntroSlide(BaseModel):
     """계정 소개 게시물 한 장 (config/intro.yaml). kind: cover, text, shots, end."""
 
