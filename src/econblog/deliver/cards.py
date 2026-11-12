@@ -268,7 +268,7 @@ def publish_saved(settings: Settings, card_dir) -> CardSet:
     account = next(a for a in settings.instagram.accounts if a.key == cs.account)
     cs.media_id = _publish(settings, account, cs)
     save_local(cs)
-    if cs.reel and not cs.reel_media_id and settings.instagram.reels.enabled:
+    if cs.reel and not cs.reel_media_id and settings.instagram.reels_on(account):
         try:
             cs.reel_media_id = _publish_reel(settings, account, cs)
         except Exception as e:  # noqa: BLE001
@@ -353,7 +353,7 @@ def deliver_cards(settings: Settings, cardsets: list[CardSet], methods: list[str
                 log.warning("인스타 게시 실패 %s: %s", cs.account, e)
                 cs.warnings.append(f"인스타 게시 실패: {e}")
                 continue
-            if cs.reel and settings.instagram.reels.enabled:
+            if cs.reel and settings.instagram.reels_on(account):
                 try:
                     cs.reel_media_id = _publish_reel(settings, account, cs)
                     results.append(f"릴스 게시 {cs.account}")

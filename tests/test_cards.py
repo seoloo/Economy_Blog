@@ -463,6 +463,13 @@ def test_reel_is_posted_to_the_reels_tab_only(settings, monkeypatch):
     assert calls[1][0].endswith("/media_publish")
 
 
+def test_english_account_gets_no_reel(settings):
+    # 2026-11-12 소유자 결정: 영어 계정에는 릴스를 만들지도 올리지도 않는다
+    accounts = {a.key: a for a in settings.instagram.accounts}
+    assert settings.instagram.reels_on(accounts["kr"])
+    assert not settings.instagram.reels_on(accounts["en"])
+
+
 def test_reel_shows_wordy_cards_longer():
     from econblog.render.reels import card_durations, reel_length
 

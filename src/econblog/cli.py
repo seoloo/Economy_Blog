@@ -195,6 +195,9 @@ def _cmd_insta_reel(args: argparse.Namespace) -> int:
         return 1
     cs = load_saved(card_dir)
     account = next(a for a in settings.instagram.accounts if a.key == cs.account)
+    if not settings.instagram.reels_on(account):
+        print(f"{cs.account} 계정은 릴스를 올리지 않도록 설정돼 있음 (settings.yaml instagram.accounts.reels)")
+        return 1
     if not cs.reel:
         saved = Path(card_dir) / "slides.json"
         kinds = ([x["kind"] for x in json.loads(saved.read_text(encoding="utf-8"))] if saved.exists()

@@ -186,3 +186,4 @@ instagram:
       chips: [sp500, nasdaq, dow]
       board: [sp500, nasdaq, dow, rut, sox, vix, us10y, dxy, wti, btc]
       check: [kospi, nikkei, st_hynix, st_samsung, usdkrw]
+      reels: false   # 2026-11-12 소유자 결정: 영어 계정에는 릴스(영상)를 올리지 않는다

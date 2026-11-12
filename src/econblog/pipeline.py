@@ -157,7 +157,7 @@ def run_cards(
         # 카드 종류(릴스에서 장마다 보여 줄 시간)는 나중에 insta-reel 로 릴스만 다시 만들 때 쓴다
         (card_dir / "slides.json").write_text(json.dumps([s.model_dump(mode="json") for s in slides], ensure_ascii=False),
                                               encoding="utf-8")
-        if settings.instagram.reels.enabled and images:
+        if settings.instagram.reels_on(account) and images:
             try:   # 릴스는 덤: 실패해도 캐러셀은 그대로 간다 (경고로 남기지 않아 게시를 막지 않는다)
                 cs.reel, track = build_reel(settings, account, images, [s.kind for s in slides], card_dir, run_date,
                                             offline=offline)
