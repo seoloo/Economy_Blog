@@ -177,16 +177,37 @@ def _cmd_insta_edit(args: argparse.Namespace) -> int:
     for html in changed:
         screenshot(chrome, html, html.with_suffix(".jpg"))
     print(f"고친 문장 {len(edits)}개, 다시 찍은 카드 {[h.stem for h in changed]}")
+    # 릴스는 카드 그림을 이어 붙인 것이라, 카드를 고쳤으면 릴스도 다시 만든다 (안 그러면 고치기 전 숫자가 영상에 남는다)
+    from econblog.deliver.cards import load_saved
+
+    cs = load_saved(card_dir)
+    account = next(a for a in settings.instagram.accounts if a.key == cs.account)
+    if changed and cs.reel and not cs.reel_media_id and settings.instagram.reels_on(account):
+        cs.reel.unlink(missing_ok=True)
+        cs.reel = None
+        _build_saved_reel(settings, account, cs, card_dir)
+        print(f"릴스 다시 만듦: {cs.reel}")
     return 0
+
+
+def _build_saved_reel(settings, account, cs, card_dir) -> None:
+    import json
+    from pathlib import Path
+
+    from econblog.deliver.cards import save_local
+    from econblog.render.reels import build_reel
+
+    saved = Path(card_dir) / "slides.json"
+    kinds = ([x["kind"] for x in json.loads(saved.read_text(encoding="utf-8"))] if saved.exists()
+             else list(account.slides))   # 예전 카드: 설정의 카드 순서로 어림한다
+    cs.reel, track = build_reel(settings, account, cs.images, kinds, cs.output_dir, cs.date)
+    cs.reel_music = f"{track.title} – {track.artist}" if track else ""
+    save_local(cs)
 
 
 def _cmd_insta_reel(args: argparse.Namespace) -> int:
     """만들어 둔 카드 묶음으로 릴스 영상을 만들고(없으면), --post 면 릴스만 게시한다."""
-    import json
-    from pathlib import Path
-
     from econblog.deliver.cards import _publish_reel, load_saved, save_local
-    from econblog.render.reels import build_reel
 
     settings = load_settings()
     card_dir = args.dir or _latest_card_dir(settings, args.account)
@@ -199,12 +220,7 @@ def _cmd_insta_reel(args: argparse.Namespace) -> int:
         print(f"{cs.account} 계정은 릴스를 올리지 않도록 설정돼 있음 (settings.yaml instagram.accounts.reels)")
         return 1
     if not cs.reel:
-        saved = Path(card_dir) / "slides.json"
-        kinds = ([x["kind"] for x in json.loads(saved.read_text(encoding="utf-8"))] if saved.exists()
-                 else list(account.slides))   # 예전 카드: 설정의 카드 순서로 어림한다
-        cs.reel, track = build_reel(settings, account, cs.images, kinds, cs.output_dir, cs.date)
-        cs.reel_music = f"{track.title} – {track.artist}" if track else ""
-        save_local(cs)
+        _build_saved_reel(settings, account, cs, card_dir)
     print(f"릴스 영상: {cs.reel} (음악: {cs.reel_music or '없음'})")
     if args.post:
         if cs.reel_media_id:
