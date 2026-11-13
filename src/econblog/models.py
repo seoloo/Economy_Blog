@@ -16,7 +16,7 @@ Region = Literal["kr", "global"]
 SourceKind = Literal["news", "blog", "official"]
 
 # 차트·표 하단 출처 표기에 쓰는 데이터 제공처 이름
-PROVIDER_NAMES = {"yahoo": "Yahoo Finance", "fred": "FRED", "ecos": "한국은행 ECOS", "sample": "샘플 데이터"}
+PROVIDER_NAMES = {"yahoo": "Yahoo Finance", "fred": "FRED", "treasury": "미 재무부", "ecos": "한국은행 ECOS", "sample": "샘플 데이터"}
 
 
 # ---------------------------------------------------------------- 수집 / 분류

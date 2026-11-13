@@ -14,6 +14,7 @@ log = logging.getLogger(__name__)
 PROVIDERS: dict[str, str] = {
     "yahoo": "econblog.market.yahoo:YahooProvider",
     "fred": "econblog.market.fred:FredProvider",
+    "treasury": "econblog.market.treasury:TreasuryProvider",
     "ecos": "econblog.market.ecos:EcosProvider",
     "sample": "econblog.market.sample:SampleProvider",
 }

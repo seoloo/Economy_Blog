@@ -1,7 +1,8 @@
 # 시장 데이터 시리즈 정의. 차트와 글의 수치는 여기 정의된 데이터만 사용한다.
-#  provider: yahoo | fred | ecos
+#  provider: yahoo | fred | treasury | ecos
 #   - yahoo: yfinance(비공식 Yahoo Finance). 지수·환율·원자재. 차트에 출처 표기.
 #   - fred:  FRED API (FRED_API_KEY 필요). 미국 금리 등.
+#   - treasury: 미 재무부 일별 국채 금리 CSV (키 불필요). id 는 열 이름("10 Yr"). 실패하면 params.fred 로 FRED 에서 받는다.
 #   - ecos:  한국은행 ECOS API (ECOS_API_KEY 필요). params에 cycle/item 코드 지정.
 #  category: index_kr | index_global | fx | rates | commodity | crypto | us_sector | us_stock | kr_stock
 #  label_en: 영어 계정(인스타 카드)에서 쓰는 이름
@@ -25,8 +26,8 @@ series:
   - {key: gold, label: 금, label_en: "Gold", provider: yahoo, id: "GC=F", unit: 달러, category: commodity}
 
   # ---------- 금리
-  - {key: us10y, label: 미 국채 10년, label_en: "10Y Treasury", provider: fred, id: DGS10, unit: "%", category: rates}
-  - {key: us2y, label: 미 국채 2년, label_en: "2Y Treasury", provider: fred, id: DGS2, unit: "%", category: rates}
+  - {key: us10y, label: 미 국채 10년, label_en: "10Y Treasury", provider: treasury, id: "10 Yr", unit: "%", category: rates, params: {fred: DGS10}}
+  - {key: us2y, label: 미 국채 2년, label_en: "2Y Treasury", provider: treasury, id: "2 Yr", unit: "%", category: rates, params: {fred: DGS2}}
   - {key: kr3y, label: 국고채 3년, label_en: "Korea 3Y", provider: ecos, id: 817Y002, unit: "%", category: rates, params: {cycle: D, item: "010200000"}}
   - {key: kr_base_rate, label: 한국은행 기준금리, label_en: "BOK base rate", provider: ecos, id: 722Y001, unit: "%", category: rates, params: {cycle: D, item: "0101000"}}
 
