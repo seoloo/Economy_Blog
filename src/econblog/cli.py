@@ -97,7 +97,7 @@ def _cmd_insta_check(args: argparse.Namespace) -> int:
 
     settings = load_settings()
     failed = 0
-    for account in settings.instagram.accounts:
+    for account in settings.instagram.active_accounts:
         if not env(account.token_env):
             print(f"{account.key}: 토큰 없음, 건너뜀")
             continue

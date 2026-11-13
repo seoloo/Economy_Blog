@@ -89,6 +89,8 @@ def test_card_renders_to_jpeg(settings, tmp_path):
 
 
 def test_dry_run_makes_cards_for_both_accounts(settings):
+    for a in settings.instagram.accounts:   # 영어 계정은 설정에서 꺼 두었지만 카드 만드는 길은 그대로 검사한다
+        a.enabled = True
     post = run(settings, run_date=date(2026, 11, 7), offline=True, deliver_methods=["local"])
     for key, brand in (("kr", "그냥모아"), ("en", "4PM RECAP")):
         out = post.output_dir / "insta" / key
@@ -509,3 +511,12 @@ def test_closing_card_has_blog_band_only_where_configured(settings):
     assert 'class="blog-band"' not in en_html
     [cover] = render_html(settings, kr, [Slide(kind="cover", page="1/8", kicker="k")])
     assert 'class="blog-band"' not in cover
+
+
+def test_disabled_account_gets_no_cards(settings):
+    en = next(a for a in settings.instagram.accounts if a.key == "en")
+    assert en.enabled is False   # 2026-11-13: the4pmrecap 은 다른 레포에서 쓴다
+    post = run(settings, run_date=date(2026, 11, 7), offline=True, deliver_methods=["local"])
+    assert (post.output_dir / "insta" / "kr" / "caption.txt").exists()
+    assert not (post.output_dir / "insta" / "en").exists()
+    assert [a.key for a in settings.instagram.active_accounts] == ["kr"]

@@ -98,6 +98,7 @@ class CardAccount(BaseModel):
     chips: list[str] = Field(default_factory=list)   # 표지 숫자 칩 (series key)
     board: list[str] = Field(default_factory=list)   # 숫자판 (series key, 10개)
     check: list[str] = Field(default_factory=list)   # 아시아·한국 체크 (series key)
+    enabled: bool = True             # false 면 이 계정은 카드를 만들지도 올리지도 않는다
     reels: bool = True               # false 면 이 계정은 릴스를 만들지도 올리지도 않는다 (캐러셀만)
     # 마지막 장 맨 아래 노란 띠 (블로그 안내). 비우면 띠를 넣지 않는다. 문구는 사람이 정한 것만 쓴다
     blog_line: str = ""
@@ -142,6 +143,11 @@ class InstagramSettings(BaseModel):
     vague_phrases: dict[str, list[str]] = Field(default_factory=dict)
     # 개인에 대한 의혹·소문처럼 사람이 확인해야 하는 표현 (언어별). 나오면 경고를 붙여 자동 게시를 멈춘다.
     sensitive_phrases: dict[str, list[str]] = Field(default_factory=dict)
+
+    @property
+    def active_accounts(self) -> list[CardAccount]:
+        """카드를 만들고 올리는 계정만 (enabled: false 인 계정은 뺀다)."""
+        return [a for a in self.accounts if a.enabled]
 
     def reels_on(self, account: CardAccount) -> bool:
         """이 계정에 릴스를 만들고 올리는지. 전체 스위치와 계정별 스위치가 둘 다 켜져야 한다."""

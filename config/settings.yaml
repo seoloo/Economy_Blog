@@ -186,6 +186,7 @@ instagram:
     - key: en
       lang: en
       brand: 4PM RECAP
+      enabled: false   # 2026-11-13 소유자 결정: the4pmrecap 은 다른 레포에서 쓰므로 이 레포에서는 카드를 만들지도 올리지도 않는다
       token_env: INSTAGRAM_EN_ACCESS_TOKEN
       user_env: INSTAGRAM_EN_USER_ID
       slides: [cover, board, sectors, movers, story, story, check, korea, events, closing]   # 인스타 캐러셀 최대 10장

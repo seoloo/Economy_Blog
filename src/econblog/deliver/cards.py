@@ -266,6 +266,8 @@ def publish_saved(settings: Settings, card_dir) -> CardSet:
     """저장된 카드 묶음을 그 내용 그대로 인스타에 올린다 (publish 설정과 상관없이, 사람이 직접 실행할 때만)."""
     cs = load_saved(card_dir)
     account = next(a for a in settings.instagram.accounts if a.key == cs.account)
+    if not account.enabled:
+        raise RuntimeError(f"{account.key} 계정은 꺼져 있어 올리지 않음 (settings.yaml instagram.accounts.enabled)")
     cs.media_id = _publish(settings, account, cs)
     save_local(cs)
     if cs.reel and not cs.reel_media_id and settings.instagram.reels_on(account):

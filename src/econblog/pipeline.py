@@ -101,7 +101,7 @@ def run(
         log.warning("검토 필요 %d건: %s", len(warnings), " | ".join(warnings))
 
     # 8. 인스타 카드뉴스 (실패해도 블로그 초안은 이미 나갔으므로 경고만 남긴다)
-    if settings.instagram.enabled and settings.instagram.accounts:
+    if settings.instagram.enabled and settings.instagram.active_accounts:
         try:
             methods = card_methods or (deliver_methods if deliver_methods is not None else settings.deliver.methods)
             run_cards(settings, run_date, snapshot, selected, content, out_dir, offline, methods)
@@ -136,7 +136,7 @@ def run_cards(
     """계정마다 카드 글 작성 → 사진 → 카드 그리기, 그다음 한꺼번에 전달(게시·메일)."""
     references = [c.article for c in articles]
     cardsets: list[CardSet] = []
-    for account in settings.instagram.accounts:
+    for account in settings.instagram.active_accounts:
         card_dir = out_dir / "insta" / account.key
         ctx = CardContext(date=run_date, account=account, articles=articles, snapshot=snapshot, post=post)
         text, warnings = write_cards(settings, ctx, offline=offline)
