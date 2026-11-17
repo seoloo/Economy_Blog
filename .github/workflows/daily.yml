@@ -58,7 +58,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -69,7 +69,9 @@ jobs:
 
       - name: 한글 폰트 설치
         run: |
-          sudo apt-get update -qq
+          # 2026-11-18 우분투 저장소가 느려 update 에만 23분이 걸려 글 생성이 30분 제한에 걸렸다.
+          # update 는 3분까지만 기다리고, 넘으면 러너에 있는 목록으로 설치한다.
+          timeout 180 sudo apt-get update -qq || echo "apt-get update 가 늦어 건너뜀"
           sudo apt-get install -y -qq fonts-nanum fonts-noto-cjk fonts-noto-cjk-extra ffmpeg
           rm -rf ~/.cache/matplotlib
 
