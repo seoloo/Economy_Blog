@@ -72,7 +72,18 @@ jobs:
           # 2026-11-18 우분투 저장소가 느려 update 에만 23분이 걸려 글 생성이 30분 제한에 걸렸다.
           # update 는 3분까지만 기다리고, 넘으면 러너에 있는 목록으로 설치한다.
           timeout 180 sudo apt-get update -qq || echo "apt-get update 가 늦어 건너뜀"
-          sudo apt-get install -y -qq fonts-nanum fonts-noto-cjk fonts-noto-cjk-extra ffmpeg
+          # 2026-11-20 에는 install 이 11분 넘게 멈췄다. 4분 안에 안 끝나면 GitHub 에서 폰트를,
+          # pip 로 ffmpeg 을 받는다 (reels.py 는 PATH 에 ffmpeg 이 없으면 imageio-ffmpeg 을 쓴다).
+          if ! timeout 240 sudo apt-get install -y -qq fonts-nanum fonts-noto-cjk fonts-noto-cjk-extra ffmpeg; then
+            echo "apt-get install 이 늦어 GitHub 에서 폰트를 받음"
+            mkdir -p ~/.local/share/fonts
+            base=https://github.com/google/fonts/raw/main/ofl
+            for f in nanumgothic/NanumGothic-Regular.ttf nanumgothic/NanumGothic-Bold.ttf nanumgothic/NanumGothic-ExtraBold.ttf "notosanskr/NotoSansKR%5Bwght%5D.ttf"; do
+              curl -fsSL --retry 3 -o ~/.local/share/fonts/$(basename "$f" | sed 's/%5B/[/;s/%5D/]/') "$base/$f"
+            done
+            fc-cache -f
+            command -v ffmpeg || pip install -q imageio-ffmpeg
+          fi
           rm -rf ~/.cache/matplotlib
 
       - name: 의존성 설치
